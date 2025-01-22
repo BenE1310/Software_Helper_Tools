@@ -1,0 +1,11 @@
+Start installation Battery1 
+07/06/2024 17:50:42.11 - INFO Check connection to BMC1 
+07/06/2024 17:50:49.71 - ERROR Connection failed - no connection to BMC1 - "Request timed out". 
+07/06/2024 17:50:49.71 - INFO Check connection to BMC2 
+07/06/2024 17:50:52.71 - ERROR Connection failed - no connection to BMC2. 
+07/06/2024 17:50:52.71 - INFO Check connection to DB1 
+07/06/2024 17:50:55.70 - ERROR Connection failed - no connection to DB1. 
+07/06/2024 17:50:55.70 - INFO Check connection to DB2 
+07/06/2024 17:50:58.71 - ERROR Connection failed - no connection to DB2. 
+07/06/2024 17:50:58.72 - INFO Check connection to ICS1 
+07/06/2024 17:51:02.70 - INFO Connection successful - Start to install ICS on ICS1. 

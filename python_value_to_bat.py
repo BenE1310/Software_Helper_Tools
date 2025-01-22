@@ -1,39 +1,64 @@
 # Prompt the user to enter the BN value
-bn_value = input("Enter the BN value: ")
-
+BN=5
 # Prompt the user to enter the PN value
-pn_value = input("Enter the PN value: ")
+PN=43
 
+# BMC
+battery_client_bat = ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat"
+battery_server_bat = ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryServer.bat"
+ics_bat = ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\ICS.bat"
+
+# CBMC
+regional_client_bat = ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat"
+regional_server_bat = ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalServer.bat"
+
+# DB
+db_bat = ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat"
+
+# Simulator
+simulator_client_bat = ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat"
+simulator_server_bat = ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorServer.bat"
+
+
+
+
+
+def change_bat_pos_function(bat_file_path):
 # Define the path to the BAT file
-bat_file_path = "Scripts/Software_Installation/test.bat"
+    try:
+        # Read the existing content of the BAT file
+        with open(bat_file_path, "r") as bat_file:
+            lines = bat_file.readlines()
 
-# Read the existing content of the BAT file
-with open(bat_file_path, "r") as bat_file:
-    lines = bat_file.readlines()
+        # Function to update or add a variable
+        def update_or_add_variable_at_row(lines, row, variable_name, value):
+            line_content = f"set /a {variable_name}={value}\n"
+            if row < len(lines):
+                # If the row exists, update it
+                lines[row] = line_content
+            else:
+                # Otherwise, append blank lines until the row exists
+                while len(lines) <= row:
+                    lines.append("\n")
+                lines[row] = line_content
+            return lines
 
-# Function to update or add a variable
-def update_or_add_variable(lines, variable_name, value, position):
-    found = False
-    for i, line in enumerate(lines):
-        if line.strip().startswith(f"{variable_name}="):
-            lines[i] = f"{variable_name}={value}\n"
-            found = True
-            break
-    if not found:
-        # If the variable was not found, add it at the specified position
-        lines.insert(position, f"{variable_name}={value}\n")
-    return lines
+        # Update BN at row 6 (index 5) and PN at row 7 (index 6)
+        lines = update_or_add_variable_at_row(lines, 5, "BN", BN)
+        lines = update_or_add_variable_at_row(lines, 6, "PN", PN)
 
-# Update or add BN and PN values
-lines = update_or_add_variable(lines, "BN", bn_value, 2)  # Third line (index 2)
-lines = update_or_add_variable(lines, "PN", pn_value, 3)  # Fourth line (index 3)
+        # Write the modified content back to the BAT file
+        with open(bat_file_path, "w") as bat_file:
+            bat_file.writelines(lines)
 
-# Write the modified content back to the BAT file
-with open(bat_file_path, "w") as bat_file:
-    bat_file.writelines(lines)
+        print(f"BN={BN} and PN={PN} have been updated in {bat_file_path}")
 
-print(f"BN={bn_value} and PN={pn_value} have been updated in {bat_file_path}")
+    except FileNotFoundError:
+        print(f"Error: The file {bat_file_path} does not exist.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
+change_bat_pos_function(ics_bat)
 
 
 
