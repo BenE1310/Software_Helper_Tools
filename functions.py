@@ -130,28 +130,6 @@ def get_remote_file_version(remote_server, file_path):
         return {"error": str(e)}
 
 
-
-
-def install_client(host, ip, bat_file_path, BN):
-    """
-    Handle the installation process for a single client.
-    """
-    try:
-        # Customize the .bat file for the client
-        fourth_octet = ip.split(".")[-1]
-        current_bat_file = f"BatteryClient_{fourth_octet}.bat"
-        print(current_bat_file)
-        temp_bat_path = f".\\temp\\{current_bat_file}"
-
-        change_bat_pos_function(bat_file_path, BN=BN, PN=fourth_octet, output_path=temp_bat_path)
-
-        # Deploy and execute the customized .bat file
-        prepare_installation(ip_base=ip, host_type=host)
-        print(f"Installation completed for {host} ({ip})")
-    except Exception as e:
-        print(f"Error during installation for {host} ({ip}): {e}")
-
-
 def change_bat_pos_function(bat_file_path, BN, PN, output_path, logs):
     """
     Update or create a customized .bat file for the client.
@@ -188,7 +166,7 @@ def change_bat_pos_function(bat_file_path, BN, PN, output_path, logs):
 
 
 
-def prepare_installation(ip_base, host_type, current_bat_file, scripts_src=None, logs=None, progress_var=None, progress_label=None, step_increment=0):
+def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_src=None, logs=None, progress_var=None, progress_label=None, step_increment=0):
     """
     Prepare the installation process for a host.
     """
@@ -196,18 +174,34 @@ def prepare_installation(ip_base, host_type, current_bat_file, scripts_src=None,
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
 
+    # Determine the destination folder based on host type
+    if "BMC" in host_type or "Client" in host_type or "ICS" in host_type:
+        folder_name = "BMC"
+    elif "DB" in host_type:
+        folder_name = "DB"
+    else:
+        folder_name = "Default"  # Fallback for any other type
+
     try:
         # Map the UNC path to a drive letter
         logs.append(f"Mapping {unc_path} to {drive_letter}...")
         os.system(f"net use {drive_letter} {unc_path}")
 
-        # Define paths using the mapped drive
-        scripts_dest = f"{drive_letter}\\FBE1\\Scripts\\BMC"
+        # Define paths using the mapped drive and determined folder name
+        scripts_dest = f"{drive_letter}\\FBE1\\Scripts\\{folder_name}"
         zip_dest = f"{drive_letter}\\FBE1\\Zip"
         tools_dest = f"{drive_letter}\\FBE1\\Tools"
-        remote_bat_path = f"{drive_letter}\\FBE1\\Scripts\\BMC\\{current_bat_file}"
+        remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
 
-        zip_src = "C:\\FBE\\Zip\\BatteryClient.7z"
+        if "BMC" in host_type:
+            zip_src = "C:\\FBE\\Zip\\BatteryServer.7z"
+        elif "DB" in host_type:
+            zip_src = "C:\\FBE\\Zip\\mDRS.7z"
+        elif "ICS" in host_type:
+            zip_src = "C:\\FBE\\Zip\\ICS.7z"
+        else:
+            zip_src = "C:\\FBE\\Zip\\BatteryClient.7z"
+
         tools_src = "C:\\FBE\\Tools"
 
         # Step 1: Copy script file
@@ -239,11 +233,6 @@ def prepare_installation(ip_base, host_type, current_bat_file, scripts_src=None,
         # Remove the drive mapping
         logs.append(f"Unmapping {drive_letter}...")
         os.system(f"net use {drive_letter} /delete")
-
-
-
-
-
 
 
 def cleanup_temp_files():

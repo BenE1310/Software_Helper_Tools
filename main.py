@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
-    change_bat_pos_function, prepare_installation
+    change_bat_pos_function, cleanup_temp_files, prepare_installation_battery
 import tkinter.ttk as ttk
 import threading
 import pythoncom  # Import pythoncom for WMI operations
@@ -484,11 +484,11 @@ def open_simulator_window():
     # Hostnames and IPs
     hostnames = {
         "Sim Server": "192.168.3.141",
-        "Client1": "192.168.1.7",
-        "Client2": "192.168.1.8",
-        "Client3": "192.168.1.9",
-        "Client4": "192.168.1.10",
-        "Client5": "192.168.1.11",
+        "Client1": "192.168.1.6",
+        "Client2": "192.168.1.7",
+        "Client3": "192.168.1.8",
+        "Client4": "192.168.1.9",
+        "Client5": "192.168.1.10",
     }
 
     # Track selections
@@ -802,459 +802,6 @@ def open_simulator_window():
         bg="#FFFDD0",
         fg="green",
         activebackground="#6B8E23"
-    ).place(x=450, y=855, width=100, height=40)
-
-
-def open_battery_window():
-    battery_window = tk.Toplevel(root)
-    battery_window.title("Remote App Installation")
-    battery_window.geometry("1000x900")
-    battery_window.resizable(False, False)
-    battery_window.configure(bg="#004d4d")  # Dark teal background
-    global progress_bar_ping
-    global progress_bar_permissions
-    global progress_bar_disk
-    global progress_bar_version
-
-    def on_close():
-        global progress_bar_ping, progress_bar_permissions, progress_bar_disk, progress_bar_version
-        # Reset the progress bar variable
-        progress_bar_ping = None
-        progress_bar_permissions = None
-        progress_bar_disk = None
-        progress_bar_version = None  # Global variable for the version check progress bar
-
-        battery_window.destroy()  # Close the window
-
-    x = battery_window.protocol("WM_DELETE_WINDOW", on_close)
-
-    # Hostnames and IPs
-    hostnames = {
-        "BMC1": "192.168.8.154",
-        "BMC2": "192.168.8.141",
-        "ICS1": "192.168.3.136",
-        "ICS2": "192.168.3.138",
-        "DB1": "192.168.3.139",
-        "DB2": "192.168.3.140",
-        "Client1": "192.168.3.154",
-        "Client2": "192.168.3.141",
-        "Client3": "192.168.1.9",
-        "Client4": "192.168.1.10",
-        "Client5": "172.16.10.108",
-    }
-
-    # Map host to corresponding bat file paths
-    bat_file_mapping = {
-        "BMC1": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/BMC/BatteryServer.bat",
-        "BMC2": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/BMC/BatteryServer.bat",
-        "ICS1": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/BMC/ICS.bat",
-        "ICS2": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/BMC/ICS.bat",
-        "DB1": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/DB/mDRS.bat",
-        "DB2": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/DB/mDRS.bat",
-        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
-        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
-        "Client3": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/BMC/BatteryClient.bat",
-        "Client4": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/BMC/BatteryClient.bat",
-        "Client5": "./Scripts/AppInstallation/RemoteInstallation/Installation_Scripts/BMC/BatteryClient.bat",
-    }
-
-    # Track selections
-    selections = {host: tk.BooleanVar() for host in hostnames}
-    labels = {}
-
-    # Title Label
-    title_label = tk.Label(battery_window, text=f"Remote App Installation - Battery {BN}", font=("Arial", 20, "bold"),
-                           fg="white", bg="#004d4d")
-    title_label.place(x=270, y=10)
-
-    # Add progress bar
-    progress_var = tk.DoubleVar()
-    progress_bar = ttk.Progressbar(battery_window, variable=progress_var, maximum=100)
-    progress_bar.place(x=560, y=615, width=300, anchor="center")  # Centered horizontally with a width of 400px
-
-    # Add percentage label
-    progress_label = tk.Label(battery_window, text="0%", font=("Arial", 14), fg="white", bg="#004d4d")
-    progress_label.place(x=566, y=650, anchor="center")  # Positioned below the progress bar
-
-    def on_install():
-        """
-        Start the installation process for all selected hosts.
-        """
-
-        def install_task():
-            logs = []  # Shared list to collect logs
-
-            # Reset progress bar and results display
-            progress_var.set(0)
-            progress_label.config(text="0%")
-            results_text.delete("1.0", tk.END)
-
-            selected_hosts = [host for host, var in selections.items() if var.get()]
-            if not selected_hosts:
-                messagebox.showwarning("No Selection", "Please select at least one hostname.")
-                return
-
-            total_hosts = len(selected_hosts)
-            steps_per_host = 5  # Number of steps per host (customize, copy script, copy zip, copy tools, execute)
-            total_steps = total_hosts * steps_per_host
-            step_increment = 100 / total_steps  # Progress increment per step
-
-            for host in selected_hosts:
-                ip = hostnames[host]
-                try:
-                    # Extract details for the host
-                    fourth_octet = ip.split(".")[-1]
-                    PN = fourth_octet
-                    bat_file_path = bat_file_mapping.get(host)
-                    print(bat_file_path)
-
-                    # Create a unique temporary .bat file for the host
-                    temp_bat_path = f".\\temp\\BatteryClient_{PN}.bat"
-                    name_bat_file = f"BatteryClient_{PN}.bat"
-
-                    # Step 1: Customize the .bat file
-                    logs.append(f"Customizing batch file for {host} ({ip})...")
-                    change_bat_pos_function(
-                        bat_file_path, BN=BN, PN=PN, output_path=temp_bat_path, logs=logs
-                    )
-                    progress_var.set(progress_var.get() + step_increment)
-                    progress_label.config(text=f"{int(progress_var.get())}%")
-                    display_results(logs)
-
-                    # Step 2-5: Transfer files and execute
-                    logs.append(f"Starting installation process for {host} ({ip})...")
-                    prepare_installation(
-                        ip_base=ip,
-                        host_type=host,
-                        current_bat_file=name_bat_file,
-                        scripts_src=temp_bat_path,
-                        logs=logs,
-                        progress_var=progress_var,
-                        progress_label=progress_label,
-                        step_increment=step_increment,
-                    )
-                    logs.append(f"Installation completed for {host} ({ip}).")
-                    display_results(logs)
-
-                except Exception as e:
-                    logs.append(f"Error during installation for {host} ({ip}): {e}")
-                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
-                    display_results(logs)
-
-            # Final progress update and logs
-            progress_var.set(100)
-            progress_label.config(text="100%")
-            logs.append("All installations completed.")
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
-
-            display_results(logs)
-
-        threading.Thread(target=install_task).start()
-
-    # Hostnames Section
-    y_offset = 98
-    for host, ip in hostnames.items():
-        label = tk.Label(
-            battery_window,
-            text=f"{host} (IP: {ip})",
-            font=("Arial", 14),
-            fg="white",
-            bg="#004d4d",
-            anchor="w"
-        )
-        label.place(x=80, y=y_offset)
-        labels[host] = label
-
-        tk.Checkbutton(
-            battery_window,
-            variable=selections[host],
-            bg="#004d4d",
-            fg="white",
-            selectcolor="#004d4d",
-            anchor="w"
-        ).place(x=50, y=y_offset + 2)
-        y_offset += 50
-
-    # Functions for Check All and Uncheck All
-    def check_all():
-        for var in selections.values():
-            var.set(True)
-
-    def uncheck_all():
-        for var in selections.values():
-            var.set(False)
-
-    # Buttons on the right
-    button_x = 760
-    button_width = 200
-    tk.Button(
-        battery_window,
-        text="Check All",
-        command=check_all,
-        font=("Arial", 14),
-        bg="#006666",
-        fg="white",
-        activebackground="#008080"
-    ).place(x=button_x, y=100, width=button_width, height=50)
-
-    tk.Button(
-        battery_window,
-        text="Uncheck All",
-        command=uncheck_all,
-        font=("Arial", 14),
-        bg="#006666",
-        fg="white",
-        activebackground="#008080"
-    ).place(x=button_x, y=170, width=button_width, height=50)
-
-    # Results Display
-    results_text = tk.Text(battery_window, height=10, width=60, bg="#003333", fg="white", font=("Arial", 12))
-    results_text.place(x=50, y=700, width=700, height=150)
-
-    def display_results(results):
-        results_text.delete("1.0", tk.END)
-        results_text.insert(tk.END, "\n".join(results))
-
-    def perform_version_check():
-        global progress_bar_version
-        logs = []  # Logs for test results
-
-        selected_hosts = [host for host, var in selections.items() if var.get()]
-        if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
-            return
-
-        # Create and show the progress bar if it's not already created
-        if progress_bar_version is None:
-            progress_bar_version = ttk.Progressbar(
-                battery_window, orient="horizontal", mode="indeterminate", length=200
-            )
-            progress_bar_version.place(x=580, y=255, width=150, height=20)
-
-        progress_bar_version.start(10)  # Start the progress bar
-
-        def run_test():
-            for host, var in selections.items():
-                if var.get():
-                    ip = hostnames[host]
-
-                    # Determine the file path based on the host type
-                    if host.startswith("DB"):
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
-                    else:
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
-
-                    # Call the version checker
-                    version_info = get_remote_file_version(ip, file_path)
-
-                    if "error" in version_info:
-                        labels[host].config(fg="red")
-                        logs.append(f"{host} (IP: {ip}): Version check failed - {version_info['error']}")
-                    else:
-                        product_version = version_info.get("Product Version", "Unknown")
-                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) - Version: {product_version}")
-                        logs.append(f"{host} (IP: {ip}): Version: {product_version}")
-
-            # Stop the progress bar and display results
-            battery_window.after(0, lambda: progress_bar_version.stop())
-            battery_window.after(0, lambda: display_results(logs))
-
-        # Run the test in a separate thread
-        threading.Thread(target=run_test).start()
-
-    def perform_communication_test():
-        global progress_bar_ping
-        logs = []  # Collect logs here
-
-        selected_hosts = [host for host, var in selections.items() if var.get()]
-        if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
-            return
-
-        # Create and show the progress bar the first time the button is pressed
-        if progress_bar_ping is None:
-            progress_bar_ping = ttk.Progressbar(
-                battery_window, orient="horizontal", mode="indeterminate", length=200
-            )
-            progress_bar_ping.place(x=580, y=325, width=150, height=20)
-
-        progress_bar_ping.start(10)  # Start the progress bar
-
-        def run_test():
-            for host, var in selections.items():
-                if var.get():
-                    ip = hostnames[host]
-                    success = check_communication(ip)
-                    if success:
-                        labels[host].config(fg="green")
-                        logs.append(f"{host} (IP: {ip}): Communication successful.")
-                    else:
-                        labels[host].config(fg="red")
-                        labels[host].config(text=f"{host} (IP: {ip}) C")
-                        logs.append(f"{host} (IP: {ip}): Communication failed.")
-
-            # Stop the progress bar after the test completes
-            battery_window.after(0, lambda: progress_bar_ping.stop())
-            battery_window.after(0, lambda: display_results(logs))
-
-        # Run the test in a separate thread
-        threading.Thread(target=run_test).start()
-
-    def perform_permission_test():
-        global progress_bar_permissions
-        logs = []  # Logs for test results
-
-        selected_hosts = [host for host, var in selections.items() if var.get()]
-        if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
-            return
-
-        # Create and show the progress bar if it's not already created
-        if progress_bar_permissions is None:
-            progress_bar_permissions = ttk.Progressbar(
-                battery_window, orient="horizontal", mode="indeterminate", length=200
-            )
-            progress_bar_permissions.place(x=580, y=395, width=150, height=20)
-
-        progress_bar_permissions.start(10)  # Start the progress bar
-
-        def run_test():
-            for host, var in selections.items():
-                if var.get():
-                    ip = hostnames[host]
-                    network_path = rf"\\{ip}\c$\temp"  # Adjust the network path format
-                    permissions = check_permissions(network_path)  # Call the helper function
-
-                    # Update GUI based on results
-                    if permissions["readable"] and permissions["writable"]:
-                        labels[host].config(fg="green")
-                        logs.append(f"{host} (IP: {ip}): Permissions OK (Read/Write).")
-                    else:
-                        labels[host].config(fg="red")
-                        labels[host].config(text=f"{host} (IP: {ip}) P")
-                        logs.append(f"{host} (IP: {ip}): Permissions FAILED.")
-
-            # Stop the progress bar and display results
-            battery_window.after(0, lambda: progress_bar_permissions.stop())
-            battery_window.after(0, lambda: display_results(logs))
-
-        # Run the test in a separate thread
-        threading.Thread(target=run_test).start()
-
-    def perform_disk_volume_test():
-        global progress_bar_disk
-        logs = []  # Logs for test results
-
-        selected_hosts = [host for host, var in selections.items() if var.get()]
-        if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
-            return
-
-        # Create and show the progress bar if it's not already created
-        if progress_bar_disk is None:
-            progress_bar_disk = ttk.Progressbar(
-                battery_window, orient="horizontal", mode="indeterminate", length=200
-            )
-            progress_bar_disk.place(x=580, y=465, width=150, height=20)
-
-        progress_bar_disk.start(10)  # Start the progress bar
-
-        def run_test():
-            pythoncom.CoInitialize()  # Initialize COM library for WMI
-            try:
-                for host, var in selections.items():
-                    if var.get():
-                        ip = hostnames[host]
-                        free_space, total_space, percentage_free = get_drive_space(ip)
-                        print(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
-
-                        if free_space is None or total_space is None:
-                            labels[host].config(fg="red")
-                            logs.append(f"{host} (IP: {ip}): Failed to retrieve disk space information.")
-                        elif percentage_free < 25:
-                            labels[host].config(fg="red")
-                            labels[host].config(text=f"{host} (IP: {ip}) D")
-                            logs.append(
-                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Cannot install, please empty the disk."
-                            )
-                        else:
-                            labels[host].config(fg="green")
-                            logs.append(
-                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Disk space is sufficient."
-                            )
-            finally:
-                pythoncom.CoUninitialize()  # Uninitialize COM library
-
-            # Stop the progress bar and display results
-            battery_window.after(0, lambda: progress_bar_disk.stop())
-            battery_window.after(0, lambda: display_results(logs))
-
-        # Run the test in a separate thread
-        threading.Thread(target=run_test).start()
-
-    # Buttons
-
-    # 003d3d
-
-    tk.Button(
-        battery_window,
-        text="Get Version",
-        command=perform_version_check,
-        font=("Arial", 14),
-        bg="#003d3d",
-        fg="white",
-        activebackground="#008080"
-    ).place(x=button_x, y=240, width=button_width, height=50)
-
-    tk.Button(
-        battery_window,
-        text="Communication Test",
-        command=perform_communication_test,
-        font=("Arial", 14),
-        bg="#006666",
-        fg="white",
-        activebackground="#008080"
-    ).place(x=button_x, y=310, width=button_width, height=50)
-
-    tk.Button(
-        battery_window,
-        text="Permission Test",
-        command=perform_permission_test,
-        font=("Arial", 14),
-        bg="#006666",
-        fg="white",
-        activebackground="#008080"
-    ).place(x=button_x, y=380, width=button_width, height=50)
-
-    tk.Button(
-        battery_window,
-        text="Disk Volume Test",
-        command=perform_disk_volume_test,
-        font=("Arial", 14),
-        bg="#006666",
-        fg="white",
-        activebackground="#008080"
-    ).place(x=button_x, y=450, width=button_width, height=50)
-
-    tk.Button(
-        battery_window,
-        text="Install App",
-        command=on_install,
-        font=("Arial", 14, 'bold'),
-        bg="#006666",
-        fg="white",
-        activebackground="#008080"
-    ).place(x=button_x, y=590, width=button_width, height=50)
-
-    # Close button in the middle at the bottom
-    tk.Button(
-        battery_window,
-        text="Close",
-        command=on_close,
-        font=("Arial", 14),
-        bg="#800000",
-        fg="white",
-        activebackground="#990000"
     ).place(x=450, y=855, width=100, height=40)
 
 
@@ -1619,6 +1166,474 @@ def open_regional_window():
     ).place(x=450, y=855, width=100, height=40)
 
 
+def open_battery_window():
+    battery_window = tk.Toplevel(root)
+    battery_window.title("Remote App Installation")
+    battery_window.geometry("1000x900")
+    battery_window.resizable(False, False)
+    battery_window.configure(bg="#004d4d")  # Dark teal background
+    global progress_bar_ping
+    global progress_bar_permissions
+    global progress_bar_disk
+    global progress_bar_version
+
+    def on_close():
+        global progress_bar_ping, progress_bar_permissions, progress_bar_disk, progress_bar_version
+        # Reset the progress bar variable
+        progress_bar_ping = None
+        progress_bar_permissions = None
+        progress_bar_disk = None
+        progress_bar_version = None  # Global variable for the version check progress bar
+
+        battery_window.destroy()  # Close the window
+
+    x = battery_window.protocol("WM_DELETE_WINDOW", on_close)
+
+    # Hostnames and IPs
+    hostnames = {
+        "BMC1": "192.168.8.154",
+        "BMC2": "192.168.8.141",
+        "ICS1": "192.168.3.136",
+        "ICS2": "192.168.3.138",
+        "DB1": "172.16.10.108",
+        "DB2": "192.168.3.140",
+        "Client1": "192.168.3.154",
+        "Client2": "192.168.3.141",
+        "Client3": "192.168.1.9",
+        "Client4": "192.168.1.10",
+        "Client5": "172.16.10.108",
+    }
+
+    # Map host to corresponding bat file paths
+    bat_file_mapping = {
+        "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryServer.bat",
+        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\/BatteryServer.bat",
+        "ICS1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\ICS.bat",
+        "ICS2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\ICS.bat",
+        "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
+        "DB2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
+        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
+        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
+        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
+        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
+        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
+    }
+
+    # Track selections
+    selections = {host: tk.BooleanVar() for host in hostnames}
+    labels = {}
+
+    # Title Label
+    title_label = tk.Label(battery_window, text=f"Remote App Installation - Battery {BN}", font=("Arial", 20, "bold"),
+                           fg="white", bg="#004d4d")
+    title_label.place(x=270, y=10)
+
+
+
+    def on_install():
+
+        # Add progress bar
+        progress_var = tk.DoubleVar()
+        progress_bar = ttk.Progressbar(battery_window, variable=progress_var, maximum=100)
+        progress_bar.place(x=580, y=615, width=300, anchor="center")  # Centered horizontally with a width of 400px
+
+        # Add percentage label
+        progress_label = tk.Label(battery_window, text="0%", font=("Arial", 14), fg="white", bg="#004d4d")
+        progress_label.place(x=586, y=650, anchor="center")  # Positioned below the progress bar
+        """
+        Start the installation process for all selected hosts.
+        """
+
+        def install_task():
+            logs = []  # Shared list to collect logs
+
+            # Reset progress bar and results display
+            progress_var.set(0)
+            progress_label.config(text="0%")
+            results_text.delete("1.0", tk.END)
+
+            selected_hosts = [host for host, var in selections.items() if var.get()]
+            if not selected_hosts:
+                messagebox.showwarning("No Selection", "Please select at least one hostname.")
+                return
+
+            total_hosts = len(selected_hosts)
+            steps_per_host = 5  # Number of steps per host (customize, copy script, copy zip, copy tools, execute)
+            total_steps = total_hosts * steps_per_host
+            step_increment = 100 / total_steps  # Progress increment per step
+
+            for host in selected_hosts:
+                ip = hostnames[host]
+                try:
+                    # Extract details for the host
+                    fourth_octet = ip.split(".")[-1]
+                    PN = fourth_octet
+                    bat_file_path = bat_file_mapping.get(host)
+                    print(bat_file_path)
+
+                    # Create a unique temporary .bat file for the host
+
+                    if "BMC" in host:
+                        temp_bat_path = f".\\temp\\BatteryServer_{PN}.bat"
+                        name_bat_file = f"BatteryServer_{PN}.bat"
+                    elif "ICS" in host:
+                        temp_bat_path = f".\\temp\\ICS_{PN}.bat"
+                        name_bat_file = f"ICS_{PN}.bat"
+                    elif "DB" in host:
+                        temp_bat_path = f".\\temp\\mDRS_{PN}.bat"
+                        name_bat_file = f"mDRS_{PN}.bat"
+                    else:
+                        temp_bat_path = f".\\temp\\BatteryClient_{PN}.bat"
+                        name_bat_file = f"BatteryClient_{PN}.bat"
+
+                    # Step 1: Customize the .bat file
+                    logs.append(f"Customizing batch file for {host} ({ip})...")
+                    change_bat_pos_function(
+                        bat_file_path, BN=BN, PN=PN, output_path=temp_bat_path, logs=logs
+                    )
+                    progress_var.set(progress_var.get() + step_increment)
+                    progress_label.config(text=f"{int(progress_var.get())}%")
+                    display_results(logs)
+
+                    # Step 2-5: Transfer files and execute
+                    logs.append(f"Starting installation process for {host} ({ip})...")
+                    prepare_installation_battery(
+                        ip_base=ip,
+                        host_type=host,
+                        current_bat_file=name_bat_file,
+                        scripts_src=temp_bat_path,
+                        logs=logs,
+                        progress_var=progress_var,
+                        progress_label=progress_label,
+                        step_increment=step_increment,
+                    )
+                    logs.append(f"Installation completed for {host} ({ip}).")
+                    display_results(logs)
+
+                except Exception as e:
+                    logs.append(f"Error during installation for {host} ({ip}): {e}")
+                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
+                    display_results(logs)
+
+            # Final progress update and logs
+            progress_var.set(100)
+            progress_label.config(text="100%")
+            cleanup_temp_files()
+            logs.append("All installations completed.")
+
+            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
+
+            display_results(logs)
+
+        threading.Thread(target=install_task).start()
+
+    # Hostnames Section
+    y_offset = 98
+    for host, ip in hostnames.items():
+        label = tk.Label(
+            battery_window,
+            text=f"{host} (IP: {ip})",
+            font=("Arial", 14),
+            fg="white",
+            bg="#004d4d",
+            anchor="w"
+        )
+        label.place(x=80, y=y_offset)
+        labels[host] = label
+
+        tk.Checkbutton(
+            battery_window,
+            variable=selections[host],
+            bg="#004d4d",
+            fg="white",
+            selectcolor="#004d4d",
+            anchor="w"
+        ).place(x=50, y=y_offset + 2)
+        y_offset += 50
+
+    # Functions for Check All and Uncheck All
+    def check_all():
+        for var in selections.values():
+            var.set(True)
+
+    def uncheck_all():
+        for var in selections.values():
+            var.set(False)
+
+    # Buttons on the right
+    button_x = 760
+    button_width = 200
+    tk.Button(
+        battery_window,
+        text="Check All",
+        command=check_all,
+        font=("Arial", 14),
+        bg="#006666",
+        fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=100, width=button_width, height=50)
+
+    tk.Button(
+        battery_window,
+        text="Uncheck All",
+        command=uncheck_all,
+        font=("Arial", 14),
+        bg="#006666",
+        fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=170, width=button_width, height=50)
+
+    # Results Display
+    results_text = tk.Text(battery_window, height=10, width=60, bg="#003333", fg="white", font=("Arial", 12))
+    results_text.place(x=50, y=700, width=700, height=150)
+
+    def display_results(results):
+        results_text.delete("1.0", tk.END)
+        results_text.insert(tk.END, "\n".join(results))
+
+    def perform_version_check():
+        global progress_bar_version
+        logs = []  # Logs for test results
+
+        selected_hosts = [host for host, var in selections.items() if var.get()]
+        if not selected_hosts:
+            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            return
+
+        # Create and show the progress bar if it's not already created
+        if progress_bar_version is None:
+            progress_bar_version = ttk.Progressbar(
+                battery_window, orient="horizontal", mode="indeterminate", length=200
+            )
+            progress_bar_version.place(x=580, y=255, width=150, height=20)
+
+        progress_bar_version.start(10)  # Start the progress bar
+
+        def run_test():
+            for host, var in selections.items():
+                if var.get():
+                    ip = hostnames[host]
+
+                    # Determine the file path based on the host type
+                    if host.startswith("DB"):
+                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                    else:
+                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+
+                    # Call the version checker
+                    version_info = get_remote_file_version(ip, file_path)
+
+                    if "error" in version_info:
+                        labels[host].config(fg="red")
+                        logs.append(f"{host} (IP: {ip}): Version check failed - {version_info['error']}")
+                    else:
+                        product_version = version_info.get("Product Version", "Unknown")
+                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) - Version: {product_version}")
+                        logs.append(f"{host} (IP: {ip}): Version: {product_version}")
+
+            # Stop the progress bar and display results
+            battery_window.after(0, lambda: progress_bar_version.stop())
+            battery_window.after(0, lambda: display_results(logs))
+
+        # Run the test in a separate thread
+        threading.Thread(target=run_test).start()
+
+    def perform_communication_test():
+        global progress_bar_ping
+        logs = []  # Collect logs here
+
+        selected_hosts = [host for host, var in selections.items() if var.get()]
+        if not selected_hosts:
+            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            return
+
+        # Create and show the progress bar the first time the button is pressed
+        if progress_bar_ping is None:
+            progress_bar_ping = ttk.Progressbar(
+                battery_window, orient="horizontal", mode="indeterminate", length=200
+            )
+            progress_bar_ping.place(x=580, y=325, width=150, height=20)
+
+        progress_bar_ping.start(10)  # Start the progress bar
+
+        def run_test():
+            for host, var in selections.items():
+                if var.get():
+                    ip = hostnames[host]
+                    success = check_communication(ip)
+                    if success:
+                        labels[host].config(fg="green")
+                        logs.append(f"{host} (IP: {ip}): Communication successful.")
+                    else:
+                        labels[host].config(fg="red")
+                        labels[host].config(text=f"{host} (IP: {ip}) C")
+                        logs.append(f"{host} (IP: {ip}): Communication failed.")
+
+            # Stop the progress bar after the test completes
+            battery_window.after(0, lambda: progress_bar_ping.stop())
+            battery_window.after(0, lambda: display_results(logs))
+
+        # Run the test in a separate thread
+        threading.Thread(target=run_test).start()
+
+    def perform_permission_test():
+        global progress_bar_permissions
+        logs = []  # Logs for test results
+
+        selected_hosts = [host for host, var in selections.items() if var.get()]
+        if not selected_hosts:
+            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            return
+
+        # Create and show the progress bar if it's not already created
+        if progress_bar_permissions is None:
+            progress_bar_permissions = ttk.Progressbar(
+                battery_window, orient="horizontal", mode="indeterminate", length=200
+            )
+            progress_bar_permissions.place(x=580, y=395, width=150, height=20)
+
+        progress_bar_permissions.start(10)  # Start the progress bar
+
+        def run_test():
+            for host, var in selections.items():
+                if var.get():
+                    ip = hostnames[host]
+                    network_path = rf"\\{ip}\c$\temp"  # Adjust the network path format
+                    permissions = check_permissions(network_path)  # Call the helper function
+
+                    # Update GUI based on results
+                    if permissions["readable"] and permissions["writable"]:
+                        labels[host].config(fg="green")
+                        logs.append(f"{host} (IP: {ip}): Permissions OK (Read/Write).")
+                    else:
+                        labels[host].config(fg="red")
+                        labels[host].config(text=f"{host} (IP: {ip}) P")
+                        logs.append(f"{host} (IP: {ip}): Permissions FAILED.")
+
+            # Stop the progress bar and display results
+            battery_window.after(0, lambda: progress_bar_permissions.stop())
+            battery_window.after(0, lambda: display_results(logs))
+
+        # Run the test in a separate thread
+        threading.Thread(target=run_test).start()
+
+    def perform_disk_volume_test():
+        global progress_bar_disk
+        logs = []  # Logs for test results
+
+        selected_hosts = [host for host, var in selections.items() if var.get()]
+        if not selected_hosts:
+            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            return
+
+        # Create and show the progress bar if it's not already created
+        if progress_bar_disk is None:
+            progress_bar_disk = ttk.Progressbar(
+                battery_window, orient="horizontal", mode="indeterminate", length=200
+            )
+            progress_bar_disk.place(x=580, y=465, width=150, height=20)
+
+        progress_bar_disk.start(10)  # Start the progress bar
+
+        def run_test():
+            pythoncom.CoInitialize()  # Initialize COM library for WMI
+            try:
+                for host, var in selections.items():
+                    if var.get():
+                        ip = hostnames[host]
+                        free_space, total_space, percentage_free = get_drive_space(ip)
+                        print(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
+
+                        if free_space is None or total_space is None:
+                            labels[host].config(fg="red")
+                            logs.append(f"{host} (IP: {ip}): Failed to retrieve disk space information.")
+                        elif percentage_free < 25:
+                            labels[host].config(fg="red")
+                            labels[host].config(text=f"{host} (IP: {ip}) D")
+                            logs.append(
+                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Cannot install, please empty the disk."
+                            )
+                        else:
+                            labels[host].config(fg="green")
+                            logs.append(
+                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Disk space is sufficient."
+                            )
+            finally:
+                pythoncom.CoUninitialize()  # Uninitialize COM library
+
+            # Stop the progress bar and display results
+            battery_window.after(0, lambda: progress_bar_disk.stop())
+            battery_window.after(0, lambda: display_results(logs))
+
+        # Run the test in a separate thread
+        threading.Thread(target=run_test).start()
+
+    # Buttons
+
+    # 003d3d
+
+    tk.Button(
+        battery_window,
+        text="Get Version",
+        command=perform_version_check,
+        font=("Arial", 14),
+        bg="#003d3d",
+        fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=240, width=button_width, height=50)
+
+    tk.Button(
+        battery_window,
+        text="Communication Test",
+        command=perform_communication_test,
+        font=("Arial", 14),
+        bg="#006666",
+        fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=310, width=button_width, height=50)
+
+    tk.Button(
+        battery_window,
+        text="Permission Test",
+        command=perform_permission_test,
+        font=("Arial", 14),
+        bg="#006666",
+        fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=380, width=button_width, height=50)
+
+    tk.Button(
+        battery_window,
+        text="Disk Volume Test",
+        command=perform_disk_volume_test,
+        font=("Arial", 14),
+        bg="#006666",
+        fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=450, width=button_width, height=50)
+
+    tk.Button(
+        battery_window,
+        text="Install App",
+        command=on_install,
+        font=("Arial", 14, 'bold'),
+        bg="#006666",
+        fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=590, width=button_width, height=50)
+
+    # Close button in the middle at the bottom
+    tk.Button(
+        battery_window,
+        text="Close",
+        command=on_close,
+        font=("Arial", 14),
+        bg="#800000",
+        fg="white",
+        activebackground="#990000"
+    ).place(x=450, y=855, width=100, height=40)
+
+
 def rai_screen():
     # Check if BN is chosen
     if BN == 0:
@@ -1630,15 +1645,15 @@ def rai_screen():
 
     # Add Label
     rai_label = tk.Label(root, text='Remote App Installation', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
-    rai_label.place(x=150, y=10)
+    rai_label.place(x=138, y=10)
     buttons.append(rai_label)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Battery', open_battery_window, 180, 420)
-    create_button(root, 'Regional', open_regional_window, 180, 490)
-    create_button(root, 'VSIL', open_vsil_window, 180, 560)
-    create_button(root, 'Simulator', open_simulator_window, 180, 630)
-    create_button(root, 'Back', main_screen, 10, 690, button_style_small)
+    create_button(root, 'Battery', open_battery_window, 178, 420)
+    create_button(root, 'Regional', open_regional_window, 178, 490)
+    create_button(root, 'VSIL', open_vsil_window, 178, 560)
+    create_button(root, 'Simulator', open_simulator_window, 178, 630)
+    create_button(root, 'Back', main_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
     # if len(installation_app_remote_message) == 0:
@@ -1658,8 +1673,8 @@ def main_screen():
         messagebox.showinfo("Save", f"The battery number was update to {BN}")
 
     # Add Main Label
-    main_label = tk.Label(root, text='Main', fg='white', bg='#000000', font=('Arial', 18, 'bold'))
-    main_label.place(x=268, y=10)
+    main_label = tk.Label(root, text='Main', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    main_label.place(x=266, y=10)
     buttons.append(main_label)
 
     # Dropdown Menu
@@ -1680,9 +1695,9 @@ def main_screen():
     buttons.append(save_button)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Remote App Installation', rai_screen, 180, 420)
-    create_button(root, 'Checks Remote Components', open_vsil_window, 180, 490)
-    create_button(root, 'Cyber Deployment', open_battery_window, 180, 560)
+    create_button(root, 'Remote App Installation', rai_screen, 178, 420)
+    create_button(root, 'Checks Remote Components', open_vsil_window, 178, 490)
+    create_button(root, 'Cyber Deployment', open_battery_window, 178, 560)
     create_button(root, 'Tools', lambda: on_click(None), 360, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
