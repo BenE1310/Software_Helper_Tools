@@ -1,7 +1,8 @@
 import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
-    change_bat_pos_function, cleanup_temp_files, prepare_installation_battery
+    change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
+    prepare_installation_simulator
 import tkinter.ttk as ttk
 import threading
 import pythoncom  # Import pythoncom for WMI operations
@@ -369,7 +370,7 @@ def open_vsil_window():
                     if var.get():
                         ip = hostnames[host]
                         free_space, total_space, percentage_free = get_drive_space(ip)
-                        print(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
+                        logs.append(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
 
                         if free_space is None or total_space is None:
                             labels[host].config(fg="red")
@@ -479,16 +480,26 @@ def open_simulator_window():
         progress_bar_version = None
         simulator_window.destroy()  # Close the window
 
-    x = simulator_window.protocol("WM_DELETE_WINDOW", on_close)
+    simulator_window.protocol("WM_DELETE_WINDOW", on_close)
 
     # Hostnames and IPs
     hostnames = {
         "Sim Server": "192.168.3.141",
-        "Client1": "192.168.1.6",
-        "Client2": "192.168.1.7",
-        "Client3": "192.168.1.8",
-        "Client4": "192.168.1.9",
-        "Client5": "192.168.1.10",
+        "Client1": f"192.168.{BN}.6",
+        "Client2": f"192.168.{BN}.7",
+        "Client3": f"192.168.{BN}.8",
+        "Client4": f"192.168.{BN}.9",
+        "Client5": "172.16.10.108",
+    }
+
+    sim_file_mapping = {
+        "Sim Server": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorServer.bat",
+        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
+        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
+        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
+        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
+        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
+
     }
 
     # Track selections
@@ -499,6 +510,105 @@ def open_simulator_window():
     title_label = tk.Label(simulator_window, text=f"Remote App Installation - Simulator", font=("Arial", 20, "bold"),
                            fg="white", bg="#228B22")
     title_label.place(x=270, y=10)
+
+    def on_install():
+
+        # Add progress bar
+        progress_var = tk.DoubleVar()
+        progress_bar = ttk.Progressbar(simulator_window, variable=progress_var, maximum=100)
+        progress_bar.place(x=580, y=615, width=300, anchor="center")  # Centered horizontally with a width of 400px
+
+        # Add percentage label
+        progress_label = tk.Label(simulator_window, text="0%", font=("Arial", 14), fg="white", bg="#228B22")
+        progress_label.place(x=586, y=650, anchor="center")  # Positioned below the progress bar
+        """
+        Start the installation process for all selected hosts.
+        """
+
+        def install_task():
+            logs = []  # Shared list to collect logs
+
+            # Reset progress bar and results display
+            progress_var.set(0)
+            progress_label.config(text="0%")
+            results_text.delete("1.0", tk.END)
+
+            selected_hosts = [host for host, var in selections.items() if var.get()]
+            if not selected_hosts:
+                messagebox.showwarning("No Selection", "Please select at least one hostname.")
+                return
+
+            total_hosts = len(selected_hosts)
+            steps_per_host = 5  # Number of steps per host (customize, copy script, copy zip, copy tools, execute)
+            total_steps = total_hosts * steps_per_host
+            step_increment = 100 / total_steps  # Progress increment per step
+
+            for host in selected_hosts:
+                ip = hostnames[host]
+                try:
+                    # Extract details for the host
+                    fourth_octet = ip.split(".")[-1]
+                    third_octets = ip.split('.')[2][0]
+                    logs.append(f"{fourth_octet}-{third_octets}")
+                    PN = fourth_octet
+                    bat_file_path = sim_file_mapping.get(host)
+                    print(bat_file_path)
+
+                    # Create a unique temporary .bat file for the host
+
+                    if "BMC" in host:
+                        temp_bat_path = f".\\temp\\BatteryServer_{PN}.bat"
+                        name_bat_file = f"BatteryServer_{PN}.bat"
+                    elif "ICS" in host:
+                        temp_bat_path = f".\\temp\\ICS_{PN}.bat"
+                        name_bat_file = f"ICS_{PN}.bat"
+                    elif "DB" in host:
+                        temp_bat_path = f".\\temp\\mDRS_{PN}.bat"
+                        name_bat_file = f"mDRS_{PN}.bat"
+                    else:
+                        temp_bat_path = f".\\temp\\BatteryClient_{PN}.bat"
+                        name_bat_file = f"BatteryClient_{PN}.bat"
+
+                    # Step 1: Customize the .bat file
+                    logs.append(f"Customizing batch file for {host} ({ip})...")
+                    change_bat_pos_function(
+                        bat_file_path, BN=BN, PN=PN, output_path=temp_bat_path, logs=logs
+                    )
+                    progress_var.set(progress_var.get() + step_increment)
+                    progress_label.config(text=f"{int(progress_var.get())}%")
+                    display_results(logs)
+
+                    # Step 2-5: Transfer files and execute
+                    logs.append(f"Starting installation process for {host} ({ip})...")
+                    prepare_installation_simulator(
+                        ip_base=ip,
+                        host_type=host,
+                        current_bat_file=name_bat_file,
+                        scripts_src=temp_bat_path,
+                        logs=logs,
+                        progress_var=progress_var,
+                        progress_label=progress_label,
+                        step_increment=step_increment,
+                    )
+                    logs.append(f"Installation completed for {host} ({ip}).")
+                    display_results(logs)
+
+                except Exception as e:
+                    logs.append(f"Error during installation for {host} ({ip}): {e}")
+                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
+                    display_results(logs)
+
+            # Final progress update and logs
+            progress_var.set(100)
+            progress_label.config(text="100%")
+            cleanup_temp_files()
+            logs.append("All installations completed.")
+
+            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
+
+            display_results(logs)
+
+        threading.Thread(target=install_task).start()
 
     # Hostnames Section
     y_offset = 98
@@ -715,7 +825,7 @@ def open_simulator_window():
                     if var.get():
                         ip = hostnames[host]
                         free_space, total_space, percentage_free = get_drive_space(ip)
-                        print(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
+                        logs.append(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
 
                         if free_space is None or total_space is None:
                             labels[host].config(fg="#013220")
@@ -786,7 +896,7 @@ def open_simulator_window():
     tk.Button(
         simulator_window,
         text="Install App",
-        command=on_close,
+        command=on_install,
         font=("Arial", 14, 'bold'),
         bg="#32CD32",
         fg="white",
@@ -837,9 +947,120 @@ def open_regional_window():
         "Client4": "192.168.1.10",
         "Client5": "192.168.1.11",
         "Client6": "192.168.3.154",
-        "Client7": "192.168.1.11",
+        "Client7": "172.16.10.108",
         "Client8": "192.168.3.154",
     }
+
+    # Map host to corresponding bat file paths
+    reg_file_mapping = {
+        "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalServer.bat",
+        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalServer.bat",
+        "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
+        "DB2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
+        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+        "Client6": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+        "Client7": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+        "Client8": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+    }
+
+    def on_install():
+
+        # Add progress bar
+        progress_var = tk.DoubleVar()
+        progress_bar = ttk.Progressbar(regional_window, variable=progress_var, maximum=100)
+        progress_bar.place(x=580, y=615, width=300, anchor="center")  # Centered horizontally with a width of 400px
+
+        # Add percentage label
+        progress_label = tk.Label(regional_window, text="0%", font=("Arial", 14), fg="white", bg="#663399")
+        progress_label.place(x=586, y=650, anchor="center")  # Positioned below the progress bar
+        """
+        Start the installation process for all selected hosts.
+        """
+
+        def install_task():
+            logs = []  # Shared list to collect logs
+
+            # Reset progress bar and results display
+            progress_var.set(0)
+            progress_label.config(text="0%")
+            results_text.delete("1.0", tk.END)
+
+            selected_hosts = [host for host, var in selections.items() if var.get()]
+            if not selected_hosts:
+                messagebox.showwarning("No Selection", "Please select at least one hostname.")
+                return
+
+            total_hosts = len(selected_hosts)
+            steps_per_host = 5  # Number of steps per host (customize, copy script, copy zip, copy tools, execute)
+            total_steps = total_hosts * steps_per_host
+            step_increment = 100 / total_steps  # Progress increment per step
+
+            for host in selected_hosts:
+                ip = hostnames[host]
+                try:
+                    # Extract details for the host
+                    fourth_octet = ip.split(".")[-1]
+                    PN = fourth_octet
+                    bat_file_path = reg_file_mapping.get(host)
+                    print(bat_file_path)
+
+                    # Create a unique temporary .bat file for the host
+
+                    if "CBMC" in host:
+                        temp_bat_path = f".\\temp\\RegionalServer_{PN}.bat"
+                        name_bat_file = f"RegionalServer_{PN}.bat"
+                    elif "DB" in host:
+                        temp_bat_path = f".\\temp\\mDRS_{PN}.bat"
+                        name_bat_file = f"mDRS_{PN}.bat"
+                    else:
+                        temp_bat_path = f".\\temp\\RegionalClient_{PN}.bat"
+                        name_bat_file = f"RegionalClient_{PN}.bat"
+
+                    # Step 1: Customize the .bat file
+                    logs.append(f"Customizing batch file for {host} ({ip})...")
+                    change_bat_pos_function(
+                        bat_file_path, BN=BN, PN=PN, output_path=temp_bat_path, logs=logs
+                    )
+                    progress_var.set(progress_var.get() + step_increment)
+                    progress_label.config(text=f"{int(progress_var.get())}%")
+                    display_results(logs)
+
+                    # Step 2-5: Transfer files and execute
+                    logs.append(f"Starting installation process for {host} ({ip})...")
+                    prepare_installation_regional(
+                        ip_base=ip,
+                        host_type=host,
+                        current_bat_file=name_bat_file,
+                        scripts_src=temp_bat_path,
+                        logs=logs,
+                        progress_var=progress_var,
+                        progress_label=progress_label,
+                        step_increment=step_increment,
+                    )
+                    logs.append(f"Installation completed for {host} ({ip}).")
+                    display_results(logs)
+
+                except Exception as e:
+                    logs.append(f"Error during installation for {host} ({ip}): {e}")
+                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
+                    display_results(logs)
+
+            # Final progress update and logs
+            progress_var.set(100)
+            progress_label.config(text="100%")
+            cleanup_temp_files()
+            logs.append("All installations completed.")
+
+            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
+
+            display_results(logs)
+
+        threading.Thread(target=install_task).start()
+
 
     # Track selections
     selections = {host: tk.BooleanVar() for host in hostnames}
@@ -1073,7 +1294,6 @@ def open_regional_window():
                     if var.get():
                         ip = hostnames[host]
                         free_space, total_space, percentage_free = get_drive_space(ip)
-                        print(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
 
                         if free_space is None or total_space is None:
                             labels[host].config(fg="red")
@@ -1089,6 +1309,9 @@ def open_regional_window():
                             logs.append(
                                 f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Disk space is sufficient."
                             )
+                            logs.append(
+                                f"Free space:{free_space:.2f}GB, Total space:{total_space:.2f}GB, Percentage free:{percentage_free:.2f}%.")
+
             finally:
                 pythoncom.CoUninitialize()  # Uninitialize COM library
 
@@ -1102,8 +1325,7 @@ def open_regional_window():
     def disk_volume_test(host, ip):
         return f"Disk volume test passed for {host} (IP: {ip})"
 
-        # Buttons
-
+    # Buttons
     tk.Button(
         regional_window,
         text="Get Version",
@@ -1147,7 +1369,7 @@ def open_regional_window():
     tk.Button(
         regional_window,
         text="Install App",
-        command=on_close,
+        command=on_install,
         font=("Arial", 14, 'bold'),
         bg="#5a2c8a",
         fg="white",
@@ -1207,7 +1429,7 @@ def open_battery_window():
     # Map host to corresponding bat file paths
     bat_file_mapping = {
         "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryServer.bat",
-        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\/BatteryServer.bat",
+        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryServer.bat",
         "ICS1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\ICS.bat",
         "ICS2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\ICS.bat",
         "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
@@ -1542,7 +1764,6 @@ def open_battery_window():
                     if var.get():
                         ip = hostnames[host]
                         free_space, total_space, percentage_free = get_drive_space(ip)
-                        print(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
 
                         if free_space is None or total_space is None:
                             labels[host].config(fg="red")
@@ -1558,6 +1779,8 @@ def open_battery_window():
                             logs.append(
                                 f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Disk space is sufficient."
                             )
+                            logs.append(
+                                f"Free space:{free_space:.2f}GB, Total space:{total_space:.2f}GB, Percentage free:{percentage_free:.2f}%.")
             finally:
                 pythoncom.CoUninitialize()  # Uninitialize COM library
 
@@ -1669,7 +1892,6 @@ def main_screen():
         selected_value = dropdown_var.get()
         BN = selected_value
         print(f"Saved value: {selected_value}")
-        print(BN)  # Replace this with your desired save logic
         messagebox.showinfo("Save", f"The battery number was update to {BN}")
 
     # Add Main Label

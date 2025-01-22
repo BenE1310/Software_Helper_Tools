@@ -162,8 +162,138 @@ def change_bat_pos_function(bat_file_path, BN, PN, output_path, logs):
 
 
 
+def prepare_installation_simulator(ip_base, host_type, current_bat_file, scripts_src=None, logs=None, progress_var=None, progress_label=None, step_increment=0):
+    """
+    Prepare the installation process for a host.
+    """
+    logs = logs or []
+    drive_letter = "P:"  # Use any available drive letter
+    unc_path = f"\\\\{ip_base}\\c$"
+
+    # Determine the destination folder based on host type
+
+    folder_name = "Simulator"  # Fallback for any other type
+
+    try:
+        # Map the UNC path to a drive letter
+        logs.append(f"Mapping {unc_path} to {drive_letter}...")
+        os.system(f"net use {drive_letter} {unc_path}")
+
+        # Define paths using the mapped drive and determined folder name
+        scripts_dest = f"{drive_letter}\\FBE1\\Scripts\\{folder_name}"
+        zip_dest = f"{drive_letter}\\FBE1\\Zip"
+        tools_dest = f"{drive_letter}\\FBE1\\Tools"
+        remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
+
+        if "BMC" in host_type:
+            zip_src = "C:\\FBE\\Zip\\BatteryServer.7z"
+        elif "DB" in host_type:
+            zip_src = "C:\\FBE\\Zip\\mDRS.7z"
+        elif "ICS" in host_type:
+            zip_src = "C:\\FBE\\Zip\\ICS.7z"
+        else:
+            zip_src = "C:\\FBE\\Zip\\BatteryClient.7z"
+
+        tools_src = "C:\\FBE\\Tools"
+
+        # Step 1: Copy script file
+        logs.append(f"Copying script file to {scripts_dest}...")
+        os.system(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I")
+        progress_var.set(progress_var.get() + step_increment)
+        progress_label.config(text=f"{int(progress_var.get())}%")
+
+        # Step 2: Copy zip file
+        logs.append(f"Copying zip file to {zip_dest}...")
+        os.system(f"echo D | xcopy \"{zip_src}\" \"{zip_dest}\" /E /Y /I")
+        progress_var.set(progress_var.get() + step_increment)
+        progress_label.config(text=f"{int(progress_var.get())}%")
+
+        # Step 3: Copy tools
+        logs.append(f"Copying tools to {tools_dest}...")
+        os.system(f"echo D |xcopy \"{tools_src}\" \"{tools_dest}\" /E /Y /I")
+        progress_var.set(progress_var.get() + step_increment)
+        progress_label.config(text=f"{int(progress_var.get())}%")
+
+        # Step 4: Execute batch file
+        logs.append(f"Executing batch file {remote_bat_path}...")
+        subprocess.run(["cmd", "/c", remote_bat_path])
+        progress_var.set(progress_var.get() + step_increment)
+        progress_label.config(text=f"{int(progress_var.get())}%")
+    except Exception as e:
+        logs.append(f"Error during installation: {e}")
+    finally:
+        # Remove the drive mapping
+        logs.append(f"Unmapping {drive_letter}...")
+        os.system(f"net use {drive_letter} /delete")
 
 
+def prepare_installation_regional(ip_base, host_type, current_bat_file, scripts_src=None, logs=None, progress_var=None, progress_label=None, step_increment=0):
+    """
+    Prepare the installation process for a host.
+    """
+    logs = logs or []
+    drive_letter = "P:"  # Use any available drive letter
+    unc_path = f"\\\\{ip_base}\\c$"
+
+    # Determine the destination folder based on host type
+    if "CBMC" in host_type or "Client" in host_type:
+        folder_name = "CBMC"
+    elif "DB" in host_type:
+        folder_name = "DB"
+    else:
+        folder_name = "Default"  # Fallback for any other type
+
+    try:
+        # Map the UNC path to a drive letter
+        logs.append(f"Mapping {unc_path} to {drive_letter}...")
+        os.system(f"net use {drive_letter} {unc_path}")
+
+        # Define paths using the mapped drive and determined folder name
+        scripts_dest = f"{drive_letter}\\FBE1\\Scripts\\{folder_name}"
+        zip_dest = f"{drive_letter}\\FBE1\\Zip"
+        tools_dest = f"{drive_letter}\\FBE1\\Tools"
+        remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
+
+        if "BMC" in host_type:
+            zip_src = "C:\\FBE\\Zip\\BatteryServer.7z"
+        elif "DB" in host_type:
+            zip_src = "C:\\FBE\\Zip\\mDRS.7z"
+        elif "ICS" in host_type:
+            zip_src = "C:\\FBE\\Zip\\ICS.7z"
+        else:
+            zip_src = "C:\\FBE\\Zip\\BatteryClient.7z"
+
+        tools_src = "C:\\FBE\\Tools"
+
+        # Step 1: Copy script file
+        logs.append(f"Copying script file to {scripts_dest}...")
+        os.system(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I")
+        progress_var.set(progress_var.get() + step_increment)
+        progress_label.config(text=f"{int(progress_var.get())}%")
+
+        # Step 2: Copy zip file
+        logs.append(f"Copying zip file to {zip_dest}...")
+        os.system(f"echo D | xcopy \"{zip_src}\" \"{zip_dest}\" /E /Y /I")
+        progress_var.set(progress_var.get() + step_increment)
+        progress_label.config(text=f"{int(progress_var.get())}%")
+
+        # Step 3: Copy tools
+        logs.append(f"Copying tools to {tools_dest}...")
+        os.system(f"echo D |xcopy \"{tools_src}\" \"{tools_dest}\" /E /Y /I")
+        progress_var.set(progress_var.get() + step_increment)
+        progress_label.config(text=f"{int(progress_var.get())}%")
+
+        # Step 4: Execute batch file
+        logs.append(f"Executing batch file {remote_bat_path}...")
+        subprocess.run(["cmd", "/c", remote_bat_path])
+        progress_var.set(progress_var.get() + step_increment)
+        progress_label.config(text=f"{int(progress_var.get())}%")
+    except Exception as e:
+        logs.append(f"Error during installation: {e}")
+    finally:
+        # Remove the drive mapping
+        logs.append(f"Unmapping {drive_letter}...")
+        os.system(f"net use {drive_letter} /delete")
 
 
 def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_src=None, logs=None, progress_var=None, progress_label=None, step_increment=0):
@@ -233,6 +363,9 @@ def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_s
         # Remove the drive mapping
         logs.append(f"Unmapping {drive_letter}...")
         os.system(f"net use {drive_letter} /delete")
+
+
+
 
 
 def cleanup_temp_files():
