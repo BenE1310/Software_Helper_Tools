@@ -137,12 +137,14 @@ def open_vsil_window():
         "ICS2": "192.168.3.140",
         "ICS3": "192.168.1.7",
         "ICS4": "192.168.1.8",
-        "DB-Bat": "192.168.1.9",
+        "DB BAT": "192.168.1.9",
         "CBMC": "192.168.1.10",
         "DB-CBMC": "192.168.1.11",
         "TCS Server": "192.168.1.11",
         "TCS Client": "192.168.1.11",
         "CBMC Client": "192.168.1.11",
+        "AD BAT": "192.168.1.11",
+        "AD CBMC": "192.168.1.11",
 
     }
 
@@ -493,12 +495,12 @@ def open_simulator_window():
     }
 
     sim_file_mapping = {
-        "Sim Server": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorServer.bat",
-        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
-        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
-        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
-        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
-        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\Simulator\\SimulatorClient.bat",
+        "Sim Server": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorServer.bat",
+        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorClient.bat",
+        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorClient.bat",
+        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorClient.bat",
+        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorClient.bat",
+        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorClient.bat",
 
     }
 
@@ -953,18 +955,18 @@ def open_regional_window():
 
     # Map host to corresponding bat file paths
     reg_file_mapping = {
-        "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalServer.bat",
-        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalServer.bat",
-        "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
-        "DB2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
-        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
-        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
-        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
-        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
-        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
-        "Client6": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
-        "Client7": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
-        "Client8": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\CBMC\\RegionalClient.bat",
+        "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalServer.bat",
+        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalServer.bat",
+        "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\DB\\mDRS.bat",
+        "DB2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\DB\\mDRS.bat",
+        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
+        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
+        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
+        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
+        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
+        "Client6": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
+        "Client7": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
+        "Client8": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
     }
 
     def on_install():
@@ -1428,17 +1430,17 @@ def open_battery_window():
 
     # Map host to corresponding bat file paths
     bat_file_mapping = {
-        "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryServer.bat",
-        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryServer.bat",
-        "ICS1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\ICS.bat",
-        "ICS2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\ICS.bat",
-        "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
-        "DB2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\DB\\mDRS.bat",
-        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
-        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
-        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
-        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
-        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\Installation_Scripts\\BMC\\BatteryClient.bat",
+        "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryServer.bat",
+        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryServer.bat",
+        "ICS1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\ICS.bat",
+        "ICS2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\ICS.bat",
+        "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\DB\\mDRS.bat",
+        "DB2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\DB\\mDRS.bat",
+        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
     }
 
     # Track selections
@@ -1768,19 +1770,19 @@ def open_battery_window():
                         if free_space is None or total_space is None:
                             labels[host].config(fg="red")
                             logs.append(f"{host} (IP: {ip}): Failed to retrieve disk space information.")
-                        elif percentage_free < 25:
+                        elif free_space < 50:
                             labels[host].config(fg="red")
                             labels[host].config(text=f"{host} (IP: {ip}) D")
                             logs.append(
-                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Cannot install, please empty the disk."
+                                f"{host} (IP: {ip}): C Drive Disk space is {free_space:.2f}GB. Cannot install, please empty the disk."
                             )
                         else:
                             labels[host].config(fg="green")
                             logs.append(
-                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Disk space is sufficient."
+                                f"{host} (IP: {ip}): Free space in C Drive is {free_space:.2f}GB. Disk space is sufficient."
                             )
                             logs.append(
-                                f"Free space:{free_space:.2f}GB, Total space:{total_space:.2f}GB, Percentage free:{percentage_free:.2f}%.")
+                                f"Free space: {free_space:.2f}GB, Total space: {total_space:.2f}GB, Percentage free: {percentage_free:.2f}%.")
             finally:
                 pythoncom.CoUninitialize()  # Uninitialize COM library
 
