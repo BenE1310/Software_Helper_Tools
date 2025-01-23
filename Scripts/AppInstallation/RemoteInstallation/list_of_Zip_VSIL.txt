@@ -1,0 +1,22 @@
+ Volume in drive X has no label.
+ Volume Serial Number is E428-E26E
+
+ Directory of X:\TfsBuildShare\Deploy\FBE-3.4\78551\VSIL\Zip
+
+01/23/2025  06:58 PM    <DIR>          .
+01/23/2025  03:09 AM    <DIR>          ..
+01/23/2025  03:04 AM       208,876,547 BMC_Server.7z
+01/23/2025  03:09 AM       117,484,378 CBMC_Client.7z
+01/23/2025  03:09 AM       201,921,983 CBMC_Server.7z
+01/23/2025  03:03 AM             6,327 DB.7z
+01/23/2025  03:08 AM       394,475,799 ICS.7z
+01/23/2025  06:58 PM                 0 list_of_Zip_VSIL.txt
+01/23/2025  03:03 AM       259,874,872 mDRS.7z
+01/23/2025  03:07 AM       129,113,621 Simulator_Client.7z
+01/23/2025  03:06 AM        40,502,145 Simulator_Server.7z
+01/23/2025  03:05 AM       176,312,093 TCS_Client.7z
+01/23/2025  03:05 AM        41,771,967 TCS_Server.7z
+01/23/2025  03:10 AM       124,333,499 Tools.7z
+01/23/2025  03:01 AM           363,223 WD_Common.7z
+              13 File(s)  1,695,036,454 bytes
+               2 Dir(s)  1,674,852,585,472 bytes free
