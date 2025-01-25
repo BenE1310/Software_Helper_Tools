@@ -41,6 +41,7 @@ root.title("Software Helper Tools")
 root.geometry("600x750")
 root.resizable(False, False)
 # root.eval('tk::PlaceWindow . center')
+root.iconbitmap("icon.ico")
 
 
 # Protect application
@@ -107,9 +108,13 @@ def create_button(parent, text, command, x, y, style=button_style):
 def open_vsil_window():
     vsil_window = tk.Toplevel(root)
     vsil_window.title("Remote App Installation")
-    vsil_window.geometry("1000x900")
+    vsil_window.geometry("1000x950")
     vsil_window.resizable(False, False)
     vsil_window.configure(bg="#FF69B4")  # Dark teal background
+    vsil_window.iconbitmap("icon.ico")
+
+
+
     global progress_bar_ping
     global progress_bar_permissions
     global progress_bar_disk
@@ -155,7 +160,7 @@ def open_vsil_window():
     # Title Label
     title_label = tk.Label(vsil_window, text=f"Remote App Installation - VSIL", font=("Arial", 20, "bold"), fg="white",
                            bg="#FF69B4")
-    title_label.place(x=270, y=10)
+    title_label.place(x=280, y=10)
 
     # Hostnames Section
     y_offset = 70
@@ -179,7 +184,7 @@ def open_vsil_window():
             selectcolor="#FF69B4",
             anchor="w"
         ).place(x=50, y=y_offset + 2)
-        y_offset += 50
+        y_offset += 46
 
     # Functions for Check All and Uncheck All
     def check_all():
@@ -215,7 +220,7 @@ def open_vsil_window():
 
     # Results Display
     results_text = tk.Text(vsil_window, height=10, width=60, bg="#C71585", fg="white", font=("Arial", 12))
-    results_text.place(x=50, y=700, width=700, height=150)
+    results_text.place(x=50, y=750, width=700, height=150)
 
     def display_results(results):
         results_text.delete("1.0", tk.END)
@@ -461,7 +466,8 @@ def open_vsil_window():
         bg="#800000",
         fg="white",
         activebackground="#990000"
-    ).place(x=450, y=855, width=100, height=40)
+    ).place(x=450, y=905, width=100, height=40)
+
 
 
 def open_simulator_window():
@@ -1400,6 +1406,7 @@ def open_battery_window():
     global progress_bar_permissions
     global progress_bar_disk
     global progress_bar_version
+    installation_app_remote_message = []
 
     def on_close():
         global progress_bar_ping, progress_bar_permissions, progress_bar_disk, progress_bar_version
@@ -1858,12 +1865,13 @@ def open_battery_window():
         activebackground="#990000"
     ).place(x=450, y=855, width=100, height=40)
 
+    if len(installation_app_remote_message) == 0:
+        messagebox.showinfo("Don't forget", "The new version of the application should be on the local disk: C:\\FBE")
+        installation_app_remote_message.append("onetime")
+
 
 def rai_screen():
-    # Check if BN is chosen
-    if BN == 0:
-        messagebox.showerror("Battery number", "Please choose a battery number to continue.")
-        return
+
 
     # Clear existing buttons
     on_button_click()
@@ -1878,13 +1886,47 @@ def rai_screen():
     create_button(root, 'Regional', open_regional_window, 178, 490)
     create_button(root, 'VSIL', open_vsil_window, 178, 560)
     create_button(root, 'Simulator', open_simulator_window, 178, 630)
-    create_button(root, 'Back', main_screen, 14, 690, button_style_small)
+    create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
-    # if len(installation_app_remote_message) == 0:
-    #     messagebox.showinfo("Don't forget", "The new version of the application should be on the local disk: C:\\FBE")
-    #     installation_app_remote_message.append("onetime")
+def db_install_screen():
 
+
+    # Clear existing buttons
+    on_button_click()
+
+    # Add Label
+    db_label = tk.Label(root, text='Database Phases', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    db_label.place(x=138, y=10)
+    buttons.append(db_label)
+
+    # Create Buttons with Hover Effects
+    create_button(root, 'Create Database', open_battery_window, 178, 420)
+    create_button(root, 'Delete Database', open_regional_window, 178, 490)
+    create_button(root, 'Import Database', open_vsil_window, 178, 560)
+    create_button(root, 'Adding launchers', open_simulator_window, 178, 630)
+    create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
+    create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
+
+
+def phases_app_installation_screen():
+    # Check if BN is chosen
+    if BN == 0:
+        messagebox.showerror("Battery number", "Please choose a battery number to continue.")
+        return
+    on_button_click()
+
+    # Add Label
+    phases_app_installation_label = tk.Label(root, text='Installation Phases', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    phases_app_installation_label.place(x=150, y=10)
+    buttons.append(phases_app_installation_label)
+
+    # Create Buttons with Hover Effects
+    create_button(root, 'Installation Phase', rai_screen, 178, 420)
+    create_button(root, 'Database Phases', db_install_screen, 178, 490)
+
+    create_button(root, 'Back', main_screen, 14, 690, button_style_small)
+    create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
 def main_screen():
     on_button_click()
@@ -1919,8 +1961,8 @@ def main_screen():
     buttons.append(save_button)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Remote App Installation', rai_screen, 178, 420)
-    create_button(root, 'Checks Remote Components', open_vsil_window, 178, 490)
+    create_button(root, 'App Installation', phases_app_installation_screen, 178, 420)
+    create_button(root, 'Checks Components', open_vsil_window, 178, 490)
     create_button(root, 'Cyber Deployment', open_battery_window, 178, 560)
     create_button(root, 'Tools', lambda: on_click(None), 360, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)

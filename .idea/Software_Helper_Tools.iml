@@ -5,7 +5,7 @@
       <sourceFolder url="file://$MODULE_DIR$/.venv1" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/venv" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.12 (Software_helper_tools_2025)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (Software_Helper_Tools)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
