@@ -94,21 +94,29 @@ progress_bar_version = None
 
 
 # Reusable function to create a button with hover effects
-def create_button(parent, text, command, x, y, style=button_style):
-    button = tk.Button(parent, text=text, **style, command=command)
+def create_button(parent, text, command, x, y, style=button_style, state='normal'):
+    button = tk.Button(parent, text=text, **style, command=command, state=state)
     button.place(x=x, y=y)
-    button.bind("<Enter>", lambda e: on_enter(button))
-    button.bind("<Leave>", lambda e: on_leave(button))
+    button.bind("<Enter>", lambda e: on_enter(button) if state == 'normal' else None)
+    button.bind("<Leave>", lambda e: on_leave(button) if state == 'normal' else None)
     buttons.append(button)  # Add to buttons list for tracking
     return button
 
+# Create a Button to Disable the Grayed-Out Button
+def disable_button(window):
+    window.config(state='disabled')  # Disable the grayed-out button
+
+
+# Create a Button to Enable the Grayed-Out Button
+def enable_button(window):
+    window.config(state='normal')  # Enable the grayed-out button
 
 # Function to open a new window for the Battery button
 
 def open_vsil_window():
     vsil_window = tk.Toplevel(root)
     vsil_window.title("Remote App Installation")
-    vsil_window.geometry("1000x950")
+    vsil_window.geometry("1100x1000")
     vsil_window.resizable(False, False)
     vsil_window.configure(bg="#FF69B4")  # Dark teal background
     vsil_window.iconbitmap("icon.ico")
@@ -134,23 +142,25 @@ def open_vsil_window():
 
     # Hostnames and IPs
     hostnames = {
-        "BMC1": "192.168.3.141",
-        "BMC2": "192.168.3.135",
-        "BMC3": "192.168.3.136",
-        "BMC4": "192.168.3.138",
-        "ICS1": "192.168.3.139",
-        "ICS2": "192.168.3.140",
-        "ICS3": "192.168.1.7",
-        "ICS4": "192.168.1.8",
-        "DB BAT": "192.168.1.9",
-        "CBMC": "192.168.1.10",
-        "DB-CBMC": "192.168.1.11",
-        "TCS Server": "192.168.1.11",
-        "TCS Client": "192.168.1.11",
-        "CBMC Client": "192.168.1.11",
-        "AD BAT": "192.168.1.11",
-        "AD CBMC": "192.168.1.11",
-
+        "BMC1": "192.168.18.1",
+        "BMC2": "192.168.28.1",
+        "BMC3": "192.168.38.1",
+        "BMC4": "192.168.48.1",
+        "ICS1": "192.169.18.13",
+        "ICS2": "192.169.28.13",
+        "ICS3": "192.169.38.13",
+        "ICS4": "192.169.48.13",
+        "DB BAT": "192.168.68.3",
+        "CBMC": "192.168.218.1",
+        "DB CBMC": "192.168.218.3",
+        "TCS Server": "192.168.18.2",
+        "TCS Client": "192.168.218.11",
+        "CBMC Client": "192.168.218.50",
+        "AD BAT": "192.168.13.20",
+        "AD CBMC": "192.168.213.20",
+        "AV BAT": "192.168.13.22",
+        "AV CBMC": "192.168.213.22",
+        "PC-ben-test": "172.16.10.108",
     }
 
     # Track selections
@@ -160,7 +170,7 @@ def open_vsil_window():
     # Title Label
     title_label = tk.Label(vsil_window, text=f"Remote App Installation - VSIL", font=("Arial", 20, "bold"), fg="white",
                            bg="#FF69B4")
-    title_label.place(x=280, y=10)
+    title_label.place(x=330, y=10)
 
     # Hostnames Section
     y_offset = 70
@@ -184,7 +194,7 @@ def open_vsil_window():
             selectcolor="#FF69B4",
             anchor="w"
         ).place(x=50, y=y_offset + 2)
-        y_offset += 46
+        y_offset += 50
 
     # Functions for Check All and Uncheck All
     def check_all():
@@ -195,8 +205,17 @@ def open_vsil_window():
         for var in selections.values():
             var.set(False)
 
+
+    # test bat number
+    for hostnames, ip in hostnames.items():
+        if "AD CBMC" in hostnames or "CBMC" in hostnames or "CBMC Client" in hostnames or "DB CBMC" in hostnames or "TCS Client" in hostnames:
+            first_digits = 21
+        else:
+            first_digits = ip.split('.')[2][0]
+        print(first_digits)
+
     # Buttons on the right
-    button_x = 760
+    button_x = 860
     button_width = 200
     tk.Button(
         vsil_window,
@@ -220,7 +239,7 @@ def open_vsil_window():
 
     # Results Display
     results_text = tk.Text(vsil_window, height=10, width=60, bg="#C71585", fg="white", font=("Arial", 12))
-    results_text.place(x=50, y=750, width=700, height=150)
+    results_text.place(x=600, y=700, width=460, height=200)
 
     def display_results(results):
         results_text.delete("1.0", tk.END)
@@ -240,7 +259,7 @@ def open_vsil_window():
             progress_bar_version = ttk.Progressbar(
                 vsil_window, orient="horizontal", mode="indeterminate", length=200
             )
-            progress_bar_version.place(x=580, y=255, width=150, height=20)
+            progress_bar_version.place(x=630, y=255, width=150, height=20)
 
         progress_bar_version.start(10)  # Start the progress bar
 
@@ -248,6 +267,7 @@ def open_vsil_window():
             for host, var in selections.items():
                 if var.get():
                     ip = hostnames[host]
+                    print(ip)
 
                     # Determine the file path based on the host type
                     if host.startswith("DB"):
@@ -466,7 +486,7 @@ def open_vsil_window():
         bg="#800000",
         fg="white",
         activebackground="#990000"
-    ).place(x=450, y=905, width=100, height=40)
+    ).place(x=500, y=955, width=100, height=40)
 
 
 
@@ -1406,7 +1426,6 @@ def open_battery_window():
     global progress_bar_permissions
     global progress_bar_disk
     global progress_bar_version
-    installation_app_remote_message = []
 
     def on_close():
         global progress_bar_ping, progress_bar_permissions, progress_bar_disk, progress_bar_version
@@ -1415,7 +1434,6 @@ def open_battery_window():
         progress_bar_permissions = None
         progress_bar_disk = None
         progress_bar_version = None  # Global variable for the version check progress bar
-
         battery_window.destroy()  # Close the window
 
     x = battery_window.protocol("WM_DELETE_WINDOW", on_close)
@@ -1871,8 +1889,6 @@ def open_battery_window():
 
 
 def rai_screen():
-
-
     # Clear existing buttons
     on_button_click()
 
@@ -1882,22 +1898,29 @@ def rai_screen():
     buttons.append(rai_label)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Battery', open_battery_window, 178, 420)
-    create_button(root, 'Regional', open_regional_window, 178, 490)
-    create_button(root, 'VSIL', open_vsil_window, 178, 560)
-    create_button(root, 'Simulator', open_simulator_window, 178, 630)
+    battery_install_window = create_button(root, 'Battery', open_battery_window, 178, 420)
+    regional_install_window = create_button(root, 'Regional', open_regional_window, 178, 490)
+    simulator_install_window = create_button(root, 'Simulator', open_simulator_window, 178, 560)
+    vsil_install_window = create_button(root, 'VSIL', open_vsil_window, 178, 630)
+
+    if BN == "VSIL":
+        disable_button(battery_install_window)
+        disable_button(regional_install_window)
+        disable_button(simulator_install_window)
+    else:
+        disable_button(vsil_install_window)
+
+
     create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
 def db_install_screen():
-
-
     # Clear existing buttons
     on_button_click()
 
     # Add Label
     db_label = tk.Label(root, text='Database Phases', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
-    db_label.place(x=138, y=10)
+    db_label.place(x=180, y=10)
     buttons.append(db_label)
 
     # Create Buttons with Hover Effects
@@ -1918,7 +1941,7 @@ def phases_app_installation_screen():
 
     # Add Label
     phases_app_installation_label = tk.Label(root, text='Installation Phases', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
-    phases_app_installation_label.place(x=150, y=10)
+    phases_app_installation_label.place(x=170, y=10)
     buttons.append(phases_app_installation_label)
 
     # Create Buttons with Hover Effects
