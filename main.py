@@ -85,6 +85,7 @@ button_style_small = {
 }
 
 BN = 0
+VSIL_BN = 0
 buttons = []
 installation_app_remote_message = []
 progress_bar_ping = None
@@ -119,10 +120,6 @@ def open_vsil_window():
     vsil_window.geometry("1100x1000")
     vsil_window.resizable(False, False)
     vsil_window.configure(bg="#FF69B4")  # Dark teal background
-    vsil_window.iconbitmap("icon.ico")
-
-
-
     global progress_bar_ping
     global progress_bar_permissions
     global progress_bar_disk
@@ -135,14 +132,14 @@ def open_vsil_window():
         progress_bar_permissions = None
         progress_bar_disk = None
         progress_bar_version = None  # Global variable for the version check progress bar
-
         vsil_window.destroy()  # Close the window
 
     x = vsil_window.protocol("WM_DELETE_WINDOW", on_close)
 
     # Hostnames and IPs
+    # Hostnames and IPs
     hostnames = {
-        "BMC1": "192.168.18.1",
+        "BMC1": "192.168.3.154",
         "BMC2": "192.168.28.1",
         "BMC3": "192.168.38.1",
         "BMC4": "192.168.48.1",
@@ -150,17 +147,39 @@ def open_vsil_window():
         "ICS2": "192.169.28.13",
         "ICS3": "192.169.38.13",
         "ICS4": "192.169.48.13",
-        "DB BAT": "192.168.68.3",
+        "DB-BAT": "192.168.68.3",
         "CBMC": "192.168.218.1",
-        "DB CBMC": "192.168.218.3",
-        "TCS Server": "192.168.18.2",
-        "TCS Client": "192.168.218.11",
-        "CBMC Client": "192.168.218.50",
-        "AD BAT": "192.168.13.20",
-        "AD CBMC": "192.168.213.20",
-        "AV BAT": "192.168.13.22",
-        "AV CBMC": "192.168.213.22",
-        "PC-ben-test": "172.16.10.108",
+        "DB-CBMC": "192.168.218.3",
+        "TCS-Server": "192.168.18.2",
+        "TCS-Client": "192.168.218.11",
+        "CBMC-Client": "192.168.218.50",
+        "AD-BAT": "192.168.13.20",
+        "AD-CBMC": "192.168.213.20",
+        "AV-BAT": "192.168.13.22",
+        "AV-CBMC": "192.168.213.22",
+    }
+
+    # Map host to corresponding bat file paths
+    bat_file_mapping = {
+        "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
+        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
+        "BMC3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
+        "BMC4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
+        "ICS1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\ICS.bat",
+        "ICS2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\ICS.bat",
+        "ICS3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\ICS.bat",
+        "ICS4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\ICS.bat",
+        "DB-BAT": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\DB\\DBServer.bat",
+        "CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\CBMC\\CBMCServer.bat",
+        "DB-CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\DB\\DBServer.bat",
+        "TCS-Server": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\TCS\\TCSServer.bat",
+        "TCS-Client": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\TCS\\TCSClient.bat",
+        "CBMC-Client": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\CBMC\\CBMCClient.bat",
+        "AD-BAT": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\ADServer.bat",
+        "AD-CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\ADServer.bat",
+        "AV-BAT": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\AVServer.bat",
+        "AV-CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\AVServer.bat",
+
     }
 
     # Track selections
@@ -172,7 +191,130 @@ def open_vsil_window():
                            bg="#FF69B4")
     title_label.place(x=330, y=10)
 
-    # Hostnames Section
+
+
+    def on_install():
+
+        # Add progress bar
+        progress_var = tk.DoubleVar()
+        progress_bar = ttk.Progressbar(vsil_window, variable=progress_var, maximum=100)
+        progress_bar.place(x=580, y=615, width=300, anchor="center")  # Centered horizontally with a width of 400px
+
+        # Add percentage label
+        progress_label = tk.Label(vsil_window, text="0%", font=("Arial", 14), fg="white", bg="#004d4d")
+        progress_label.place(x=586, y=650, anchor="center")  # Positioned below the progress bar
+        """
+        Start the installation process for all selected hosts.
+        """
+
+
+
+        def install_task():
+            global VSIL_BN
+            logs = []  # Shared list to collect logs
+
+            # Reset progress bar and results display
+            progress_var.set(0)
+            progress_label.config(text="0%")
+            results_text.delete("1.0", tk.END)
+
+            selected_hosts = [host for host, var in selections.items() if var.get()]
+            if not selected_hosts:
+                messagebox.showwarning("No Selection", "Please select at least one hostname.")
+                return
+
+            total_hosts = len(selected_hosts)
+            steps_per_host = 5  # Number of steps per host (customize, copy script, copy zip, copy tools, execute)
+            total_steps = total_hosts * steps_per_host
+            step_increment = 100 / total_steps  # Progress increment per step
+
+            for host in selected_hosts:
+                ip = hostnames[host]
+                try:
+                    # Extract details for the host
+                    fourth_octet = ip.split(".")[-1]
+                    PN = fourth_octet
+                    bat_file_path = bat_file_mapping.get(host)
+                    print(bat_file_path)
+
+                    if "AD-CBMC" in hostnames or "CBMC" in hostnames or "CBMC-Client" in hostnames or "DB-CBMC" in hostnames or "TCS-Client" in hostnames:
+                        VSIL_BN = 21
+                    else:
+                        VSIL_BN = ip.split('.')[2][0]
+
+                    # Create a unique temporary .bat file for the host
+
+                    if "BMC1" in host or "BMC2" in host or "BMC3" in host or "BMC4" in host:
+                        temp_bat_path = f".\\temp\\BMCServer_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"BMCServer_{VSIL_BN}_{PN}.bat"
+                    elif "ICS1" in host or "ICS2" in host or "ICS3" in host or "ICS4" in host:
+                        temp_bat_path = f".\\temp\\ICS_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"ICS_{VSIL_BN}_{PN}.bat"
+                    elif "DB-BAT" in host or "DB-CBMC" in host:
+                        temp_bat_path = f".\\temp\\DBServer_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"DBServer_{VSIL_BN}_{PN}.bat"
+                    elif "TCS-Server" in host:
+                        temp_bat_path = f".\\temp\\TCSServer_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"TCSServer_{VSIL_BN}_{PN}.bat"
+                    elif "TCS-Client" in host:
+                        temp_bat_path = f".\\temp\\TCSClient_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"TCSClient_{VSIL_BN}_{PN}.bat"
+                    elif "AD-BAT" in host or "AD-CBMC" in host:
+                        temp_bat_path = f".\\temp\\ADServer_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"ADServer_{VSIL_BN}_{PN}.bat"
+                    elif "AV-BAT" in host or "AV-CBMC" in host:
+                        temp_bat_path = f".\\temp\\AVServer_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"AVServer_{VSIL_BN}_{PN}.bat"
+                    elif "CBMC-Client" in host:
+                        temp_bat_path = f".\\temp\\CBMCClient_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"CBMCClient_{VSIL_BN}_{PN}.bat"
+                    else:
+                        temp_bat_path = f".\\temp\\CBMCServer_{VSIL_BN}_{PN}.bat"
+                        name_bat_file = f"CBMCServer_{VSIL_BN}_{PN}.bat"
+
+                    # Step 1: Customize the .bat file
+                    logs.append(f"Customizing batch file for {host} ({ip})...")
+                    change_bat_pos_function(
+                        bat_file_path, BN=VSIL_BN, PN=PN, output_path=temp_bat_path, logs=logs
+                    )
+                    progress_var.set(progress_var.get() + step_increment)
+                    progress_label.config(text=f"{int(progress_var.get())}%")
+                    display_results(logs)
+
+                    # Step 2-5: Transfer files and execute
+                    logs.append(f"Starting installation process for {host} ({ip})...")
+                    prepare_installation_battery(
+                        ip_base=ip,
+                        host_type=host,
+                        current_bat_file=name_bat_file,
+                        scripts_src=temp_bat_path,
+                        logs=logs,
+                        progress_var=progress_var,
+                        progress_label=progress_label,
+                        step_increment=step_increment,
+                    )
+                    logs.append(f"Installation completed for {host} ({ip}).")
+                    display_results(logs)
+
+                except Exception as e:
+                    logs.append(f"Error during installation for {host} ({ip}): {e}")
+                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
+                    display_results(logs)
+
+            # Final progress update and logs
+            progress_var.set(100)
+            progress_label.config(text="100%")
+            cleanup_temp_files()
+            logs.append("All installations completed.")
+
+            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
+
+            display_results(logs)
+
+        threading.Thread(target=install_task).start()
+
+        # Hostnames Section
+
     y_offset = 70
     for host, ip in hostnames.items():
         label = tk.Label(
@@ -205,14 +347,14 @@ def open_vsil_window():
         for var in selections.values():
             var.set(False)
 
+        # test bat number
 
-    # test bat number
-    for hostnames, ip in hostnames.items():
-        if "AD CBMC" in hostnames or "CBMC" in hostnames or "CBMC Client" in hostnames or "DB CBMC" in hostnames or "TCS Client" in hostnames:
-            first_digits = 21
-        else:
-            first_digits = ip.split('.')[2][0]
-        print(first_digits)
+    # for hostnames, ip in hostnames.items():
+    #     if "AD CBMC" in hostnames or "CBMC" in hostnames or "CBMC Client" in hostnames or "DB CBMC" in hostnames or "TCS Client" in hostnames:
+    #         first_digits = 21
+    #     else:
+    #         first_digits = ip.split('.')[2][0]
+    #     print(first_digits)
 
     # Buttons on the right
     button_x = 860
@@ -259,7 +401,7 @@ def open_vsil_window():
             progress_bar_version = ttk.Progressbar(
                 vsil_window, orient="horizontal", mode="indeterminate", length=200
             )
-            progress_bar_version.place(x=630, y=255, width=150, height=20)
+            progress_bar_version.place(x=580, y=255, width=150, height=20)
 
         progress_bar_version.start(10)  # Start the progress bar
 
@@ -267,7 +409,6 @@ def open_vsil_window():
             for host, var in selections.items():
                 if var.get():
                     ip = hostnames[host]
-                    print(ip)
 
                     # Determine the file path based on the host type
                     if host.startswith("DB"):
@@ -307,7 +448,7 @@ def open_vsil_window():
             progress_bar_ping = ttk.Progressbar(
                 vsil_window, orient="horizontal", mode="indeterminate", length=200
             )
-            progress_bar_ping.place(x=580, y=325, width=150, height=20)
+            progress_bar_ping.place(x=680, y=325, width=150, height=20)
 
         progress_bar_ping.start(10)  # Start the progress bar
 
@@ -345,7 +486,7 @@ def open_vsil_window():
             progress_bar_permissions = ttk.Progressbar(
                 vsil_window, orient="horizontal", mode="indeterminate", length=200
             )
-            progress_bar_permissions.place(x=580, y=395, width=150, height=20)
+            progress_bar_permissions.place(x=680, y=395, width=150, height=20)
 
         progress_bar_permissions.start(10)  # Start the progress bar
 
@@ -386,7 +527,7 @@ def open_vsil_window():
             progress_bar_disk = ttk.Progressbar(
                 vsil_window, orient="horizontal", mode="indeterminate", length=200
             )
-            progress_bar_disk.place(x=580, y=465, width=150, height=20)
+            progress_bar_disk.place(x=680, y=465, width=150, height=20)
 
         progress_bar_disk.start(10)  # Start the progress bar
 
@@ -397,22 +538,23 @@ def open_vsil_window():
                     if var.get():
                         ip = hostnames[host]
                         free_space, total_space, percentage_free = get_drive_space(ip)
-                        logs.append(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
 
                         if free_space is None or total_space is None:
                             labels[host].config(fg="red")
                             logs.append(f"{host} (IP: {ip}): Failed to retrieve disk space information.")
-                        elif percentage_free < 25:
+                        elif free_space < 50:
                             labels[host].config(fg="red")
                             labels[host].config(text=f"{host} (IP: {ip}) D")
                             logs.append(
-                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Cannot install, please empty the disk."
+                                f"{host} (IP: {ip}): C Drive Disk space is {free_space:.2f}GB. Cannot install, please empty the disk."
                             )
                         else:
                             labels[host].config(fg="green")
                             logs.append(
-                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Disk space is sufficient."
+                                f"{host} (IP: {ip}): Free space in C Drive is {free_space:.2f}GB. Disk space is sufficient."
                             )
+                            logs.append(
+                                f"Free space: {free_space:.2f}GB, Total space: {total_space:.2f}GB, Percentage free: {percentage_free:.2f}%.")
             finally:
                 pythoncom.CoUninitialize()  # Uninitialize COM library
 
@@ -470,7 +612,7 @@ def open_vsil_window():
     tk.Button(
         vsil_window,
         text="Install App",
-        command=on_close,
+        command=on_install,
         font=("Arial", 14, 'bold'),
         bg="#FF1493",
         fg="white",
@@ -487,7 +629,6 @@ def open_vsil_window():
         fg="white",
         activebackground="#990000"
     ).place(x=500, y=955, width=100, height=40)
-
 
 
 def open_simulator_window():

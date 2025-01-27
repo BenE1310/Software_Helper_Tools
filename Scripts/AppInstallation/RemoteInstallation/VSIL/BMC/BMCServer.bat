@@ -2,6 +2,10 @@
 rem Version 1.0.0.2
 @setlocal enableextensions
 @cd /d "%~dp0"
+
+
+
+
 :Check_Permissions
 echo Administrative permissions required. Detecting permissions...
 echo.
