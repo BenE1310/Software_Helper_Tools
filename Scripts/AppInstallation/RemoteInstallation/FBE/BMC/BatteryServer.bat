@@ -1,11 +1,12 @@
 @echo off
-rem Version 1.0.0.5
+rem Version 1.0.0.5 By Ben Eytan 28012025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
 set /a BN=3
 set /a PN=141
 
+:Check_Permissions
 echo Administrative permissions required. Detecting permissions...
 net session >nul 2>&1
 if %errorLevel% == 0 (
@@ -21,7 +22,7 @@ if %errorLevel% == 0 (
 
 :logo
 cls
-title Firebolt Client Version Update 
+title Firebolt Server Version Update
 echo.  
 echo	8888888888 d8b                 888               888 888    
 echo	888        Y8P                 888               888 888    
@@ -38,11 +39,11 @@ for /f "tokens=2 delims==" %%i in ('wmic os get localdatetime /value ^| find "="
 set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%datetime:~10,2%-%datetime:~12,2%
 
 :: Variables
-set RemoteComputer=\\192.168.%BN%.%PN%
+set RemoteComputer="\\10.11.%BN%8.%PN%"
 set RemoteShare=C$
 set TargetFolder=Firebolt
 set NewFolderName=Firebolt_%mydate%
-set DestPath="\\192.168.%BN%.%PN%\c$\Firebolt"
+set DestPath="\\10.11.%BN%8.%PN%\c$\Firebolt"
 echo %RemoteComputer%
 
 :: Map Remote Share
@@ -72,7 +73,7 @@ if exist "T:\%TargetFolder%" (
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
 
-:: Continue with BatteryClient Logic
+:: Continue with BatteryServer Logic
 echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
@@ -81,21 +82,19 @@ echo ----------------------------------------------------------
 sc \\10.11.%BN%8.%PN% stop "FBE Watchdog"
 timeout /t 10
 "%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IronDomeMdrsAgent.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t LoginApp.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBETrainerClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEMaintenance.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeBmcOperationalClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeTrainingClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackClient.exe
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeBmcOperationalServer.exe
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackServer.exe
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEBmcTrainingServer.exe
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t SafetiesService.exe
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBETrainerServer.exe
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
-:BMC_Client
-("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\BatteryClient.7z" -o"%DestPath%" -y) 
+:BMC_Server
+("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\BatteryServer.7z" -o"%DestPath%" -y)
 IF exist %DestPath% ( echo Firebolt Source Folder Found ) ELSE (goto NoSource)
 
-echo Installing FBE Client, Please Wait...
+echo Installing FBE Server, Please Wait...
 echo.
 echo Deleting ClientFiltersData.xml and PreDefinedZoomConf.xml ...
 echo.
@@ -124,14 +123,13 @@ goto EOF
 :Error
 echo.
 echo.
-echo Error! Failed to update BatteryClient folder.
+echo Error! Failed to update BatteryServer folder.
 echo        Make sure you are not running any process
 echo.
 goto eof
 :NoSource
 echo.
-echo [%~dp0..\..\Zip\BatteryClient.7z] Not Exist
-echo [%~dp0..\..\Zip\BatteryClient.7z] Not Exist
+echo [%~dp0..\..\Zip\BatteryServer.7z] Not Exist
 echo Error! Source Files Not Found
 echo.
 :EOF

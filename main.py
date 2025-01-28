@@ -116,10 +116,12 @@ def enable_button(window):
 
 def open_vsil_window():
     vsil_window = tk.Toplevel(root)
-    vsil_window.title("Remote App Installation")
-    vsil_window.geometry("1100x1000")
+    vsil_window.title("Remote App Installation - VSIL")
+    vsil_window.geometry("1000x900")
     vsil_window.resizable(False, False)
     vsil_window.configure(bg="#FF69B4")  # Dark teal background
+    vsil_window.iconbitmap("icon.ico")
+
     global progress_bar_ping
     global progress_bar_permissions
     global progress_bar_disk
@@ -134,9 +136,8 @@ def open_vsil_window():
         progress_bar_version = None  # Global variable for the version check progress bar
         vsil_window.destroy()  # Close the window
 
-    x = vsil_window.protocol("WM_DELETE_WINDOW", on_close)
+    vsil_window.protocol("WM_DELETE_WINDOW", on_close)
 
-    # Hostnames and IPs
     # Hostnames and IPs
     hostnames = {
         "BMC1": "192.168.3.154",
@@ -191,7 +192,25 @@ def open_vsil_window():
                            bg="#FF69B4")
     title_label.place(x=330, y=10)
 
+    # Create a scrollable frame for hostnames
+    scroll_frame = tk.Frame(vsil_window, bg="#FF69B4")
+    scroll_frame.place(x=10, y=70, width=900, height=600)  # Ensure the frame starts at the correct position
 
+    canvas = tk.Canvas(scroll_frame, bg="#FF69B4", highlightthickness=0)
+    scrollbar = tk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
+    host_frame = tk.Frame(canvas, bg="#FF69B4")  # This will contain the hostnames and checkboxes
+
+    # Configure the canvas and scrollbar
+    host_frame.bind(
+        "<Configure>",
+        lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+    canvas.create_window((0, 0), window=host_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    # Pack the canvas and scrollbar
+    scrollbar.pack(side="left", fill="y")  # Place the scrollbar on the left
+    canvas.pack(side="right", fill="both", expand=True)  # Place the canvas to the right of the scrollbar
 
     def on_install():
 
@@ -313,30 +332,33 @@ def open_vsil_window():
 
         threading.Thread(target=install_task).start()
 
-        # Hostnames Section
-
-    y_offset = 70
     for host, ip in hostnames.items():
-        label = tk.Label(
-            vsil_window,
+        # Create a frame for the checkbox and label
+        item_frame = tk.Frame(host_frame, bg="#FF69B4")  # Matches the background color
+
+        # Add the checkbox
+        tk.Checkbutton(
+            item_frame,
+            variable=selections[host],
+            bg="#FF69B4",
+            fg="white",
+            selectcolor="#FF69B4",
+            anchor="w"
+        ).pack(side="left", padx=2)  # Pack the checkbox to the left with padding
+
+        # Add the label
+        labels[host] = tk.Label(
+            item_frame,
             text=f"{host} (IP: {ip})",
             font=("Arial", 14),
             fg="white",
             bg="#FF69B4",
             anchor="w"
         )
-        label.place(x=80, y=y_offset)
-        labels[host] = label
+        labels[host].pack(side="left", padx=2)  # Pack the label to the right of the checkbox with spacing
 
-        tk.Checkbutton(
-            vsil_window,
-            variable=selections[host],
-            bg="#FF69B4",
-            fg="white",
-            selectcolor="#FF69B4",
-            anchor="w"
-        ).place(x=50, y=y_offset + 2)
-        y_offset += 50
+        # Pack the row into the scrollable host frame
+        item_frame.pack(fill="x", pady=10)  # Add vertical space between rows
 
     # Functions for Check All and Uncheck All
     def check_all():
@@ -357,7 +379,7 @@ def open_vsil_window():
     #     print(first_digits)
 
     # Buttons on the right
-    button_x = 860
+    button_x = 760
     button_width = 200
     tk.Button(
         vsil_window,
@@ -381,7 +403,7 @@ def open_vsil_window():
 
     # Results Display
     results_text = tk.Text(vsil_window, height=10, width=60, bg="#C71585", fg="white", font=("Arial", 12))
-    results_text.place(x=600, y=700, width=460, height=200)
+    results_text.place(x=50, y=700, width=700, height=150)
 
     def display_results(results):
         results_text.delete("1.0", tk.END)
@@ -448,7 +470,7 @@ def open_vsil_window():
             progress_bar_ping = ttk.Progressbar(
                 vsil_window, orient="horizontal", mode="indeterminate", length=200
             )
-            progress_bar_ping.place(x=680, y=325, width=150, height=20)
+            progress_bar_ping.place(x=580, y=325, width=150, height=20)
 
         progress_bar_ping.start(10)  # Start the progress bar
 
@@ -486,7 +508,7 @@ def open_vsil_window():
             progress_bar_permissions = ttk.Progressbar(
                 vsil_window, orient="horizontal", mode="indeterminate", length=200
             )
-            progress_bar_permissions.place(x=680, y=395, width=150, height=20)
+            progress_bar_permissions.place(x=580, y=395, width=150, height=20)
 
         progress_bar_permissions.start(10)  # Start the progress bar
 
@@ -527,7 +549,7 @@ def open_vsil_window():
             progress_bar_disk = ttk.Progressbar(
                 vsil_window, orient="horizontal", mode="indeterminate", length=200
             )
-            progress_bar_disk.place(x=680, y=465, width=150, height=20)
+            progress_bar_disk.place(x=580, y=465, width=150, height=20)
 
         progress_bar_disk.start(10)  # Start the progress bar
 
@@ -628,15 +650,17 @@ def open_vsil_window():
         bg="#800000",
         fg="white",
         activebackground="#990000"
-    ).place(x=500, y=955, width=100, height=40)
+    ).place(x=450, y=855, width=100, height=40)
 
 
 def open_simulator_window():
     simulator_window = tk.Toplevel(root)
-    simulator_window.title("Remote App Installation")
+    simulator_window.title("Remote App Installation - Simulator mPrest")
     simulator_window.geometry("1000x900")
     simulator_window.resizable(False, False)
     simulator_window.configure(bg="#228B22")  # Dark teal background
+    simulator_window.iconbitmap("icon.ico")
+
     global progress_bar_ping
     global progress_bar_permissions
 
@@ -653,12 +677,12 @@ def open_simulator_window():
 
     # Hostnames and IPs
     hostnames = {
-        "Sim Server": "192.168.3.141",
-        "Client1": f"192.168.{BN}.6",
-        "Client2": f"192.168.{BN}.7",
-        "Client3": f"192.168.{BN}.8",
-        "Client4": f"192.168.{BN}.9",
-        "Client5": "172.16.10.108",
+        "Sim Server": f"192.168.{BN}.141",
+        "Client1": f"192.168.{BN}8.6",
+        "Client2": f"192.168.{BN}8.7",
+        "Client3": f"192.168.{BN}8.8",
+        "Client4": f"192.168.{BN}8.9",
+        "Client5": f"192.168.{BN}8.10",
     }
 
     sim_file_mapping = {
@@ -1086,10 +1110,12 @@ def open_simulator_window():
 
 def open_regional_window():
     regional_window = tk.Toplevel(root)
-    regional_window.title("Remote App Installation")
+    regional_window.title("Remote App Installation - Regional")
     regional_window.geometry("1000x900")
     regional_window.resizable(False, False)
     regional_window.configure(bg="#663399")  # Dark teal background
+    regional_window.iconbitmap("icon.ico")
+
     global progress_bar_ping
     global progress_bar_permissions
 
@@ -1106,18 +1132,18 @@ def open_regional_window():
 
     # Hostnames and IPs
     hostnames = {
-        "CBMC1": "192.168.3.141",
-        "CBMC2": "192.168.3.135",
-        "DB1": "192.168.3.139",
-        "DB2": "192.168.3.140",
-        "Client1": "192.168.1.7",
-        "Client2": "192.168.1.8",
-        "Client3": "192.168.1.9",
-        "Client4": "192.168.1.10",
-        "Client5": "192.168.1.11",
-        "Client6": "192.168.3.154",
-        "Client7": "172.16.10.108",
-        "Client8": "192.168.3.154",
+        "CBMC1": "192.168.218.1",
+        "CBMC2": "192.168.218.2",
+        "DB1": "192.168.218.3",
+        "DB2": "192.168.218.4",
+        "Client1": "192.168.218.50",
+        "Client2": "192.168.218.51",
+        "Client3": "192.168.218.52",
+        "Client4": "192.168.218.53",
+        "Client5": "192.168.218.54",
+        "Client6": "192.168.218.55",
+        "Client7": "192.168.218.56",
+        "Client8": "192.168.3.141",
     }
 
     # Map host to corresponding bat file paths
@@ -1559,10 +1585,11 @@ def open_regional_window():
 
 def open_battery_window():
     battery_window = tk.Toplevel(root)
-    battery_window.title("Remote App Installation")
+    battery_window.title(f"Remote App Installation - Battery {BN}")
     battery_window.geometry("1000x900")
     battery_window.resizable(False, False)
     battery_window.configure(bg="#004d4d")  # Dark teal background
+    battery_window.iconbitmap("icon.ico")
     global progress_bar_ping
     global progress_bar_permissions
     global progress_bar_disk
@@ -1581,17 +1608,18 @@ def open_battery_window():
 
     # Hostnames and IPs
     hostnames = {
-        "BMC1": "192.168.8.154",
-        "BMC2": "192.168.8.141",
-        "ICS1": "192.168.3.136",
-        "ICS2": "192.168.3.138",
-        "DB1": "172.16.10.108",
-        "DB2": "192.168.3.140",
-        "Client1": "192.168.3.154",
-        "Client2": "192.168.3.141",
-        "Client3": "192.168.1.9",
-        "Client4": "192.168.1.10",
-        "Client5": "172.16.10.108",
+        "BMC1": f"192.168.{BN}8.1",
+        "BMC2": f"192.168.{BN}8.2",
+        "ICS1": f"192.169.{BN}8.13",
+        "ICS2": f"192.169.{BN}8.14",
+        "DB1": f"192.168.{BN}8.3",
+        "DB2": f"192.168.{BN}8.4",
+        "Client1": f"192.168.{BN}8.6",
+        "Client2": f"192.168.{BN}8.7",
+        "Client3": f"192.168.{BN}8.8",
+        "Client4": f"192.168.{BN}8.9",
+        "Client5": f"192.168.{BN}8.10",
+        "BMC3": "192.168.3.154",
     }
 
     # Map host to corresponding bat file paths
@@ -2098,6 +2126,8 @@ def main_screen():
     def save_value():
         global BN
         selected_value = dropdown_var.get()
+        if selected_value == "Select a number":
+            return
         BN = selected_value
         print(f"Saved value: {selected_value}")
         messagebox.showinfo("Save", f"The battery number was update to {BN}")

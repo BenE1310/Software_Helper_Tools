@@ -1,11 +1,12 @@
 @echo off
-rem Version 1.0.0.4
+rem Version 1.0.0.5 By Ben Eytan 28012025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
 set /a BN=3
 set /a PN=141
 
+:Check_Permissions
 echo Administrative permissions required. Detecting permissions...
 net session >nul 2>&1
 if %errorLevel% == 0 (
@@ -25,7 +26,7 @@ title Firebolt Client Version Update
 echo.  
 echo	8888888888 d8b                 888               888 888    
 echo	888        Y8P                 888               888 888    
-echo	888                            888               888 888    
+echo	888                            888               888 888
 echo	8888888    888 888d888 .d88b.  88888b.   .d88b.  888 888888 
 echo	888        888 888P"  d8P  Y8b 888 "88b d88""88b 888 888    
 echo	888        888 888    88888888 888  888 888  888 888 888    
@@ -78,7 +79,7 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-sc \\172.16.%BN%.%PN% stop "FBE Watchdog"
+sc \\10.11.%BN%8.%PN% stop "FBE Watchdog"
 timeout /t 10
 "%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog"
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IronDomeMdrsAgent.exe
@@ -105,7 +106,6 @@ for /F %%G in ('dir C:\Users\ /b /AD') DO IF EXIST %FilterData% (del /F /Q %Filt
 for /F %%G in ('dir C:\Users\ /b /AD') DO IF EXIST %PreDefinedZoomConf% (del /F /Q %PreDefinedZoomConf%)
 echo.
 
-rem robocopy /e /w:3 /r:3 %DestPath%%mydate%\Maps %DestPath%\Maps
 echo Moving mDRSStorage to the new version, Please Wait...
 robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
 echo.
@@ -130,7 +130,6 @@ echo.
 goto eof
 :NoSource
 echo.
-echo [%~dp0..\..\Zip\BatteryClient.7z] Not Exist
 echo [%~dp0..\..\Zip\BatteryClient.7z] Not Exist
 echo Error! Source Files Not Found
 echo.

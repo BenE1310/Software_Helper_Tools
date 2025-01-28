@@ -2,7 +2,7 @@ import os
 import subprocess
 import platform
 import time
-
+from datetime import datetime
 import pefile
 import win32file
 import wmi
@@ -167,14 +167,19 @@ def prepare_installation_vsil(ip_base, host_type, current_bat_file, scripts_src=
     logs = logs or []
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
 
     # Determine the destination folder based on host type
-    if "BMC1" in host_type or "BMC2" in host_type or "BMC3" in host_type or "BMC4" in host_type:
+    if "BMC1" in host_type or "BMC2" in host_type or "BMC3" in host_type or "BMC4" in host_type or "ICS1" in host_type or "ICS2" in host_type or "ICS3" in host_type or "ICS4" in host_type:
         folder_name = "BMC"
-    elif "DB" in host_type:
+    elif "DB-BAT" in host_type or "DB-CBMC" in host_type:
         folder_name = "DB"
+    elif "TCS-Server" in host_type or "TCS-Client" in host_type:
+        folder_name = "TCS"
+    elif "AD-BAT" in host_type or "AD-CBMC" in host_type or "AV-BAT" in host_type or "AV-CBMC" in host_type:
+        folder_name = "GeneralServer"
     else:
-        folder_name = "Default"  # Fallback for any other type
+        folder_name = "CBMC"  # Fallback for any other type
 
     try:
         # Map the UNC path to a drive letter
@@ -182,21 +187,29 @@ def prepare_installation_vsil(ip_base, host_type, current_bat_file, scripts_src=
         os.system(f"net use {drive_letter} {unc_path}")
 
         # Define paths using the mapped drive and determined folder name
-        scripts_dest = f"{drive_letter}\\VSIL1\\Scripts\\{folder_name}"
-        zip_dest = f"{drive_letter}\\VSIL1\\Zip"
-        tools_dest = f"{drive_letter}\\VSIL1\\Tools"
+        scripts_dest = f"{drive_letter}\\VSIL_{timestamp}\\Scripts\\{folder_name}"
+        zip_dest = f"{drive_letter}\\VSIL_{timestamp}\\Zip"
+        tools_dest = f"{drive_letter}\\VSIL_{timestamp}\\Tools"
         remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
 
-        if "BMC" in host_type:
-            zip_src = "C:\\FBE\\Zip\\BatteryServer.7z"
-        elif "DB" in host_type:
-            zip_src = "C:\\FBE\\Zip\\mDRS.7z"
-        elif "ICS" in host_type:
-            zip_src = "C:\\FBE\\Zip\\ICS.7z"
+        if "BMC1" in host_type or "BMC2" in host_type or "BMC3" in host_type or "BMC4" in host_type:
+            zip_src = "C:\\VSIL\\Zip\\BMC_Server.7z"
+        elif "ICS1" in host_type or "ICS2" in host_type or "ICS3" in host_type or "ICS4" in host_type:
+            zip_src = "C:\\VSIL\\Zip\\ICS.7z"
+        elif "DB-BAT" in host_type or "DB-CBMC" in host_type:
+            zip_src = "C:\\VSIL\\Zip\\mDRS.7z"
+        elif "TCS-Server" in host_type:
+            zip_src = "C:\\VSIL\\Zip\\TCS_Server.7z"
+        elif "TCS Client" in host_type:
+            zip_src = "C:\\VSIL\\Zip\\TCS_Client.7z"
+        elif "AD-BAT" in host_type or "AD-CBMC" in host_type or "AV-BAT" in host_type or "AV-CBMC" in host_type:
+            zip_src = "C:\\VSIL\\Zip\\WD_Common.7z"
+        elif "CBMC Client" in host_type:
+            zip_src = "C:\\VSIL\\Zip\\CBMC_Client.7z"
         else:
-            zip_src = "C:\\FBE\\Zip\\BatteryClient.7z"
+            zip_src = "C:\\VSIL\\Zip\\CBMC_Server.7z"
 
-        tools_src = "C:\\FBE\\Tools"
+        tools_src = "C:\\VSIL\\Tools"
 
         # Step 1: Copy script file
         logs.append(f"Copying script file to {scripts_dest}...")
@@ -236,6 +249,8 @@ def prepare_installation_simulator(ip_base, host_type, current_bat_file, scripts
     logs = logs or []
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+
 
     # Determine the destination folder based on host type
 
@@ -247,9 +262,9 @@ def prepare_installation_simulator(ip_base, host_type, current_bat_file, scripts
         os.system(f"net use {drive_letter} {unc_path}")
 
         # Define paths using the mapped drive and determined folder name
-        scripts_dest = f"{drive_letter}\\FBE1\\Scripts\\{folder_name}"
-        zip_dest = f"{drive_letter}\\FBE1\\Zip"
-        tools_dest = f"{drive_letter}\\FBE1\\Tools"
+        scripts_dest = f"{drive_letter}\\FBE_{timestamp}\\Scripts\\{folder_name}"
+        zip_dest = f"{drive_letter}\\FBE_{timestamp}\\Zip"
+        tools_dest = f"{drive_letter}\\FBE_{timestamp}\\Tools"
         remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
 
         if "BMC" in host_type:
@@ -301,6 +316,8 @@ def prepare_installation_regional(ip_base, host_type, current_bat_file, scripts_
     logs = logs or []
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+
 
     # Determine the destination folder based on host type
     if "CBMC" in host_type or "Client" in host_type:
@@ -316,9 +333,9 @@ def prepare_installation_regional(ip_base, host_type, current_bat_file, scripts_
         os.system(f"net use {drive_letter} {unc_path}")
 
         # Define paths using the mapped drive and determined folder name
-        scripts_dest = f"{drive_letter}\\FBE1\\Scripts\\{folder_name}"
-        zip_dest = f"{drive_letter}\\FBE1\\Zip"
-        tools_dest = f"{drive_letter}\\FBE1\\Tools"
+        scripts_dest = f"{drive_letter}\\FBE_{timestamp}\\Scripts\\{folder_name}"
+        zip_dest = f"{drive_letter}\\FBE_{timestamp}\\Zip"
+        tools_dest = f"{drive_letter}\\FBE_{timestamp}\\Tools"
         remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
 
         if "BMC" in host_type:
@@ -370,6 +387,8 @@ def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_s
     logs = logs or []
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+
 
     # Determine the destination folder based on host type
     if "BMC" in host_type or "Client" in host_type or "ICS" in host_type:
@@ -385,9 +404,9 @@ def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_s
         os.system(f"net use {drive_letter} {unc_path}")
 
         # Define paths using the mapped drive and determined folder name
-        scripts_dest = f"{drive_letter}\\FBE1\\Scripts\\{folder_name}"
-        zip_dest = f"{drive_letter}\\FBE1\\Zip"
-        tools_dest = f"{drive_letter}\\FBE1\\Tools"
+        scripts_dest = f"{drive_letter}\\FBE_{timestamp}\\Scripts\\{folder_name}"
+        zip_dest = f"{drive_letter}\\FBE_{timestamp}\\Zip"
+        tools_dest = f"{drive_letter}\\FBE_{timestamp}\\Tools"
         remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
 
         if "BMC" in host_type:
