@@ -39,11 +39,11 @@ for /f "tokens=2 delims==" %%i in ('wmic os get localdatetime /value ^| find "="
 set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%datetime:~10,2%-%datetime:~12,2%
 
 :: Variables
-set RemoteComputer=\\10.11.%BN%8.%PN%
+set RemoteComputer=\\192.168.%BN%.%PN%
 set RemoteShare=C$
 set TargetFolder=Firebolt
 set NewFolderName=Firebolt_%mydate%
-set DestPath="\\10.11.%BN%8.%PN%\c$\Firebolt"
+set DestPath="\\192.168.%BN%.%PN%\c$\Firebolt"
 echo %RemoteComputer%
 
 :: Map Remote Share

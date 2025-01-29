@@ -148,7 +148,7 @@ def open_vsil_window():
         "ICS2": "192.169.28.13",
         "ICS3": "192.169.38.13",
         "ICS4": "192.169.48.13",
-        "DB-BAT": "192.168.68.3",
+        "DB-BAT": "192.168.18.3",
         "CBMC": "192.168.218.1",
         "DB-CBMC": "192.168.218.3",
         "TCS-Server": "192.168.18.2",
@@ -1130,6 +1130,7 @@ def open_regional_window():
 
     regional_window.protocol("WM_DELETE_WINDOW", on_close)
 
+### We can save the hostnames in JSON file
     # Hostnames and IPs
     hostnames = {
         "CBMC1": "192.168.218.1",
@@ -1159,7 +1160,7 @@ def open_regional_window():
         "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
         "Client6": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
         "Client7": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
-        "Client8": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
+        "Client8": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient_test.bat",
     }
 
     def on_install():
@@ -1619,7 +1620,7 @@ def open_battery_window():
         "Client3": f"192.168.{BN}8.8",
         "Client4": f"192.168.{BN}8.9",
         "Client5": f"192.168.{BN}8.10",
-        "BMC3": "192.168.3.154",
+        "Client6": f"192.168.{BN}.154",
     }
 
     # Map host to corresponding bat file paths
@@ -1635,6 +1636,8 @@ def open_battery_window():
         "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
         "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
         "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client6": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient_test.bat",
+
     }
 
     # Track selections
