@@ -110,20 +110,5 @@ echo Trying to start FBE Watchdog Service
 sc \\10.11.218.%PN% start "FBE Watchdog REGIONAL"
 goto EOF
 
-:Error
-echo.
-echo.
-echo Error! Failed to update RegionalServer folder.
-echo        Make sure you are not running any process
-echo.
-goto eof
-
-:NoSource
-echo.
-echo [%~dp0..\..\Zip\RegionalServer.7z] Not Exist
-echo Error! Source Files Not Found
-echo.
-
 :EOF
-pause
 exit

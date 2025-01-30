@@ -104,7 +104,6 @@ for /F %%G in ('dir C:\Users\ /b /AD') DO IF EXIST %FilterData% (del /F /Q %Filt
 for /F %%G in ('dir C:\Users\ /b /AD') DO IF EXIST %PreDefinedZoomConf% (del /F /Q %PreDefinedZoomConf%)
 echo.
 
-rem robocopy /e /w:3 /r:3 %DestPath%%mydate%\Maps %DestPath%\Maps
 echo Moving mDRSStorage to the new version, Please Wait...
 robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
 echo.
@@ -119,18 +118,5 @@ echo Trying to start FBE Watchdog Service
 sc \\10.11.%BN%8.%PN% start "FBE Watchdog"
 goto EOF
 
-
-:Error
-echo.
-echo.
-echo Error! Failed to update BatteryServer folder.
-echo        Make sure you are not running any process
-echo.
-goto eof
-:NoSource
-echo.
-echo [%~dp0..\..\Zip\BatteryServer.7z] Not Exist
-echo Error! Source Files Not Found
-echo.
 :EOF
 exit

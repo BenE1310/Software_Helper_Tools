@@ -168,6 +168,8 @@ def prepare_installation_vsil(ip_base, host_type, current_bat_file, scripts_src=
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+    zip_src_db_1 = "C:\\VSIL\\Zip\\DB.7z"
+    zip_src_db_2 = "C:\\VSIL\\Zip\\WD_Common.7z"
 
     # Determine the destination folder based on host type
     if "BMC1" in host_type or "BMC2" in host_type or "BMC3" in host_type or "BMC4" in host_type or "ICS1" in host_type or "ICS2" in host_type or "ICS3" in host_type or "ICS4" in host_type:
@@ -218,8 +220,14 @@ def prepare_installation_vsil(ip_base, host_type, current_bat_file, scripts_src=
         progress_label.config(text=f"{int(progress_var.get())}%")
 
         # Step 2: Copy zip file
-        logs.append(f"Copying zip file to {zip_dest}...")
-        os.system(f"echo D | xcopy \"{zip_src}\" \"{zip_dest}\" /E /Y /I")
+        if "DB-BAT" in host_type or "DB-CBMC" in host_type:
+            logs.append(f"Copying zips file to {zip_dest}...")
+            os.system(f"echo D | xcopy \"{zip_src}\" \"{zip_dest}\" /E /Y /I")
+            os.system(f"echo D | xcopy \"{zip_src_db_1}\" \"{zip_dest}\" /E /Y /I")
+            os.system(f"echo D | xcopy \"{zip_src_db_2}\" \"{zip_dest}\" /E /Y /I")
+        else:
+            logs.append(f"Copying zip file to {zip_dest}...")
+            os.system(f"echo D | xcopy \"{zip_src}\" \"{zip_dest}\" /E /Y /I")
         progress_var.set(progress_var.get() + step_increment)
         progress_label.config(text=f"{int(progress_var.get())}%")
 

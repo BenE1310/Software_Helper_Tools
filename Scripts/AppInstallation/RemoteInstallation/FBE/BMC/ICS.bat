@@ -115,21 +115,5 @@ echo Trying to start FBE Watchdog Service
 sc \\10.12.%BN%8.%PN% start "FBE Watchdog"
 goto EOF
 
-
-:Error
-echo.
-echo.
-echo Error! Failed to update ICS folder.
-echo        Make sure you are not running any process
-echo.
-goto eof
-
-:NoSource
-echo.
-echo [%~dp0..\..\Zip\ICS.7z] Not Exist
-echo Error! Source Files Not Found
-echo.
-
 :EOF
-pause
 exit

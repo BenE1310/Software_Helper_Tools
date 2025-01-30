@@ -42,9 +42,9 @@ set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%date
 :: Variables
 set RemoteComputer=\\10.11.%BN%8.%PN%
 set RemoteShare=C$
-set TargetFolder=Firebolt
-set NewFolderName=Firebolt_%mydate%
-set DestPath="\\10.11.%BN%8.%PN%\c$\Firebolt"
+set TargetFolder=mDRS
+set NewFolderName=mDRS_%mydate%
+set DestPath="\\10.11.%BN%8.%PN%\c$\mDRS"
 echo %RemoteComputer%
 
 :: Map Remote Share
@@ -87,25 +87,14 @@ timeout /t 10
 :mDRS
 echo Installing FBE mDRS, Please Wait...
 ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\mDRS.7z" -o"%DestPath%" -y)
-IF exist %DestPath% ( echo Firebolt Source Folder Found ) ELSE (goto NoSource)
+IF exist %DestPath% ( echo mDRS Source Folder Found ) ELSE (goto NoSource)
+goto DB
 
+:DB
+echo Creating FBE DB folder, Please Wait...
+("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\DB.7z" -o"%DestPath%" -y)
+IF exist %DestPath% ( echo VSIL Source Folder Found ) ELSE (goto NoSource_DB)
 goto EOF
 
-
-:Error
-echo.
-echo.
-echo Error! Failed to update DB folder.
-echo        Make sure you are not running any process
-echo.
-goto eof
-
-:NoSource
-echo.
-echo [%~dp0..\..\Zip\DB.7z] Not Exist
-echo Error! Source Files Not Found
-echo.
-
 :EOF
-pause
 exit

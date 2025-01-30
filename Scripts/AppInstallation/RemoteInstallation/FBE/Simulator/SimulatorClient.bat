@@ -96,18 +96,5 @@ goto Maps
 IF not exist C:\Maps ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\Maps.7z" -o"C:\" -y) 
 goto EOF
 
-:Error
-echo.
-echo.
-echo Error! Failed to update SimulatorClient folder.
-echo        Make sure you are not running any process
-echo.
-goto eof
-:NoSource
-echo.
-echo [%~dp0..\..\Zip\SimulatorClient.7z] Not Exist
-echo Error! Source Files Not Found
-echo.
 :EOF
-pause
 exit
