@@ -300,7 +300,7 @@ def prepare_installation_simulator(ip_base, host_type, current_bat_file, scripts
 
         # Step 3: Copy tools
         logs.append(f"Copying tools to {tools_dest}...")
-        os.system(f"echo D |xcopy \"{tools_src}\" \"{tools_dest}\" /E /Y /I")
+        os.system(f"echo D | xcopy \"{tools_src}\" \"{tools_dest}\" /E /Y /I")
         progress_var.set(progress_var.get() + step_increment)
         progress_label.config(text=f"{int(progress_var.get())}%")
 
@@ -371,7 +371,7 @@ def prepare_installation_regional(ip_base, host_type, current_bat_file, scripts_
 
         # Step 3: Copy tools
         logs.append(f"Copying tools to {tools_dest}...")
-        os.system(f"echo D |xcopy \"{tools_src}\" \"{tools_dest}\" /E /Y /I")
+        os.system(f"echo D | xcopy \"{tools_src}\" \"{tools_dest}\" /E /Y /I")
         progress_var.set(progress_var.get() + step_increment)
         progress_label.config(text=f"{int(progress_var.get())}%")
 
@@ -396,6 +396,7 @@ def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_s
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
+    zip_src_db_1 = "C:\\VSIL\\Zip\\DB.7z"
 
 
     # Determine the destination folder based on host type
@@ -435,14 +436,19 @@ def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_s
         progress_label.config(text=f"{int(progress_var.get())}%")
 
         # Step 2: Copy zip file
-        logs.append(f"Copying zip file to {zip_dest}...")
-        os.system(f"echo D | xcopy \"{zip_src}\" \"{zip_dest}\" /E /Y /I")
+        if "DB" in host_type:
+            logs.append(f"Copying zips file to {zip_dest}...")
+            os.system(f"echo D | xcopy \"{zip_src}\" \"{zip_dest}\" /E /Y /I")
+            os.system(f"echo D | xcopy \"{zip_src_db_1}\" \"{zip_dest}\" /E /Y /I")
+        else:
+            logs.append(f"Copying zip file to {zip_dest}...")
+            os.system(f"echo D | xcopy \"{zip_src}\" \"{zip_dest}\" /E /Y /I")
         progress_var.set(progress_var.get() + step_increment)
         progress_label.config(text=f"{int(progress_var.get())}%")
 
         # Step 3: Copy tools
         logs.append(f"Copying tools to {tools_dest}...")
-        os.system(f"echo D |xcopy \"{tools_src}\" \"{tools_dest}\" /E /Y /I")
+        os.system(f"echo D | xcopy \"{tools_src}\" \"{tools_dest}\" /E /Y /I")
         progress_var.set(progress_var.get() + step_increment)
         progress_label.config(text=f"{int(progress_var.get())}%")
 
