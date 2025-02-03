@@ -80,7 +80,7 @@ echo ----------------------------------------------------------
 
 @echo Kill Processes...
 sc \\10.11.%BN%8.%PN% stop "FBE Watchdog"
-timeout /t 10
+timeout /t 6
 "%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog"
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeBmcOperationalServer.exe
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackServer.exe

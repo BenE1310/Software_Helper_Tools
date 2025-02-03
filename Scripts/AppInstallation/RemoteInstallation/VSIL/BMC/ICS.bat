@@ -79,6 +79,7 @@ echo ----------------------------------------------------------
 
 @echo Kill Processes...
 sc \\10.12.%BN%8.%PN% stop "VSIL Watchdog"
+timeout /t 6
 "%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "VSIL Watchdog"
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IcsMainAppWithoutSafeties.exe
 

@@ -101,22 +101,13 @@ echo ----------------------------------------------------------
 sc \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
 sc \\10.11.%BN%8.%PN% stop "mDRS Server Service"
 sc \\10.11.%BN%8.%PN% stop "VSIL Watchdog"
+timeout /t 6
 "%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "mDRS Agent Service"
 "%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "mDRS Server Service"
 "%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "VSIL Watchdog"
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\VSIL') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
-
-goto mDRS_move
-
-:mDRS_move
-FOR /L %%A IN (1,1,500) DO (
-if not exist %DestPath_mDRS%  ( goto mDRS
-   ) else IF EXIST %DestPath_mDRS%  ( Ren %DestPath_mDRS% mDRS%mydate% 
-	if errorlevel 1 goto Error
-   goto mDRS
-  goto EOF  ) )
 goto mDRS
 
 :mDRS

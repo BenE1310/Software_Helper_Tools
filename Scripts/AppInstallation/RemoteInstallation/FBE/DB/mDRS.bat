@@ -82,7 +82,7 @@ echo ----------------------------------------------------------
 @echo Kill Processes...
 sc \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
 sc \\10.11.%BN%8.%PN% stop "mDRS Server Service"
-timeout /t 10
+timeout /t 6
 
 :mDRS
 echo Installing FBE mDRS, Please Wait...

@@ -79,6 +79,7 @@ echo ----------------------------------------------------------
 
 @echo Kill Processes...
 sc \\10.11.%BN%3.%PN% stop "VSIL Watchdog"
+timeout /t 6
 "%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "VSIL Watchdog"
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\VSIL') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
