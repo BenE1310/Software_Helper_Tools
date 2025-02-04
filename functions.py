@@ -6,6 +6,8 @@ from datetime import datetime
 import pefile
 import win32file
 import wmi
+import tkinter as tk
+
 import pythoncom  # Import pythoncom for WMI operations
 
 
@@ -465,9 +467,6 @@ def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_s
         os.system(f"net use {drive_letter} /delete")
 
 
-
-
-
 def cleanup_temp_files():
     """
     Delete all temporary .bat files created during installation.
@@ -477,3 +476,113 @@ def cleanup_temp_files():
         if file.endswith(".bat"):
             os.remove(os.path.join(temp_dir, file))
     print("Temporary files cleaned up.")
+
+
+def create_empty_tables_battery(bat_num, mode, logs=None, results_text=None):
+    """
+    Prepare the installation process for a host.
+    """
+    logs = logs or []
+    drive_letter = "P:"  # Use any available drive letter
+    db_ip = f"10.11.{bat_num}8.3"
+    unc_path = f"\\\\{db_ip}\\c$"
+    if mode == "Operational":
+        scripts_src = ".\\Scripts\\SQL\\CreateEmptyTablesOperational.bat"
+        current_bat_file = "CreateEmptyTablesOperational.bat"
+    else:
+        scripts_src = ".\\Scripts\\SQL\\CreateEmptyTablesTraining.bat"
+        current_bat_file = "CreateEmptyTablesTraining.bat"
+
+    # Determine the destination folder based on host type
+    try:
+        # Step 1: Map the drive
+        log_message = f"Mapping {unc_path} to {drive_letter}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        os.system(f"net use {drive_letter} {unc_path}")
+
+        # Step 2: Copy the script
+        scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
+        remote_bat_path = f"{scripts_dest}{current_bat_file}"
+        log_message = f"Copying script file to {scripts_dest}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        os.system(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I")
+
+        # Step 3: Execute the batch file
+        log_message = f"Executing batch file {remote_bat_path}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        subprocess.run(["cmd", "/c", remote_bat_path])
+
+    except Exception as e:
+        log_message = f"Error during execution: {e}"
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+
+    finally:
+        # Step 4: Unmap the drive
+        log_message = f"Unmapping {drive_letter}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        os.system(f"net use {drive_letter} /delete")
+
+def write_bat_file(mode, BN, SQL_USER, SQL_PASS, logs=None, results_text=None):
+    """
+    Writes BN, SQL_USER, and SQL_PASS values to lines 3, 4, and 5 in the BAT file.
+    If the file exists, it updates only those lines. Otherwise, it creates a new file.
+    """
+    logs = logs or []
+
+    new_lines = [
+        f"set /a BN={BN}\n",
+        f"set USER={SQL_USER}\n",
+        f"set PASS={SQL_PASS}\n"
+    ]
+    if mode == "Operational":
+        BAT_FILE_PATH = ".\\Scripts\\SQL\\CreateEmptyTablesOperational.bat"
+    elif mode == "Training":
+        BAT_FILE_PATH = ".\\Scripts\\SQL\\CreateEmptyTablesTraining.bat"
+
+    else:
+        print("No mode selected.")
+        return
+
+    if os.path.exists(BAT_FILE_PATH):
+        with open(BAT_FILE_PATH, "r") as file:
+            existing_lines = file.readlines()
+
+        # Ensure the file has at least 5 lines
+        while len(existing_lines) < 5:
+            existing_lines.append("\n")
+
+        # Overwrite only lines 3, 4, and 5
+        existing_lines[2] = new_lines[0]  # Line 3
+        existing_lines[3] = new_lines[1]  # Line 4
+        existing_lines[4] = new_lines[2]  # Line 5
+
+        with open(BAT_FILE_PATH, "w") as file:
+            file.writelines(existing_lines)
+
+        log_message = f"Updated lines 3-5 in existing batch file: {BAT_FILE_PATH}"
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        print(f"Updated lines 3-5 in existing batch file: {BAT_FILE_PATH}")
+
+    else:
+        # If the file doesn't exist, create at least 2 empty lines before writing the values
+        with open(BAT_FILE_PATH, "w") as file:
+            file.writelines(["\n"] * 2)  # Ensure first 2 lines are empty
+            file.writelines(new_lines)
+
+        print(f"New batch file created with values starting at line 3: {BAT_FILE_PATH}")
+
+def update_results_text(results_text, message):
+    """
+    Updates the Tkinter Text widget with log messages.
+    """
+    if results_text:
+        results_text.insert(tk.END, message + "\n")  # Append message
+        results_text.see(tk.END)  # Auto-scroll to the latest log
+        results_text.update_idletasks()  # Refresh GUI
+# create_empty_tables_battery(bat_num=3, mode="Operational")

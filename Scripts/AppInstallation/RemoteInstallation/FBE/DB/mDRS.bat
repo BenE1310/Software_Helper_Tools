@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 28012025
+rem Version 1.0.0.6 By Ben Eytan 04022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -44,6 +44,8 @@ set RemoteComputer=\\10.11.%BN%8.%PN%
 set RemoteShare=C$
 set TargetFolder=mDRS
 set NewFolderName=mDRS_%mydate%
+set TargetFolder_DB=DB
+set NewFolderName_DB=DB_%mydate%
 set DestPath="\\10.11.%BN%8.%PN%\c$\mDRS"
 echo %RemoteComputer%
 
@@ -56,7 +58,7 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Check and Rename Folder
+:: Check and Rename Folder mDRS
 if exist "T:\%TargetFolder%" (
     echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
     REN "T:\%TargetFolder%" "%NewFolderName%"
@@ -69,6 +71,21 @@ if exist "T:\%TargetFolder%" (
     echo Folder renamed successfully to %NewFolderName%.
 ) else (
     echo Folder %TargetFolder% does not exist. Continuing...
+)
+
+:: Check and Rename Folder DB
+if exist "T:\%TargetFolder_DB%" (
+    echo Folder %TargetFolder_DB% exists. Renaming to %NewFolderName_DB%...
+    REN "T:\%TargetFolder_DB%" "%NewFolderName_DB%"
+    if errorlevel 1 (
+        echo Failed to rename the folder. Check permissions and path.
+        NET USE T: /DELETE >nul 2>&1
+        pause
+        exit /b 1
+    )
+    echo Folder renamed successfully to %NewFolderName_DB%.
+) else (
+    echo Folder %TargetFolder_DB% does not exist. Continuing...
 )
 
 :: Disconnect Mapped Drive

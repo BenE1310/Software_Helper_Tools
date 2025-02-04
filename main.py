@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
-    prepare_installation_simulator
+    prepare_installation_simulator, write_bat_file, create_empty_tables_battery
 import tkinter.ttk as ttk
 import threading
 import pythoncom  # Import pythoncom for WMI operations
@@ -86,6 +86,8 @@ button_style_small = {
 
 BN = 0
 VSIL_BN = 0
+SQL_USER = None
+SQL_PASS = None
 buttons = []
 installation_app_remote_message = []
 progress_bar_ping = None
@@ -112,7 +114,125 @@ def disable_button(window):
 def enable_button(window):
     window.config(state='normal')  # Enable the grayed-out button
 
-# Function to open a new window for the Battery button
+def prompt_for_credentials():
+    global SQL_USER, SQL_PASS
+
+    # Create a dialog to request credentials
+    credentials_window = tk.Toplevel()
+    credentials_window.title("Enter Credentials")
+    credentials_window.geometry("300x200")
+    credentials_window.resizable(False, False)
+    credentials_window.grab_set()  # Make it modal
+
+    tk.Label(credentials_window, text="Username:", font=("Arial", 12)).pack(pady=5)
+    username_entry = tk.Entry(credentials_window, font=("Arial", 12))
+    username_entry.pack(pady=5)
+
+    tk.Label(credentials_window, text="Password:", font=("Arial", 12)).pack(pady=5)
+    password_entry = tk.Entry(credentials_window, font=("Arial", 12), show="*")
+    password_entry.pack(pady=5)
+
+    def save_credentials():
+        global SQL_USER, SQL_PASS
+        SQL_USER = username_entry.get()
+        SQL_PASS = password_entry.get()
+        credentials_window.destroy()  # Close the credentials window
+
+    tk.Button(credentials_window, text="Submit", command=save_credentials, font=("Arial", 12)).pack(pady=10)
+
+    credentials_window.wait_window()  # Block execution until window is closed
+# Function to open a new window for the Database
+
+
+def open_battery_database_window():
+    global BN, operational_var, training_var, results_text  # Include results_text
+
+    # Ask for credentials before opening the main window
+    prompt_for_credentials()
+
+    small_window = tk.Toplevel()
+    small_window.title("Table Management")
+    small_window.geometry("400x450")
+    small_window.resizable(False, False)
+    small_window.configure(bg="#004d4d")
+
+    # Title Label
+    title_label = tk.Label(
+        small_window, text=f"Database Battery {BN}", font=("Arial", 14, "bold"), fg="white", bg="#004d4d"
+    )
+    title_label.place(x=100, y=5)
+
+    # Checkbox Variables
+    operational_var = tk.BooleanVar()
+    training_var = tk.BooleanVar()
+
+    tk.Checkbutton(
+        small_window, text="Operational", variable=operational_var,
+        bg="#004d4d", fg="white", selectcolor="#004d4d", font=("Arial", 12)
+    ).place(x=20, y=50)
+
+    tk.Checkbutton(
+        small_window, text="Training", variable=training_var,
+        bg="#004d4d", fg="white", selectcolor="#004d4d", font=("Arial", 12)
+    ).place(x=20, y=90)
+
+    def handle_create_tables():
+        global BN
+
+        """
+        Handles the "Create Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            mode = "Operational"
+        elif training_var.get():
+            mode = "Training"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file(mode, BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, results_text=results_text)
+
+        # Step 2: Transfer & Execute Remotely
+        create_empty_tables_battery(BN, mode, results_text=results_text)
+
+    # Buttons on the right
+    button_x = 200
+    button_width = 170
+    button_height = 40
+    y_start = 50
+    y_gap = 60
+
+    tk.Button(
+        small_window, text="Create Tables", font=("Arial", 12), bg="#006666", fg="white",
+        activebackground="#008080", command=handle_create_tables
+    ).place(x=button_x, y=y_start, width=button_width, height=button_height)
+    tk.Button(
+        small_window, text="Delete Tables", font=("Arial", 12), bg="#006666", fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=y_start + y_gap, width=button_width, height=button_height)
+
+    tk.Button(
+        small_window, text="Import Tables", font=("Arial", 12), bg="#006666", fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=y_start + 2 * y_gap, width=button_width, height=button_height)
+
+    tk.Button(
+        small_window, text="Adding Arguments", font=("Arial", 12), bg="#006666", fg="white",
+        activebackground="#008080"
+    ).place(x=button_x, y=y_start + 3 * y_gap, width=button_width, height=button_height)
+
+    # Results Display
+    results_text = tk.Text(small_window, height=5, width=50, bg="#003333", fg="white", font=("Arial", 10))
+    results_text.place(x=20, y=300, width=360, height=120)
+
+
+
+
+# Function to open a new window for the App Installation
 
 def open_vsil_window():
     vsil_window = tk.Toplevel(root)
@@ -2065,7 +2185,7 @@ def rai_screen():
     on_button_click()
 
     # Add Label
-    rai_label = tk.Label(root, text='Remote App Installation', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    rai_label = tk.Label(root, text='Installation Phase', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
     rai_label.place(x=138, y=10)
     buttons.append(rai_label)
 
@@ -2103,6 +2223,29 @@ def db_install_screen():
     create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
+def db_screen():
+    # Clear existing buttons
+    on_button_click()
+
+    # Add Label
+    rai_label = tk.Label(root, text='Installation Phase', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    rai_label.place(x=138, y=10)
+    buttons.append(rai_label)
+
+    # Create Buttons with Hover Effects
+    battery_install_window = create_button(root, 'Battery', open_battery_window, 178, 420)
+    regional_install_window = create_button(root, 'Regional', open_regional_window, 178, 490)
+    vsil_install_window = create_button(root, 'VSIL', open_vsil_window, 178, 560)
+
+    if BN == "VSIL":
+        disable_button(battery_install_window)
+        disable_button(regional_install_window)
+    else:
+        disable_button(vsil_install_window)
+
+
+    create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
+    create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
 def phases_app_installation_screen():
     # Check if BN is chosen
@@ -2112,13 +2255,13 @@ def phases_app_installation_screen():
     on_button_click()
 
     # Add Label
-    phases_app_installation_label = tk.Label(root, text='Installation Phases', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    phases_app_installation_label = tk.Label(root, text='Remote App Installation', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
     phases_app_installation_label.place(x=170, y=10)
     buttons.append(phases_app_installation_label)
 
     # Create Buttons with Hover Effects
     create_button(root, 'Installation Phase', rai_screen, 178, 420)
-    create_button(root, 'Database Phases', db_install_screen, 178, 490)
+    create_button(root, 'Database Phase', db_screen, 178, 490)
 
     create_button(root, 'Back', main_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
@@ -2160,7 +2303,7 @@ def main_screen():
     # Create Buttons with Hover Effects
     create_button(root, 'App Installation', phases_app_installation_screen, 178, 420)
     create_button(root, 'Checks Components', open_vsil_window, 178, 490)
-    create_button(root, 'Cyber Deployment', open_battery_window, 178, 560)
+    create_button(root, 'Cyber Deployment', open_battery_database_window, 178, 560)
     create_button(root, 'Tools', lambda: on_click(None), 360, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 

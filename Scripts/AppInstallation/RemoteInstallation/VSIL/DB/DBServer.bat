@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 30012025
+rem Version 1.0.0.6 By Ben Eytan 04022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -45,6 +45,8 @@ set TargetFolder=VSIL
 set NewFolderName=VSIL_%mydate%
 set TargetFolder_mDRS=mDRS
 set NewFolderName_mDRS=mDRS_%mydate%
+set TargetFolder_DB=DB
+set NewFolderName_DB=DB_%mydate%
 set DestPath="\\10.11.%BN%8.%PN%\c$\VSIL"
 set DestPath_mDRS="\\10.11.%BN%8.%PN%\c$\mDRS"
 
@@ -87,6 +89,21 @@ if exist "T:\%TargetFolder_mDRS%" (
     echo Folder renamed successfully to %NewFolderName_mDRS%.
 ) else (
     echo Folder %TargetFolder_mDRS% does not exist. Continuing...
+)
+
+:: Check and Rename Folder DB
+if exist "T:\%TargetFolder_DB%" (
+    echo Folder %TargetFolder_DB% exists. Renaming to %NewFolderName_DB%...
+    REN "T:\%TargetFolder_DB%" "%NewFolderName_DB%"
+    if errorlevel 1 (
+        echo Failed to rename the folder. Check permissions and path.
+        NET USE T: /DELETE >nul 2>&1
+        pause
+        exit /b 1
+    )
+    echo Folder renamed successfully to %NewFolderName_DB%.
+) else (
+    echo Folder %TargetFolder_DB% does not exist. Continuing...
 )
 
 :: Disconnect Mapped Drive
