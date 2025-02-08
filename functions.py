@@ -478,7 +478,7 @@ def cleanup_temp_files():
     print("Temporary files cleaned up.")
 
 
-def create_empty_tables_battery(bat_num, mode, logs=None, results_text=None):
+def create_empty_tables_battery(bat_num, current_bat_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
@@ -486,12 +486,7 @@ def create_empty_tables_battery(bat_num, mode, logs=None, results_text=None):
     drive_letter = "P:"  # Use any available drive letter
     db_ip = f"10.11.{bat_num}8.3"
     unc_path = f"\\\\{db_ip}\\c$"
-    if mode == "Operational":
-        scripts_src = ".\\Scripts\\SQL\\CreateEmptyTablesOperational.bat"
-        current_bat_file = "CreateEmptyTablesOperational.bat"
-    else:
-        scripts_src = ".\\Scripts\\SQL\\CreateEmptyTablesTraining.bat"
-        current_bat_file = "CreateEmptyTablesTraining.bat"
+    scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
 
     # Determine the destination folder based on host type
     try:
@@ -527,7 +522,7 @@ def create_empty_tables_battery(bat_num, mode, logs=None, results_text=None):
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
 
-def write_bat_file(mode, BN, SQL_USER, SQL_PASS, logs=None, results_text=None):
+def write_bat_file_db_phase(BN, SQL_USER, SQL_PASS, BAT_FILE_NAME, logs=None, results_text=None):
     """
     Writes BN, SQL_USER, and SQL_PASS values to lines 3, 4, and 5 in the BAT file.
     If the file exists, it updates only those lines. Otherwise, it creates a new file.
@@ -539,14 +534,8 @@ def write_bat_file(mode, BN, SQL_USER, SQL_PASS, logs=None, results_text=None):
         f"set USER={SQL_USER}\n",
         f"set PASS={SQL_PASS}\n"
     ]
-    if mode == "Operational":
-        BAT_FILE_PATH = ".\\Scripts\\SQL\\CreateEmptyTablesOperational.bat"
-    elif mode == "Training":
-        BAT_FILE_PATH = ".\\Scripts\\SQL\\CreateEmptyTablesTraining.bat"
 
-    else:
-        print("No mode selected.")
-        return
+    BAT_FILE_PATH = f".\\Scripts\\SQL\\{BAT_FILE_NAME}"
 
     if os.path.exists(BAT_FILE_PATH):
         with open(BAT_FILE_PATH, "r") as file:

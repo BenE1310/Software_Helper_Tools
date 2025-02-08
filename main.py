@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
-    prepare_installation_simulator, write_bat_file, create_empty_tables_battery
+    prepare_installation_simulator, create_empty_tables_battery, write_bat_file_db_phase
 import tkinter.ttk as ttk
 import threading
 import pythoncom  # Import pythoncom for WMI operations
@@ -145,7 +145,7 @@ def prompt_for_credentials():
 
 
 def open_battery_database_window():
-    global BN, operational_var, training_var, results_text  # Include results_text
+    global BN
 
     # Ask for credentials before opening the main window
     prompt_for_credentials()
@@ -176,8 +176,9 @@ def open_battery_database_window():
         bg="#004d4d", fg="white", selectcolor="#004d4d", font=("Arial", 12)
     ).place(x=20, y=90)
 
-    def handle_create_tables():
-        global BN
+
+    def handle_create_empty_tables():
+        global BN, bat_file_name
 
         """
         Handles the "Create Tables" button click.
@@ -186,18 +187,23 @@ def open_battery_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            mode = "Operational"
+            bat_file_name = "CreateEmptyTablesOperational.bat"
         elif training_var.get():
-            mode = "Training"
+            bat_file_name = "CreateEmptyTablesTraining.bat"
         else:
             print("No mode selected.")
             return
 
         # Step 1: Write BAT File
-        write_bat_file(mode, BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        create_empty_tables_battery(BN, mode, results_text=results_text)
+        create_empty_tables_battery(BN,current_bat_file=bat_file_name, results_text=results_text)
+
+
+    def create_empty_databases():
+        threading.Thread(target=handle_create_empty_tables).start()
+
 
     # Buttons on the right
     button_x = 200
@@ -208,7 +214,7 @@ def open_battery_database_window():
 
     tk.Button(
         small_window, text="Create Tables", font=("Arial", 12), bg="#006666", fg="white",
-        activebackground="#008080", command=handle_create_tables
+        activebackground="#008080", command=create_empty_databases
     ).place(x=button_x, y=y_start, width=button_width, height=button_height)
     tk.Button(
         small_window, text="Delete Tables", font=("Arial", 12), bg="#006666", fg="white",

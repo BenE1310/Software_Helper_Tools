@@ -1,14 +1,15 @@
 @echo off
 setlocal enabledelayedexpansion
-set /a BN=1
-
-
+set /a BN=3
+set USER=mPrest
+set PASS=MprBe12#4%
 echo Creating Databases For Battery number %BN%
 set CDBase="C:\Windows\Temp\CDBase.sql"
 del %CDBase%
 MD C:\FireBoltDB
 
 >> %CDBase% echo CREATE LOGIN [mPrest] WITH PASSWORD='MprIt12#4%', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+>> %CDBase% echo ALTER SERVER ROLE sysadmin ADD MEMBER [mPrest]
 >> %CDBase% echo GO
 
 for %%A in (

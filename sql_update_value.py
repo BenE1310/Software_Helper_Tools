@@ -1,11 +1,8 @@
-import datetime
 import os
-from time import sleep
-from typing import dataclass_transform
 
-BN=8
+BN=1
 
-def generate_sql_script(octet_value):
+def generate_sql_script_training_launchers(octet_value):
     sql_script = f"""
     -- Query for CombainTraining & Training Mode --
     DECLARE @serialNumber INTEGER
@@ -17,7 +14,7 @@ def generate_sql_script(octet_value):
 
     WHILE @serialNumber < 325 
     BEGIN 
-        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.11.{octet_value}8.3', @sendPort, @recievePort)
+        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.12.{octet_value}8.3', @sendPort, @recievePort)
         SET @sendPort = @sendPort + 1;
         SET @serialNumber = @serialNumber + 1;
         SET @recievePort = @recievePort + 1;
@@ -26,14 +23,13 @@ def generate_sql_script(octet_value):
     return sql_script
 
 # Example usage
-sql_code = generate_sql_script(BN)
+sql_code = generate_sql_script_training_launchers(BN)
 
 # Print or save the generated SQL script
 print(sql_code)
 
 # Optionally, write it to a file
-with open(f"Scripts/SQL/adding_launcher_training_mode_bt_{BN}.sql", "w") as file:
+with open(f"Scripts/SQL/adding_launcher_training_mode.sql", "w") as file:
     file.write(sql_code)
 
-sleep(3)
-os.remove(f"Scripts/SQL/adding_launcher_training_mode_bt_{BN}.sql")
+os.remove(f"Scripts/SQL/adding_launcher_training_mode.sql")
