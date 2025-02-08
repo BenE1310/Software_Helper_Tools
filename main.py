@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
-    prepare_installation_simulator, create_empty_tables_battery, write_bat_file_db_phase
+    prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery
 import tkinter.ttk as ttk
 import threading
 import pythoncom  # Import pythoncom for WMI operations
@@ -119,10 +119,11 @@ def prompt_for_credentials():
 
     # Create a dialog to request credentials
     credentials_window = tk.Toplevel()
-    credentials_window.title("Enter Credentials")
+    credentials_window.title("Enter SQL Credentials")
     credentials_window.geometry("300x200")
     credentials_window.resizable(False, False)
     credentials_window.grab_set()  # Make it modal
+    credentials_window.iconbitmap("icon.ico")
 
     tk.Label(credentials_window, text="Username:", font=("Arial", 12)).pack(pady=5)
     username_entry = tk.Entry(credentials_window, font=("Arial", 12))
@@ -143,7 +144,6 @@ def prompt_for_credentials():
     credentials_window.wait_window()  # Block execution until window is closed
 # Function to open a new window for the Database
 
-
 def open_battery_database_window():
     global BN
 
@@ -155,6 +155,7 @@ def open_battery_database_window():
     small_window.geometry("400x450")
     small_window.resizable(False, False)
     small_window.configure(bg="#004d4d")
+    small_window.iconbitmap("icon.ico")
 
     # Title Label
     title_label = tk.Label(
@@ -198,11 +199,64 @@ def open_battery_database_window():
         write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        create_empty_tables_battery(BN,current_bat_file=bat_file_name, results_text=results_text)
-
+        handle_tables_battery(BN,current_bat_file=bat_file_name, results_text=results_text)
 
     def create_empty_databases():
         threading.Thread(target=handle_create_empty_tables).start()
+
+
+    def handle_delete_tables():
+        global BN, bat_file_name
+
+        """
+        Handles the "Create Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "DeleteDatabasesOperational.bat"
+        elif training_var.get():
+            bat_file_name = "DeleteDatabasesTraining.bat"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+
+        # Step 2: Transfer & Execute Remotely
+        handle_tables_battery(BN,current_bat_file=bat_file_name, results_text=results_text)
+
+    def delete_databases():
+        threading.Thread(target=handle_delete_tables).start()
+
+    def handle_import_tables():
+        global BN, bat_file_name
+
+        """
+        Handles the "Import Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "CreateTablesOperationalFBE.bat"
+        elif training_var.get():
+            bat_file_name = "CreateTablesTrainingFBE.bat"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name,
+                                results_text=results_text)
+
+        # Step 2: Transfer & Execute Remotely
+        handle_tables_battery(BN, current_bat_file=bat_file_name, results_text=results_text)
+
+    def import_tables():
+        threading.Thread(target=handle_import_tables).start()
 
 
     # Buttons on the right
@@ -218,16 +272,16 @@ def open_battery_database_window():
     ).place(x=button_x, y=y_start, width=button_width, height=button_height)
     tk.Button(
         small_window, text="Delete Tables", font=("Arial", 12), bg="#006666", fg="white",
-        activebackground="#008080"
+        activebackground="#008080", command=delete_databases
     ).place(x=button_x, y=y_start + y_gap, width=button_width, height=button_height)
 
     tk.Button(
         small_window, text="Import Tables", font=("Arial", 12), bg="#006666", fg="white",
-        activebackground="#008080"
+        activebackground="#008080", command=import_tables
     ).place(x=button_x, y=y_start + 2 * y_gap, width=button_width, height=button_height)
 
     tk.Button(
-        small_window, text="Adding Arguments", font=("Arial", 12), bg="#006666", fg="white",
+        small_window, text="Adding Launchers", font=("Arial", 12), bg="#006666", fg="white",
         activebackground="#008080"
     ).place(x=button_x, y=y_start + 3 * y_gap, width=button_width, height=button_height)
 
@@ -235,11 +289,7 @@ def open_battery_database_window():
     results_text = tk.Text(small_window, height=5, width=50, bg="#003333", fg="white", font=("Arial", 10))
     results_text.place(x=20, y=300, width=360, height=120)
 
-
-
-
 # Function to open a new window for the App Installation
-
 def open_vsil_window():
     vsil_window = tk.Toplevel(root)
     vsil_window.title("Remote App Installation - VSIL")
@@ -1746,7 +1796,7 @@ def open_battery_window():
         "Client3": f"192.168.{BN}8.8",
         "Client4": f"192.168.{BN}8.9",
         "Client5": f"192.168.{BN}8.10",
-        "Client6": f"192.168.{BN}.154",
+        "Client6": f"172.16.{BN}.108",
     }
 
     # Map host to corresponding bat file paths
@@ -1775,7 +1825,12 @@ def open_battery_window():
                            fg="white", bg="#004d4d")
     title_label.place(x=270, y=10)
 
-
+    def yes_no_keep_install():
+        response = messagebox.askyesno("Install App", "Are you sure you want to install the Battery?")
+        if response:
+            on_install()
+        else:
+            return
 
     def on_install():
 
@@ -2163,7 +2218,7 @@ def open_battery_window():
     tk.Button(
         battery_window,
         text="Install App",
-        command=on_install,
+        command=yes_no_keep_install,
         font=("Arial", 14, 'bold'),
         bg="#006666",
         fg="white",
@@ -2181,9 +2236,9 @@ def open_battery_window():
         activebackground="#990000"
     ).place(x=450, y=855, width=100, height=40)
 
-    if len(installation_app_remote_message) == 0:
-        messagebox.showinfo("Don't forget", "The new version of the application should be on the local disk: C:\\FBE")
-        installation_app_remote_message.append("onetime")
+    # if len(installation_app_remote_message) == 0:
+    #     messagebox.showinfo("Don't forget", "The new version of the application should be on the local disk: C:\\FBE")
+    #     installation_app_remote_message.append("onetime")
 
 
 def rai_screen():

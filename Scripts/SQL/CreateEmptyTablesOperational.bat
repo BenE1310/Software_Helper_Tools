@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
-set /a BN=3
-set USER=mPrest
-set PASS=MprBe12#4%
+set /a BN=0
+set USER=123
+set PASS=
 echo Creating Databases For Battery number %BN%
 set CDBase="C:\Windows\Temp\CDBase.sql"
 del %CDBase%

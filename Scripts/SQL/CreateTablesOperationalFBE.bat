@@ -1,8 +1,8 @@
 @cd /d "%~dp0"
 @echo off
-set /a BN=1
-set USER=mPrest
-set PASS=MprIt12#4%
+set /a BN=0
+set USER=123
+set PASS=
 
 sqlcmd -S "." -d FireBolt_BMCConfigDB_Operational_%BN% -U %USER% -P %PASS% -i C:\DB\Sql\CreateBatteryConfig.sql
 

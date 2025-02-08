@@ -39,11 +39,11 @@ for /f "tokens=2 delims==" %%i in ('wmic os get localdatetime /value ^| find "="
 set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%datetime:~10,2%-%datetime:~12,2%
 
 :: Variables
-set RemoteComputer=\\192.168.%BN%.%PN%
+set RemoteComputer=\\172.16.%BN%.%PN%
 set RemoteShare=C$
 set TargetFolder=Firebolt
 set NewFolderName=Firebolt_%mydate%
-set DestPath="\\192.168.%BN%.%PN%\c$\Firebolt"
+set DestPath="\\172.16.%BN%.%PN%\c$\Firebolt"
 echo %RemoteComputer%
 
 :: Map Remote Share
@@ -79,9 +79,9 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-sc \\10.11.%BN%8.%PN% stop "FBE Watchdog"
+:: sc \\172.16.%BN%.%PN% stop "Spooler"
 timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog"
+"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "Spooler"
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IronDomeMdrsAgent.exe
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t LoginApp.exe
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBETrainerClient.exe
@@ -117,21 +117,8 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-sc \\10.11.%BN%8.%PN% start "FBE Watchdog"
+sc \\172.16.%BN%.%PN%  start "Spooler"
 goto EOF
 
-
-:Error
-echo.
-echo.
-echo Error! Failed to update BatteryClient folder.
-echo        Make sure you are not running any process
-echo.
-goto eof
-:NoSource
-echo.
-echo [%~dp0..\..\Zip\BatteryClient.7z] Not Exist
-echo Error! Source Files Not Found
-echo.
 :EOF
 exit

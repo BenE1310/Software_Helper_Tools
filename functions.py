@@ -478,7 +478,7 @@ def cleanup_temp_files():
     print("Temporary files cleaned up.")
 
 
-def create_empty_tables_battery(bat_num, current_bat_file, logs=None, results_text=None):
+def handle_tables_battery(bat_num, current_bat_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
@@ -574,4 +574,3 @@ def update_results_text(results_text, message):
         results_text.insert(tk.END, message + "\n")  # Append message
         results_text.see(tk.END)  # Auto-scroll to the latest log
         results_text.update_idletasks()  # Refresh GUI
-# create_empty_tables_battery(bat_num=3, mode="Operational")
