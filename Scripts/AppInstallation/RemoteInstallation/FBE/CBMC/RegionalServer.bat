@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 28012025
+rem Version 1.0.0.5 By Ben Eytan 09022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -55,6 +55,22 @@ if errorlevel 1 (
     exit /b 1
 )
 
+
+
+:: Continue with RegionalServer Logic
+echo ----------------------------------------------------------
+echo Installation Path: %DestPath%
+echo ----------------------------------------------------------
+
+@echo Kill Processes...
+sc \\10.11.218.%PN% stop "FBE Watchdog REGIONAL"
+timeout /t 6
+"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog REGIONAL"
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeRegionalOperationalServer.exe
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackServer.exe
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeTrainerServer.exe
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBETrainerServer.exe
+
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
     echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
@@ -72,20 +88,6 @@ if exist "T:\%TargetFolder%" (
 
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
-
-:: Continue with RegionalServer Logic
-echo ----------------------------------------------------------
-echo Installation Path: %DestPath%
-echo ----------------------------------------------------------
-
-@echo Kill Processes...
-sc \\10.11.218.%PN% stop "FBE Watchdog REGIONAL"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog REGIONAL"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeRegionalOperationalServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeTrainerServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBETrainerServer.exe
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 

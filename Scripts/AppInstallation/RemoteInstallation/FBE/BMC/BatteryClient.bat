@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 28012025
+rem Version 1.0.0.7 By Ben Eytan 09022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -55,23 +55,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Check and Rename Folder
-if exist "T:\%TargetFolder%" (
-    echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
-    REN "T:\%TargetFolder%" "%NewFolderName%"
-    if errorlevel 1 (
-        echo Failed to rename the folder. Check permissions and path.
-        NET USE T: /DELETE >nul 2>&1
-        pause
-        exit /b 1
-    )
-    echo Folder renamed successfully to %NewFolderName%.
-) else (
-    echo Folder %TargetFolder% does not exist. Continuing...
-)
-
-:: Disconnect Mapped Drive
-NET USE T: /DELETE >nul 2>&1
 
 :: Continue with BatteryClient Logic
 echo ----------------------------------------------------------
@@ -90,6 +73,25 @@ timeout /t 6
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeTrainingClient.exe
 "%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackClient.exe
 
+:: Check and Rename Folder
+if exist "T:\%TargetFolder%" (
+    echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
+    REN "T:\%TargetFolder%" "%NewFolderName%"
+    if errorlevel 1 (
+        echo Failed to rename the folder. Check permissions and path.
+        NET USE T: /DELETE >nul 2>&1
+        pause
+        exit /b 1
+    )
+    echo Folder renamed successfully to %NewFolderName%.
+) else (
+    echo Folder %TargetFolder% does not exist. Continuing...
+)
+
+:: Disconnect Mapped Drive
+NET USE T: /DELETE >nul 2>&1
+
+
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
 :BMC_Client
@@ -107,7 +109,7 @@ for /F %%G in ('dir C:\Users\ /b /AD') DO IF EXIST %PreDefinedZoomConf% (del /F 
 echo.
 
 echo Moving mDRSStorage to the new version, Please Wait...
-robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
+robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
 echo.
 goto Maps
 

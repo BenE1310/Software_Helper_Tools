@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 28012025
+rem Version 1.0.0.5 By Ben Eytan 09022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -39,11 +39,11 @@ for /f "tokens=2 delims==" %%i in ('wmic os get localdatetime /value ^| find "="
 set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%datetime:~10,2%-%datetime:~12,2%
 
 :: Variables
-set RemoteComputer=\\172.16.%BN%.%PN%
+set RemoteComputer=\\192.168.%BN%.%PN%
 set RemoteShare=C$
 set TargetFolder=Firebolt
 set NewFolderName=Firebolt_%mydate%
-set DestPath="\\172.16.%BN%.%PN%\c$\Firebolt"
+set DestPath="\\192.168.%BN%.%PN%\c$\Firebolt"
 echo %RemoteComputer%
 
 :: Map Remote Share
@@ -117,7 +117,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-sc \\172.16.%BN%.%PN%  start "Spooler"
+sc \\192.168.%BN%.%PN%  start "Spooler"
 goto EOF
 
 :EOF

@@ -2,13 +2,14 @@ import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
-    prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery
+    prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery, handle_adding_launchers_battery, \
+    generate_sql_script_training_launchers
 import tkinter.ttk as ttk
 import threading
 import pythoncom  # Import pythoncom for WMI operations
-
 from tkinter.messagebox import showinfo
 from tkinter.simpledialog import askstring
+import os
 
 
 # Button hover effect
@@ -258,6 +259,39 @@ def open_battery_database_window():
     def import_tables():
         threading.Thread(target=handle_import_tables).start()
 
+    def handle_adding_launchers():
+        global BN, bat_file_name
+
+        """
+        Handles the "Adding launchers" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "AddingLaunchersOperationalFBE.bat"
+            sql_file_name = "adding_launcher_training_mode.sql"
+        elif training_var.get():
+            bat_file_name = "CreateTablesTrainingFBE.bat"
+            sql_file_name = "adding_launcher_operational_mode.sql"
+            sql_code = generate_sql_script_training_launchers(BN)
+
+            # Write it to a file
+            with open(f"Scripts/SQL/adding_launcher_training_mode.sql", "w") as file:
+                file.write(sql_code)
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name,
+                                results_text=results_text)
+
+        # Step 2: Transfer & Execute Remotely
+        handle_adding_launchers_battery(bat_num=BN, current_sql_file=sql_file_name, current_bat_file=bat_file_name, results_text=results_text)
+
+    def adding_launchers():
+        threading.Thread(target=handle_adding_launchers).start()
 
     # Buttons on the right
     button_x = 200
@@ -282,7 +316,7 @@ def open_battery_database_window():
 
     tk.Button(
         small_window, text="Adding Launchers", font=("Arial", 12), bg="#006666", fg="white",
-        activebackground="#008080"
+        activebackground="#008080", command=adding_launchers
     ).place(x=button_x, y=y_start + 3 * y_gap, width=button_width, height=button_height)
 
     # Results Display
@@ -1785,18 +1819,18 @@ def open_battery_window():
 
     # Hostnames and IPs
     hostnames = {
-        "BMC1": f"192.168.{BN}8.1",
-        "BMC2": f"192.168.{BN}8.2",
-        "ICS1": f"192.169.{BN}8.13",
-        "ICS2": f"192.169.{BN}8.14",
-        "DB1": f"192.168.{BN}8.3",
-        "DB2": f"192.168.{BN}8.4",
-        "Client1": f"192.168.{BN}8.6",
-        "Client2": f"192.168.{BN}8.7",
-        "Client3": f"192.168.{BN}8.8",
-        "Client4": f"192.168.{BN}8.9",
-        "Client5": f"192.168.{BN}8.10",
-        "Client6": f"172.16.{BN}.108",
+        "BMC1": f"10.11.{BN}8.1",
+        "BMC2": f"10.11.{BN}8.2",
+        "ICS1": f"10.12.{BN}8.13",
+        "ICS2": f"10.12.{BN}8.14",
+        "DB1": f"10.11.{BN}8.3",
+        "DB2": f"10.11.{BN}8.4",
+        "Client1": f"10.11.{BN}8.6",
+        "Client2": f"10.11.{BN}8.7",
+        "Client3": f"10.11.{BN}8.8",
+        "Client4": f"10.11.{BN}8.9",
+        "Client5": f"10.11.{BN}8.10",
+        "Client6": f"192.168.{BN}.141",
     }
 
     # Map host to corresponding bat file paths
@@ -2066,6 +2100,7 @@ def open_battery_window():
                     if success:
                         labels[host].config(fg="green")
                         logs.append(f"{host} (IP: {ip}): Communication successful.")
+                        labels[host].config(text=f"{host} (IP: {ip})")
                     else:
                         labels[host].config(fg="red")
                         labels[host].config(text=f"{host} (IP: {ip}) C")
@@ -2101,16 +2136,41 @@ def open_battery_window():
                 if var.get():
                     ip = hostnames[host]
                     network_path = rf"\\{ip}\c$\temp"  # Adjust the network path format
+
+                    # Check if the folder exists
+                    if not os.path.exists(network_path):
+                        try:
+                            os.makedirs(network_path)  # Create the folder
+                            folder_created = True
+                        except Exception as e:
+                            logs.append(f"{host} (IP: {ip}): Failed to create folder - {e}")
+                            labels[host].config(fg="red")
+                            continue  # Skip further execution for this host
+                    else:
+                        folder_created = False  # The folder already existed
+
                     permissions = check_permissions(network_path)  # Call the helper function
 
                     # Update GUI based on results
                     if permissions["readable"] and permissions["writable"]:
                         labels[host].config(fg="green")
+                        labels[host].config(text=f"{host} (IP: {ip})")
                         logs.append(f"{host} (IP: {ip}): Permissions OK (Read/Write).")
                     else:
                         labels[host].config(fg="red")
                         labels[host].config(text=f"{host} (IP: {ip}) P")
                         logs.append(f"{host} (IP: {ip}): Permissions FAILED.")
+
+                    # If we created the folder, delete it after the test
+                    if folder_created:
+                        try:
+                            for file in os.listdir(network_path):  # Remove all files first
+                                file_path = os.path.join(network_path, file)
+                                if os.path.isfile(file_path) or os.path.islink(file_path):
+                                    os.remove(file_path)
+                            os.rmdir(network_path)  # Now remove the empty directory
+                        except Exception as e:
+                            logs.append(f"{host} (IP: {ip}): Failed to delete folder - {e}")
 
             # Stop the progress bar and display results
             battery_window.after(0, lambda: progress_bar_permissions.stop())
@@ -2148,7 +2208,7 @@ def open_battery_window():
                         if free_space is None or total_space is None:
                             labels[host].config(fg="red")
                             logs.append(f"{host} (IP: {ip}): Failed to retrieve disk space information.")
-                        elif free_space < 50:
+                        elif free_space < 10:
                             labels[host].config(fg="red")
                             labels[host].config(text=f"{host} (IP: {ip}) D")
                             logs.append(
@@ -2156,6 +2216,7 @@ def open_battery_window():
                             )
                         else:
                             labels[host].config(fg="green")
+                            labels[host].config(text=f"{host} (IP: {ip}")
                             logs.append(
                                 f"{host} (IP: {ip}): Free space in C Drive is {free_space:.2f}GB. Disk space is sufficient."
                             )
@@ -2267,22 +2328,6 @@ def rai_screen():
     create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
-def db_install_screen():
-    # Clear existing buttons
-    on_button_click()
-
-    # Add Label
-    db_label = tk.Label(root, text='Database Phases', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
-    db_label.place(x=180, y=10)
-    buttons.append(db_label)
-
-    # Create Buttons with Hover Effects
-    create_button(root, 'Create Database', open_battery_window, 178, 420)
-    create_button(root, 'Delete Database', open_regional_window, 178, 490)
-    create_button(root, 'Import Database', open_vsil_window, 178, 560)
-    create_button(root, 'Adding launchers', open_simulator_window, 178, 630)
-    create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
-    create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
 def db_screen():
     # Clear existing buttons

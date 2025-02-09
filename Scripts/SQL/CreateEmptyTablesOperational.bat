@@ -8,8 +8,8 @@ set CDBase="C:\Windows\Temp\CDBase.sql"
 del %CDBase%
 MD C:\FireBoltDB
 
->> %CDBase% echo CREATE LOGIN [mPrest] WITH PASSWORD='MprIt12#4%', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
->> %CDBase% echo ALTER SERVER ROLE sysadmin ADD MEMBER [mPrest]
+>> %CDBase% echo CREATE LOGIN [%USER%] WITH PASSWORD=N'%PASS%', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
+>> %CDBase% echo ALTER SERVER ROLE sysadmin ADD MEMBER [%USER%]
 >> %CDBase% echo GO
 
 for %%A in (

@@ -1,5 +1,6 @@
 @echo off
-rem Version 1.0.0.6 By Ben Eytan 04022025
+rem Version 1.0.0.6 By Ben Eytan 09022025
+
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -58,6 +59,18 @@ if errorlevel 1 (
     exit /b 1
 )
 
+
+
+
+echo ----------------------------------------------------------
+echo Installation Path: %DestPath%
+echo ----------------------------------------------------------
+
+@echo Kill Processes...
+sc \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
+sc \\10.11.%BN%8.%PN% stop "mDRS Server Service"
+timeout /t 6
+
 :: Check and Rename Folder mDRS
 if exist "T:\%TargetFolder%" (
     echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
@@ -90,16 +103,6 @@ if exist "T:\%TargetFolder_DB%" (
 
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
-
-
-echo ----------------------------------------------------------
-echo Installation Path: %DestPath%
-echo ----------------------------------------------------------
-
-@echo Kill Processes...
-sc \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
-sc \\10.11.%BN%8.%PN% stop "mDRS Server Service"
-timeout /t 6
 
 :mDRS
 echo Installing FBE mDRS, Please Wait...

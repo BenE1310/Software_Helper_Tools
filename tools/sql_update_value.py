@@ -2,6 +2,8 @@ import os
 
 BN=1
 
+
+
 def generate_sql_script_training_launchers(octet_value):
     sql_script = f"""
     -- Query for CombainTraining & Training Mode --
@@ -24,9 +26,6 @@ def generate_sql_script_training_launchers(octet_value):
 
 # Example usage
 sql_code = generate_sql_script_training_launchers(BN)
-
-# Print or save the generated SQL script
-print(sql_code)
 
 # Optionally, write it to a file
 with open(f"Scripts/SQL/adding_launcher_training_mode.sql", "w") as file:

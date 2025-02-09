@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 28012025
+rem Version 1.0.0.7 By Ben Eytan 09022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -55,6 +55,21 @@ if errorlevel 1 (
     exit /b 1
 )
 
+
+:: Continue with BatteryClient Logic
+echo ----------------------------------------------------------
+echo Installation Path: %DestPath%
+echo ----------------------------------------------------------
+
+@echo Kill Processes...
+sc \\10.12.%BN%8.%PN% stop "FBE Watchdog"
+timeout /t 6
+"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog"
+"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IcsMainAppWithSafeties.exe
+"%~dp0..\..\"Tools"\"PsKill.exe" -accepteula -t IcsMainAppWithoutSafeties.exe
+
+for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
+
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
     echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
@@ -73,20 +88,6 @@ if exist "T:\%TargetFolder%" (
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
 
-:: Continue with BatteryClient Logic
-echo ----------------------------------------------------------
-echo Installation Path: %DestPath%
-echo ----------------------------------------------------------
-
-@echo Kill Processes...
-sc \\10.12.%BN%8.%PN% stop "FBE Watchdog"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IcsMainAppWithSafeties.exe
-"%~dp0..\..\"Tools"\"PsKill.exe" -accepteula -t IcsMainAppWithoutSafeties.exe
-
-for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
-
 :ICS
 ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\ICS.7z" -o"%DestPath%" -y) 
 IF exist %DestPath% ( echo Firebolt Source Folder Found ) ELSE (goto NoSource)
@@ -95,14 +96,14 @@ echo Installing FBE ICS, Please Wait...
 echo.
 echo.
 rem robocopy /e /w:3 /r:3 %DestPath%%mydate%\Maps %DestPath%\Maps
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\BMC\Battery\Operational\ICS %DestPath%\BMC\Battery\Operational\ICS AddressBook.ini
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\BMC\Battery\Operational\ICS %DestPath%\BMC\Battery\Operational\ICS IcsParams.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\BMC\Battery\Operational\ICS %DestPath%\BMC\Battery\Operational\ICS AddressBook.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\BMC\Battery\Operational\ICS %DestPath%\BMC\Battery\Operational\ICS IcsParams.ini
 
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\BMC\Battery\Training\ICS %DestPath%\BMC\Battery\Training\ICS AddressBook.ini
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\BMC\Battery\Training\ICS %DestPath%\BMC\Battery\Training\ICS IcsParams.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\BMC\Battery\Training\ICS %DestPath%\BMC\Battery\Training\ICS AddressBook.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\BMC\Battery\Training\ICS %DestPath%\BMC\Battery\Training\ICS IcsParams.ini
 
 echo Moving mDRSStorage to the new version, Please Wait...
-robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
+robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
 echo.
 goto Maps
 

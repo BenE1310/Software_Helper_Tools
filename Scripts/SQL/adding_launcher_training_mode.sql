@@ -9,7 +9,7 @@
 
     WHILE @serialNumber < 325 
     BEGIN 
-        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.11.18.3', @sendPort, @recievePort)
+        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.12.38.3', @sendPort, @recievePort)
         SET @sendPort = @sendPort + 1;
         SET @serialNumber = @serialNumber + 1;
         SET @recievePort = @recievePort + 1;

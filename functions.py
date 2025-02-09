@@ -398,7 +398,7 @@ def prepare_installation_battery(ip_base, host_type, current_bat_file, scripts_s
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-    zip_src_db_1 = "C:\\VSIL\\Zip\\DB.7z"
+    zip_src_db_1 = "C:\\FBE\\Zip\\DB.7z"
 
 
     # Determine the destination folder based on host type
@@ -476,6 +476,57 @@ def cleanup_temp_files():
         if file.endswith(".bat"):
             os.remove(os.path.join(temp_dir, file))
     print("Temporary files cleaned up.")
+
+
+def handle_adding_launchers_battery(bat_num, current_bat_file, current_sql_file, logs=None, results_text=None):
+    """
+    Prepare the installation process for a host.
+    """
+    logs = logs or []
+    drive_letter = "P:"  # Use any available drive letter
+    db_ip = f"10.11.{bat_num}8.3"
+    unc_path = f"\\\\{db_ip}\\c$"
+    scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
+    sql_script_src = f".\\Scripts\\SQL\\{current_sql_file}"
+
+    # Determine the destination folder based on host type
+    try:
+        # Step 1: Map the drive
+        log_message = f"Mapping {unc_path} to {drive_letter}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        os.system(f"net use {drive_letter} {unc_path}")
+
+        # Step 2: Copy the script
+        scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
+        sql_dest = f"{drive_letter}\\DB\\sql\\"
+        remote_bat_path = f"{scripts_dest}{current_bat_file}"
+        log_message = f"Copying script file to {scripts_dest}..."
+        log_message_sql = f"Copying sql script file to {sql_dest}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        os.system(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I")
+        logs.append(log_message_sql)
+        update_results_text(results_text, log_message_sql)
+        os.system(f"echo D | xcopy \"{sql_script_src}\" \"{sql_dest}\" /E /Y /I")
+
+        # Step 3: Execute the batch file
+        log_message = f"Executing batch file {remote_bat_path}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        subprocess.run(["cmd", "/c", remote_bat_path])
+
+    except Exception as e:
+        log_message = f"Error during execution: {e}"
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+
+    finally:
+        # Step 4: Unmap the drive
+        log_message = f"Unmapping {drive_letter}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        os.system(f"net use {drive_letter} /delete")
 
 
 def handle_tables_battery(bat_num, current_bat_file, logs=None, results_text=None):
@@ -574,3 +625,24 @@ def update_results_text(results_text, message):
         results_text.insert(tk.END, message + "\n")  # Append message
         results_text.see(tk.END)  # Auto-scroll to the latest log
         results_text.update_idletasks()  # Refresh GUI
+
+
+def generate_sql_script_training_launchers(octet_value):
+    sql_script = f"""
+    -- Query for CombainTraining & Training Mode --
+    DECLARE @serialNumber INTEGER
+    DECLARE @sendPort INTEGER
+    DECLARE @recievePort INTEGER
+    SET @serialNumber = 301;
+    SET @recievePort = 1301;
+    SET @sendPort = 1801;
+
+    WHILE @serialNumber < 325 
+    BEGIN 
+        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.12.{octet_value}8.3', @sendPort, @recievePort)
+        SET @sendPort = @sendPort + 1;
+        SET @serialNumber = @serialNumber + 1;
+        SET @recievePort = @recievePort + 1;
+    END
+    """
+    return sql_script
