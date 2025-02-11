@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.6 By Ben Eytan 04022025
+rem Version 1.0.0.6 By Ben Eytan 10022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -49,6 +49,8 @@ set TargetFolder_DB=DB
 set NewFolderName_DB=DB_%mydate%
 set DestPath="\\10.11.%BN%8.%PN%\c$\VSIL"
 set DestPath_mDRS="\\10.11.%BN%8.%PN%\c$\mDRS"
+set DestPath_DB="\\10.11.%BN%8.%PN%\c$\DB"
+
 
 echo %RemoteComputer%
 
@@ -141,8 +143,8 @@ goto WD
 
 :WD
 echo Installing FBE WD, Please Wait...
-("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\WD_Common.7z" -o"%DestPath%" -y) 
-IF exist %DestPath% ( echo VSIL Source Folder Found ) ELSE (goto NoSource_WD)
+("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\WD_Common.7z" -o"%DestPath_DB%" -y)
+IF exist %DestPath_DB% ( echo VSIL Source Folder Found ) ELSE (goto NoSource_WD)
 goto :Run_WD
 
 :Run_WD

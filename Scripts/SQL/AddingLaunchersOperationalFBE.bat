@@ -1,7 +1,6 @@
 @cd /d "%~dp0"
 @echo off
-set /a BN=1
-set USER=mPrest
-set PASS=MprIt12#4%
+set /a BN=0
 
-sqlcmd -S "." -d FireBolt_BMCConfigDB_Operational_%BN% -U %USER% -P %PASS% -i C:\DB\Sql\adding_launcher_operational_mode.sql
+
+sqlcmd -S 10.11.%BN%8.3 -d FireBolt_BMCConfigDB_Operational_%BN%  -i P:\DB\Sql\adding_launcher_operational_mode.sql

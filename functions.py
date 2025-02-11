@@ -573,7 +573,7 @@ def handle_tables_battery(bat_num, current_bat_file, logs=None, results_text=Non
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
 
-def write_bat_file_db_phase(BN, SQL_USER, SQL_PASS, BAT_FILE_NAME, logs=None, results_text=None):
+def write_bat_file_db_phase(BN, BAT_FILE_NAME, logs=None, results_text=None):
     """
     Writes BN, SQL_USER, and SQL_PASS values to lines 3, 4, and 5 in the BAT file.
     If the file exists, it updates only those lines. Otherwise, it creates a new file.
@@ -582,8 +582,6 @@ def write_bat_file_db_phase(BN, SQL_USER, SQL_PASS, BAT_FILE_NAME, logs=None, re
 
     new_lines = [
         f"set /a BN={BN}\n",
-        f"set USER={SQL_USER}\n",
-        f"set PASS={SQL_PASS}\n"
     ]
 
     BAT_FILE_PATH = f".\\Scripts\\SQL\\{BAT_FILE_NAME}"
@@ -593,21 +591,19 @@ def write_bat_file_db_phase(BN, SQL_USER, SQL_PASS, BAT_FILE_NAME, logs=None, re
             existing_lines = file.readlines()
 
         # Ensure the file has at least 5 lines
-        while len(existing_lines) < 5:
+        while len(existing_lines) < 3:
             existing_lines.append("\n")
 
         # Overwrite only lines 3, 4, and 5
         existing_lines[2] = new_lines[0]  # Line 3
-        existing_lines[3] = new_lines[1]  # Line 4
-        existing_lines[4] = new_lines[2]  # Line 5
 
         with open(BAT_FILE_PATH, "w") as file:
             file.writelines(existing_lines)
 
-        log_message = f"Updated lines 3-5 in existing batch file: {BAT_FILE_PATH}"
+        log_message = f"Updated lines 3 in existing batch file: {BAT_FILE_PATH}"
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        print(f"Updated lines 3-5 in existing batch file: {BAT_FILE_PATH}")
+        print(f"Updated lines 3 in existing batch file: {BAT_FILE_PATH}")
 
     else:
         # If the file doesn't exist, create at least 2 empty lines before writing the values

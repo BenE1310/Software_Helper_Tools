@@ -87,8 +87,7 @@ button_style_small = {
 
 BN = 0
 VSIL_BN = 0
-SQL_USER = None
-SQL_PASS = None
+
 buttons = []
 installation_app_remote_message = []
 progress_bar_ping = None
@@ -115,52 +114,52 @@ def disable_button(window):
 def enable_button(window):
     window.config(state='normal')  # Enable the grayed-out button
 
-def prompt_for_credentials():
-    global SQL_USER, SQL_PASS
-
-    # Create a dialog to request credentials
-    credentials_window = tk.Toplevel()
-    credentials_window.title("Enter SQL Credentials")
-    credentials_window.geometry("300x200")
-    credentials_window.resizable(False, False)
-    credentials_window.grab_set()  # Make it modal
-    credentials_window.iconbitmap("icon.ico")
-
-    tk.Label(credentials_window, text="Username:", font=("Arial", 12)).pack(pady=5)
-    username_entry = tk.Entry(credentials_window, font=("Arial", 12))
-    username_entry.pack(pady=5)
-
-    tk.Label(credentials_window, text="Password:", font=("Arial", 12)).pack(pady=5)
-    password_entry = tk.Entry(credentials_window, font=("Arial", 12), show="*")
-    password_entry.pack(pady=5)
-
-    def save_credentials():
-        global SQL_USER, SQL_PASS
-        SQL_USER = username_entry.get()
-        SQL_PASS = password_entry.get()
-        credentials_window.destroy()  # Close the credentials window
-
-    tk.Button(credentials_window, text="Submit", command=save_credentials, font=("Arial", 12)).pack(pady=10)
-
-    credentials_window.wait_window()  # Block execution until window is closed
+# def prompt_for_credentials():
+#     global SQL_USER, SQL_PASS
+#
+#     # Create a dialog to request credentials
+#     credentials_window = tk.Toplevel()
+#     credentials_window.title("Enter SQL Credentials")
+#     credentials_window.geometry("300x200")
+#     credentials_window.resizable(False, False)
+#     credentials_window.grab_set()  # Make it modal
+#     credentials_window.iconbitmap("icon.ico")
+#
+#     tk.Label(credentials_window, text="Username:", font=("Arial", 12)).pack(pady=5)
+#     username_entry = tk.Entry(credentials_window, font=("Arial", 12))
+#     username_entry.pack(pady=5)
+#
+#     tk.Label(credentials_window, text="Password:", font=("Arial", 12)).pack(pady=5)
+#     password_entry = tk.Entry(credentials_window, font=("Arial", 12), show="*")
+#     password_entry.pack(pady=5)
+#
+#     def save_credentials():
+#         global SQL_USER, SQL_PASS
+#         SQL_USER = username_entry.get()
+#         SQL_PASS = password_entry.get()
+#         credentials_window.destroy()  # Close the credentials window
+#
+#     tk.Button(credentials_window, text="Submit", command=save_credentials, font=("Arial", 12)).pack(pady=10)
+#
+#     credentials_window.wait_window()  # Block execution until window is closed
 # Function to open a new window for the Database
 
 def open_battery_database_window():
     global BN
 
     # Ask for credentials before opening the main window
-    prompt_for_credentials()
+    # prompt_for_credentials()
 
-    small_window = tk.Toplevel()
-    small_window.title("Table Management")
-    small_window.geometry("400x450")
-    small_window.resizable(False, False)
-    small_window.configure(bg="#004d4d")
-    small_window.iconbitmap("icon.ico")
+    database_window_battery = tk.Toplevel()
+    database_window_battery.title("Table Management")
+    database_window_battery.geometry("400x470")
+    database_window_battery.resizable(False, False)
+    database_window_battery.configure(bg="#004d4d")
+    database_window_battery.iconbitmap("icon.ico")
 
     # Title Label
     title_label = tk.Label(
-        small_window, text=f"Database Battery {BN}", font=("Arial", 14, "bold"), fg="white", bg="#004d4d"
+        database_window_battery, text=f"Database Battery {BN}", font=("Arial", 14, "bold"), fg="white", bg="#004d4d"
     )
     title_label.place(x=100, y=5)
 
@@ -169,18 +168,33 @@ def open_battery_database_window():
     training_var = tk.BooleanVar()
 
     tk.Checkbutton(
-        small_window, text="Operational", variable=operational_var,
+        database_window_battery, text="Operational", variable=operational_var,
         bg="#004d4d", fg="white", selectcolor="#004d4d", font=("Arial", 12)
     ).place(x=20, y=50)
 
     tk.Checkbutton(
-        small_window, text="Training", variable=training_var,
+        database_window_battery, text="Training", variable=training_var,
         bg="#004d4d", fg="white", selectcolor="#004d4d", font=("Arial", 12)
     ).place(x=20, y=90)
+
+    def on_close():
+        database_window_battery.destroy()  # Close the window
+
+    def yes_no_keep_delete():
+        response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?")
+        if response:
+            handle_delete_tables()
+        else:
+            return
 
 
     def handle_create_empty_tables():
         global BN, bat_file_name
+
+        # Ensure at least one mode is selected
+        if not (operational_var.get() or training_var.get()):
+            messagebox.showwarning("No Selection", "Please select at least one mode.")
+            return
 
         """
         Handles the "Create Tables" button click.
@@ -197,7 +211,7 @@ def open_battery_database_window():
             return
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
         handle_tables_battery(BN,current_bat_file=bat_file_name, results_text=results_text)
@@ -209,6 +223,10 @@ def open_battery_database_window():
     def handle_delete_tables():
         global BN, bat_file_name
 
+        # Ensure at least one mode is selected
+        if not (operational_var.get() or training_var.get()):
+            messagebox.showwarning("No Selection", "Please select at least one mode.")
+            return
         """
         Handles the "Create Tables" button click.
         - Checks if either checkbox is selected.
@@ -224,7 +242,7 @@ def open_battery_database_window():
             return
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
         handle_tables_battery(BN,current_bat_file=bat_file_name, results_text=results_text)
@@ -234,6 +252,11 @@ def open_battery_database_window():
 
     def handle_import_tables():
         global BN, bat_file_name
+
+        # Ensure at least one mode is selected
+        if not (operational_var.get() or training_var.get()):
+            messagebox.showwarning("No Selection", "Please select at least one mode.")
+            return
 
         """
         Handles the "Import Tables" button click.
@@ -250,7 +273,7 @@ def open_battery_database_window():
             return
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name,
+        write_bat_file_db_phase(BN=BN, BAT_FILE_NAME=bat_file_name,
                                 results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
@@ -262,6 +285,11 @@ def open_battery_database_window():
     def handle_adding_launchers():
         global BN, bat_file_name
 
+        # Ensure at least one mode is selected
+        if not (operational_var.get() or training_var.get()):
+            messagebox.showwarning("No Selection", "Please select at least one mode.")
+            return
+
         """
         Handles the "Adding launchers" button click.
         - Checks if either checkbox is selected.
@@ -270,10 +298,10 @@ def open_battery_database_window():
         """
         if operational_var.get():
             bat_file_name = "AddingLaunchersOperationalFBE.bat"
-            sql_file_name = "adding_launcher_training_mode.sql"
-        elif training_var.get():
-            bat_file_name = "CreateTablesTrainingFBE.bat"
             sql_file_name = "adding_launcher_operational_mode.sql"
+        elif training_var.get():
+            bat_file_name = "AddingLaunchersTrainingFBE.bat"
+            sql_file_name = "adding_launcher_training_mode.sql"
             sql_code = generate_sql_script_training_launchers(BN)
 
             # Write it to a file
@@ -284,7 +312,7 @@ def open_battery_database_window():
             return
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, SQL_USER=SQL_USER, SQL_PASS=SQL_PASS, BAT_FILE_NAME=bat_file_name,
+        write_bat_file_db_phase(BN=BN, BAT_FILE_NAME=bat_file_name,
                                 results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
@@ -294,33 +322,41 @@ def open_battery_database_window():
         threading.Thread(target=handle_adding_launchers).start()
 
     # Buttons on the right
-    button_x = 200
+    button_x = 210
     button_width = 170
     button_height = 40
     y_start = 50
     y_gap = 60
 
     tk.Button(
-        small_window, text="Create Tables", font=("Arial", 12), bg="#006666", fg="white",
+        database_window_battery, text="Create Tables", font=("Arial", 12), bg="#006666", fg="white",
         activebackground="#008080", command=create_empty_databases
     ).place(x=button_x, y=y_start, width=button_width, height=button_height)
     tk.Button(
-        small_window, text="Delete Tables", font=("Arial", 12), bg="#006666", fg="white",
-        activebackground="#008080", command=delete_databases
+        database_window_battery, text="Delete Tables", font=("Arial", 12), bg="#006666", fg="white",
+        activebackground="#008080", command=yes_no_keep_delete
     ).place(x=button_x, y=y_start + y_gap, width=button_width, height=button_height)
 
     tk.Button(
-        small_window, text="Import Tables", font=("Arial", 12), bg="#006666", fg="white",
+        database_window_battery, text="Import Tables", font=("Arial", 12), bg="#006666", fg="white",
         activebackground="#008080", command=import_tables
     ).place(x=button_x, y=y_start + 2 * y_gap, width=button_width, height=button_height)
 
     tk.Button(
-        small_window, text="Adding Launchers", font=("Arial", 12), bg="#006666", fg="white",
+        database_window_battery, text="Adding Launchers", font=("Arial", 12), bg="#006666", fg="white",
         activebackground="#008080", command=adding_launchers
     ).place(x=button_x, y=y_start + 3 * y_gap, width=button_width, height=button_height)
 
+    tk.Button(
+        database_window_battery, text="Close", font=("Arial", 12), bg="#800000", fg="white",
+        activebackground="#990000", command=on_close
+    ).place(x=162, y=430, width=80, height=30)
+
+    # Close button in the middle at the bottom
+
+
     # Results Display
-    results_text = tk.Text(small_window, height=5, width=50, bg="#003333", fg="white", font=("Arial", 10))
+    results_text = tk.Text(database_window_battery, height=5, width=50, bg="#003333", fg="white", font=("Arial", 10))
     results_text.place(x=20, y=300, width=360, height=120)
 
 # Function to open a new window for the App Installation
@@ -2064,7 +2100,7 @@ def open_battery_window():
                         logs.append(f"{host} (IP: {ip}): Version check failed - {version_info['error']}")
                     else:
                         product_version = version_info.get("Product Version", "Unknown")
-                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) - Version: {product_version}")
+                        0
                         logs.append(f"{host} (IP: {ip}): Version: {product_version}")
 
             # Stop the progress bar and display results
@@ -2145,6 +2181,7 @@ def open_battery_window():
                         except Exception as e:
                             logs.append(f"{host} (IP: {ip}): Failed to create folder - {e}")
                             labels[host].config(fg="red")
+                            labels[host].config(text=f"{host} (IP: {ip}) P")
                             continue  # Skip further execution for this host
                     else:
                         folder_created = False  # The folder already existed
@@ -2216,7 +2253,7 @@ def open_battery_window():
                             )
                         else:
                             labels[host].config(fg="green")
-                            labels[host].config(text=f"{host} (IP: {ip}")
+                            labels[host].config(text=f"{host} (IP: {ip})")
                             logs.append(
                                 f"{host} (IP: {ip}): Free space in C Drive is {free_space:.2f}GB. Disk space is sufficient."
                             )
@@ -2233,9 +2270,6 @@ def open_battery_window():
         threading.Thread(target=run_test).start()
 
     # Buttons
-
-    # 003d3d
-
     tk.Button(
         battery_window,
         text="Get Version",

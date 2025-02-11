@@ -1,9 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 set /a BN=0
-set USER=123
-set PASS=
-echo Deleting Databases for Battery number %BN%
+
+echo Deleting Databases for Battery number %BN% Operational Mode
 set CDBase="C:\Windows\Temp\DeleteDatabases.sql"
 del %CDBase%
 
@@ -22,7 +21,7 @@ for %%A in (
 >> %CDBase% echo GO
 ))
 
-sqlcmd -S localhost -U %USER% -P %PASS% -i %CDBase%
+sqlcmd -S 10.11.%BN%8.3 -i %CDBase%
 
 echo Removing database files...
 for %%A in (

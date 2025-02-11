@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.7 By Ben Eytan 09022025
+rem Version 1.0.1.0 By Ben Eytan 11022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -62,16 +62,16 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-sc \\10.11.%BN%8.%PN% stop "FBE Watchdog"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IronDomeMdrsAgent.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t LoginApp.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBETrainerClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEMaintenance.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeBmcOperationalClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeTrainingClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackClient.exe
+psservice \\10.11.%BN%8.%PN% stop "FBE Watchdog"
+pskill \\10.11.%BN%8.%PN% IronDomeMdrsAgent.exe
+pskill \\10.11.%BN%8.%PN% LoginApp.exe
+pskill \\10.11.%BN%8.%PN% FBETrainerClient.exe
+pskill \\10.11.%BN%8.%PN% FBEMaintenance.exe
+pskill \\10.11.%BN%8.%PN% FBEIronDomeBmcOperationalClient.exe
+pskill \\10.11.%BN%8.%PN% FBEIronDomeTrainingClient.exe
+pskill \\10.11.%BN%8.%PN% FBEPlaybackClient.exe
+
+timeout /t 10
 
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
@@ -119,7 +119,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-sc \\10.11.%BN%8.%PN% start "FBE Watchdog"
+psservice \\10.11.%BN%8.%PN% start "FBE Watchdog"
 goto EOF
 
 :EOF

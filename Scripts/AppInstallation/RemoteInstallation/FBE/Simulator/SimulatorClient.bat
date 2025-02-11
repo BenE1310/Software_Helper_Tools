@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 28012025
+rem Version 1.0.1.0 By Ben Eytan 11022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -80,7 +80,7 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeSimClient.exe
+pskill \\10.11.%BN%8.%PN% FBEIronDomeSimClient.exe
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 goto Simulator_Client

@@ -1,16 +1,11 @@
 @echo off
 setlocal enabledelayedexpansion
-set /a BN=0
-set USER=123
-set PASS=
-echo Creating Databases For Battery number %BN%
+set /a BN=5
+
+echo Creating Databases For Battery number %BN% Operational Mode
 set CDBase="C:\Windows\Temp\CDBase.sql"
 del %CDBase%
 MD C:\FireBoltDB
-
->> %CDBase% echo CREATE LOGIN [%USER%] WITH PASSWORD=N'%PASS%', DEFAULT_DATABASE=[master], DEFAULT_LANGUAGE=[us_english], CHECK_EXPIRATION=OFF, CHECK_POLICY=OFF
->> %CDBase% echo ALTER SERVER ROLE sysadmin ADD MEMBER [%USER%]
->> %CDBase% echo GO
 
 for %%A in (
 			FireBolt_BMCConfigDB_Operational
@@ -51,4 +46,4 @@ for %%A in (
 >> %CDBase% echo EXEC sp_addrolemember N'db_datareader', N'IronDomeClient1'
 ))
 
-sqlcmd -i %CDBase%
+sqlcmd -S 10.11.%BN%8.3 -i %CDBase%

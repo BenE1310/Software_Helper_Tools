@@ -1,6 +1,5 @@
 @echo off
-rem Version 1.0.0.6 By Ben Eytan 09022025
-
+rem Version 1.0.1.0 By Ben Eytan 11022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -48,6 +47,8 @@ set NewFolderName=mDRS_%mydate%
 set TargetFolder_DB=DB
 set NewFolderName_DB=DB_%mydate%
 set DestPath="\\10.11.%BN%8.%PN%\c$\mDRS"
+set DestPath_DB="\\10.11.%BN%8.%PN%\c$\DB"
+
 echo %RemoteComputer%
 
 :: Map Remote Share
@@ -60,16 +61,15 @@ if errorlevel 1 (
 )
 
 
-
-
 echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-sc \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
-sc \\10.11.%BN%8.%PN% stop "mDRS Server Service"
-timeout /t 6
+psservice \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
+psservice \\10.11.%BN%8.%PN% stop "mDRS Server Service"
+
+timeout /t 10
 
 :: Check and Rename Folder mDRS
 if exist "T:\%TargetFolder%" (
@@ -112,8 +112,8 @@ goto DB
 
 :DB
 echo Creating FBE DB folder, Please Wait...
-("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\DB.7z" -o"%DestPath%" -y)
-IF exist %DestPath% ( echo VSIL Source Folder Found ) ELSE (goto NoSource_DB)
+("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\DB.7z" -o"%DestPath_DB%" -y)
+IF exist %DestPath_DB% ( echo DB Source Folder Found ) ELSE (goto NoSource_DB)
 goto EOF
 
 :EOF

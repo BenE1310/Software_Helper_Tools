@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 09022025
+rem Version 1.0.1.0 By Ben Eytan 11022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -63,13 +63,13 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-sc \\10.11.218.%PN% stop "FBE Watchdog REGIONAL"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "FBE Watchdog REGIONAL"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeRegionalOperationalServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeTrainerServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBETrainerServer.exe
+psservice \\10.11.218.%PN% stop "FBE Watchdog REGIONAL"
+pskill \\10.11.%BN%8.%PN% FBEIronDomeRegionalOperationalServer.exe
+pskill \\10.11.%BN%8.%PN% FBEPlaybackServer.exe
+pskill \\10.11.%BN%8.%PN% FBEIronDomeTrainerServer.exe
+pskill \\10.11.%BN%8.%PN% FBETrainerServer.exe
+
+timeout /t 10
 
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
@@ -109,7 +109,8 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-sc \\10.11.218.%PN% start "FBE Watchdog REGIONAL"
+psservice \\10.11.218.%PN% start "FBE Watchdog REGIONAL"
+
 goto EOF
 
 :EOF
