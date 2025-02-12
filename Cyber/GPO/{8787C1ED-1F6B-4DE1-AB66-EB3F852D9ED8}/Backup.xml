@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Copyright (c) Microsoft Corporation.  All rights reserved. --><GroupPolicyBackupScheme bkp:version="2.0" bkp:type="GroupPolicyBackupTemplate" xmlns:bkp="http://www.microsoft.com/GroupPolicy/GPOOperations" xmlns="http://www.microsoft.com/GroupPolicy/GPOOperations">
+    <GroupPolicyObject><SecurityGroups><Group bkp:Source="FromDACL"><Sid><![CDATA[S-1-5-21-2045930637-2246715820-2293107792-519]]></Sid><SamAccountName><![CDATA[Enterprise Admins]]></SamAccountName><Type><![CDATA[UniversalGroup]]></Type><NetBIOSDomainName><![CDATA[FIREBOLT21]]></NetBIOSDomainName><DnsDomainName><![CDATA[Firebolt21.Local]]></DnsDomainName><UPN><![CDATA[Enterprise Admins@Firebolt21.Local]]></UPN></Group><Group bkp:Source="FromDACL"><Sid><![CDATA[S-1-5-21-2045930637-2246715820-2293107792-512]]></Sid><SamAccountName><![CDATA[Domain Admins]]></SamAccountName><Type><![CDATA[GlobalGroup]]></Type><NetBIOSDomainName><![CDATA[FIREBOLT21]]></NetBIOSDomainName><DnsDomainName><![CDATA[Firebolt21.Local]]></DnsDomainName><UPN><![CDATA[Domain Admins@Firebolt21.Local]]></UPN></Group></SecurityGroups><FilePaths/><GroupPolicyCoreSettings><ID><![CDATA[{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}]]></ID><Domain><![CDATA[Firebolt21.Local]]></Domain><SecurityDescriptor>01 00 04 9c 00 00 00 00 00 00 00 00 00 00 00 00 14 00 00 00 04 00 ec 00 08 00 00 00 05 02 28 00 00 01 00 00 01 00 00 00 8f fd ac ed b3 ff d1 11 b4 1d 00 a0 c9 68 f9 39 01 01 00 00 00 00 00 05 0b 00 00 00 00 00 24 00 ff 00 0f 00 01 05 00 00 00 00 00 05 15 00 00 00 8d 6c f2 79 ac 29 ea 85 50 0c ae 88 00 02 00 00 00 02 24 00 ff 00 0f 00 01 05 00 00 00 00 00 05 15 00 00 00 8d 6c f2 79 ac 29 ea 85 50 0c ae 88 00 02 00 00 00 02 24 00 ff 00 0f 00 01 05 00 00 00 00 00 05 15 00 00 00 8d 6c f2 79 ac 29 ea 85 50 0c ae 88 07 02 00 00 00 02 14 00 94 00 02 00 01 01 00 00 00 00 00 05 09 00 00 00 00 02 14 00 94 00 02 00 01 01 00 00 00 00 00 05 0b 00 00 00 00 02 14 00 ff 00 0f 00 01 01 00 00 00 00 00 05 12 00 00 00 00 0a 14 00 ff 00 0f 00 01 01 00 00 00 00 00 03 00 00 00 00</SecurityDescriptor><DisplayName><![CDATA[Windows EAP Policy]]></DisplayName><Options><![CDATA[0]]></Options><UserVersionNumber><![CDATA[196611]]></UserVersionNumber><MachineVersionNumber><![CDATA[1245203]]></MachineVersionNumber><MachineExtensionGuids><![CDATA[[{827D319E-6EAC-11D2-A4EA-00C04F79F83A}{803E14A0-B4FB-11D0-A0D0-00A0C90F574B}][{B587E2B1-4D59-4E7E-AED9-22B9DF11D053}{06993B16-A5C7-47EB-B61C-B1CB7EE600AC}]]]></MachineExtensionGuids><UserExtensionGuids/><WMIFilter/></GroupPolicyCoreSettings> 
+        <GroupPolicyExtension bkp:ID="{35378EAC-683F-11D2-A89A-00C04FBBCFA2}" bkp:DescName="Registry">
+            
+            
+            <FSObjectFile bkp:Path="%GPO_FSPATH%\Adm\*.*" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Adm\*.*"/>
+        </GroupPolicyExtension>
+        
+        
+        
+        
+        <GroupPolicyExtension bkp:ID="{827D319E-6EAC-11D2-A4EA-00C04F79F83A}" bkp:DescName="Security">
+            <FSObjectFile bkp:Path="%GPO_MACH_FSPATH%\microsoft\windows nt\SecEdit\GptTmpl.inf" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Machine\microsoft\windows nt\SecEdit\GptTmpl.inf" bkp:ReEvaluateFunction="SecurityValidateSettings" bkp:Location="DomainSysvol\GPO\Machine\microsoft\windows nt\SecEdit\GptTmpl.inf"/>
+        </GroupPolicyExtension>
+        
+        
+        <GroupPolicyExtension bkp:ID="{B587E2B1-4D59-4E7E-AED9-22B9DF11D053}" bkp:DescName="Wired Group Policy" bkp:Win2KCompatible="false">
+            <DSObject bkp:Path="cn=Microsoft,%GPO_MACH_DSPATH%" bkp:ObjectClass="container" bkp:SourceExpandedPath="cn=Microsoft,cn=Machine,cn={39EC12F5-17ED-4637-A50D-0A3379F4FB6D},CN=Policies,CN=System,DC=Firebolt21,DC=Local">
+                <DSObject bkp:Path="cn=Windows,cn=Microsoft,%GPO_MACH_DSPATH%" bkp:ObjectClass="container" bkp:SourceExpandedPath="cn=Windows,cn=Microsoft,cn=Machine,cn={39EC12F5-17ED-4637-A50D-0A3379F4FB6D},CN=Policies,CN=System,DC=Firebolt21,DC=Local">
+                    <DSObject bkp:Path="cn=IEEE8023,cn=Windows,cn=Microsoft,%GPO_MACH_DSPATH%" bkp:ObjectClass="container" bkp:SourceExpandedPath="cn=IEEE8023,cn=Windows,cn=Microsoft,cn=Machine,cn={39EC12F5-17ED-4637-A50D-0A3379F4FB6D},CN=Policies,CN=System,DC=Firebolt21,DC=Local">
+                        <DSObject bkp:Path="*,cn=IEEE8023,cn=Windows,cn=Microsoft,%GPO_MACH_DSPATH%" bkp:ObjectClass="ms-net-ieee-8023-GroupPolicy" bkp:SourceExpandedPath="*,cn=IEEE8023,cn=Windows,cn=Microsoft,cn=Machine,cn={39EC12F5-17ED-4637-A50D-0A3379F4FB6D},CN=Policies,CN=System,DC=Firebolt21,DC=Local"><DSObject bkp:ObjectClass="ms-net-ieee-8023-GroupPolicy" bkp:Path="CN=EAP,CN=IEEE8023,CN=Windows,CN=Microsoft,%GPO_MACH_DSPATH%" bkp:SourceExpandedPath="CN=EAP,CN=IEEE8023,CN=Windows,CN=Microsoft,cn=Machine,cn={39EC12F5-17ED-4637-A50D-0A3379F4FB6D},CN=Policies,CN=System,DC=Firebolt21,DC=Local">
+                            <DSAttributeMultiString bkp:DSAttrName="description"><DSValue><![CDATA[Sample Description]]></DSValue></DSAttributeMultiString>
+                            <DSAttributeString bkp:DSAttrName="ms-net-ieee-8023-GP-PolicyGUID"><DSValue><![CDATA[{460b09a3-89b8-405b-a6e9-3e50310a9b77}]]></DSValue></DSAttributeString>
+                            <DSAttributeString bkp:DSAttrName="ms-net-ieee-8023-GP-PolicyData"><DSValue><![CDATA[<?xml version="1.0"?>
+<LANPolicy xmlns="http://www.microsoft.com/networking/LAN/policy/v1">
+	<name>EAP</name>
+	<description>Sample Description</description>
+	<globalFlags>
+		<enableAutoConfig>true</enableAutoConfig>
+	</globalFlags>
+	<profileList>
+		<LANProfile xmlns="http://www.microsoft.com/networking/LAN/profile/v1">
+			<MSM>
+				<security>
+					<OneXEnforced>false</OneXEnforced>
+					<OneXEnabled>true</OneXEnabled>
+					<OneX xmlns="http://www.microsoft.com/networking/OneX/v1">
+						<maxAuthFailures>1</maxAuthFailures>
+						<authMode>machine</authMode>
+						<EAPConfig><EapHostConfig xmlns="http://www.microsoft.com/provisioning/EapHostConfig"><EapMethod><Type xmlns="http://www.microsoft.com/provisioning/EapCommon">13</Type><VendorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorId><VendorType xmlns="http://www.microsoft.com/provisioning/EapCommon">0</VendorType><AuthorId xmlns="http://www.microsoft.com/provisioning/EapCommon">0</AuthorId></EapMethod><Config xmlns="http://www.microsoft.com/provisioning/EapHostConfig"><Eap xmlns="http://www.microsoft.com/provisioning/BaseEapConnectionPropertiesV1"><Type>13</Type><EapType xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV1"><CredentialsSource><CertificateStore><SimpleCertSelection>true</SimpleCertSelection></CertificateStore></CredentialsSource><ServerValidation><DisableUserPromptForServerValidation>false</DisableUserPromptForServerValidation><ServerNames></ServerNames><TrustedRootCA>82 0b 36 e4 34 d9 29 fa 26 97 69 24 d9 17 93 fa 8e 71 dc f5 </TrustedRootCA><TrustedRootCA>31 86 1f 15 d6 40 75 c1 0a 09 a0 25 5d aa 81 5b f5 40 fd 90 </TrustedRootCA><TrustedRootCA>00 1a cf 22 9a 63 eb 67 9b 3c 98 96 c2 31 e4 d9 5a 38 62 d1 </TrustedRootCA><TrustedRootCA>d8 92 70 02 3c 32 5c 93 c9 1a 4b 40 e9 57 9b 82 6b ec df fb </TrustedRootCA></ServerValidation><DifferentUsername>false</DifferentUsername><PerformServerValidation xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">true</PerformServerValidation><AcceptServerName xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2">false</AcceptServerName><TLSExtensions xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV2"><FilteringInfo xmlns="http://www.microsoft.com/provisioning/EapTlsConnectionPropertiesV3"><CAHashList Enabled="true"><IssuerHash>82 0b 36 e4 34 d9 29 fa 26 97 69 24 d9 17 93 fa 8e 71 dc f5 </IssuerHash><IssuerHash>31 86 1f 15 d6 40 75 c1 0a 09 a0 25 5d aa 81 5b f5 40 fd 90 </IssuerHash><IssuerHash>00 1a cf 22 9a 63 eb 67 9b 3c 98 96 c2 31 e4 d9 5a 38 62 d1 </IssuerHash><IssuerHash>d8 92 70 02 3c 32 5c 93 c9 1a 4b 40 e9 57 9b 82 6b ec df fb </IssuerHash><IssuerHash>d8 92 70 02 3c 32 5c 93 c9 1a 4b 40 e9 57 9b 82 6b ec df fb </IssuerHash><IssuerHash>d8 92 70 02 3c 32 5c 93 c9 1a 4b 40 e9 57 9b 82 6b ec df fb </IssuerHash><IssuerHash>d8 92 70 02 3c 32 5c 93 c9 1a 4b 40 e9 57 9b 82 6b ec df fb </IssuerHash></CAHashList></FilteringInfo></TLSExtensions></EapType></Eap></Config></EapHostConfig></EAPConfig>
+					</OneX>
+				</security>
+			</MSM>
+		</LANProfile>
+	</profileList>
+</LANPolicy>
+]]></DSValue></DSAttributeString>
+                        </DSObject>
+                            <DSAttributeMultiString bkp:DSAttrName="description"/>
+                            <DSAttributeString bkp:DSAttrName="ms-net-ieee-8023-GP-PolicyGUID"/>
+                            <DSAttributeString bkp:DSAttrName="ms-net-ieee-8023-GP-PolicyData"/>
+                        </DSObject>
+                    </DSObject>
+                </DSObject>
+            </DSObject>
+        </GroupPolicyExtension>
+        
+    <GroupPolicyExtension bkp:ID="{F15C46CD-82A0-4C2D-A210-5D0D3182A418}" bkp:DescName="Unknown Extension"><FSObjectDir bkp:Path="%GPO_MACH_FSPATH%\Applications" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Machine\Applications" bkp:Location="DomainSysvol\GPO\Machine\Applications"/><FSObjectDir bkp:Path="%GPO_MACH_FSPATH%\Microsoft" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Machine\Microsoft" bkp:Location="DomainSysvol\GPO\Machine\Microsoft"/><FSObjectDir bkp:Path="%GPO_MACH_FSPATH%\Microsoft\Windows NT" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Machine\Microsoft\Windows NT" bkp:Location="DomainSysvol\GPO\Machine\Microsoft\Windows NT"/><FSObjectDir bkp:Path="%GPO_MACH_FSPATH%\Microsoft\Windows NT\SecEdit" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Machine\Microsoft\Windows NT\SecEdit" bkp:Location="DomainSysvol\GPO\Machine\Microsoft\Windows NT\SecEdit"/><FSObjectDir bkp:Path="%GPO_MACH_FSPATH%\Scripts" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Machine\Scripts" bkp:Location="DomainSysvol\GPO\Machine\Scripts"/><FSObjectDir bkp:Path="%GPO_MACH_FSPATH%\Scripts\Shutdown" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Machine\Scripts\Shutdown" bkp:Location="DomainSysvol\GPO\Machine\Scripts\Shutdown"/><FSObjectDir bkp:Path="%GPO_MACH_FSPATH%\Scripts\Startup" bkp:SourceExpandedPath="\\FB-213-20.Firebolt21.Local\sysvol\Firebolt21.Local\Policies\{39EC12F5-17ED-4637-A50D-0A3379F4FB6D}\Machine\Scripts\Startup" bkp:Location="DomainSysvol\GPO\Machine\Scripts\Startup"/></GroupPolicyExtension></GroupPolicyObject>
+</GroupPolicyBackupScheme>

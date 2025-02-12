@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Groups clsid="{3125E937-EB16-4b4c-9934-544FC6D24D26}"><Group clsid="{6D4A79E4-529C-4481-ABD0-F5BD7EA93BA7}" name="Administrators (built-in)" image="2" userContext="0" removePolicy="0" changed="2025-02-05 14:19:32" uid="{C839C5A8-CBC5-422C-B58E-48744042F17C}"><Properties action="U" newName="" description="" deleteAllUsers="0" deleteAllGroups="0" removeAccounts="0" groupSid="S-1-5-32-544" groupName="Administrators (built-in)"><Members><Member name="FIREBOLT21\AppUsr" action="ADD" sid="S-1-5-21-2045930637-2246715820-2293107792-1132"/></Members></Properties></Group>
+</Groups>

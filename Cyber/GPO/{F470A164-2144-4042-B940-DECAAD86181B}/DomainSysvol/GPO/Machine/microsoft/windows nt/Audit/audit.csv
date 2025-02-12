@@ -1,0 +1,8 @@
+Machine Name,Policy Target,Subcategory,Subcategory GUID,Inclusion Setting,Exclusion Setting,Setting Value
+,System,Audit Application Group Management,{0cce9239-69ae-11d9-bed3-505054503030},Success and Failure,,3
+,System,Audit Detailed File Share,{0cce9244-69ae-11d9-bed3-505054503030},Failure,,2
+,System,Audit File Share,{0cce9224-69ae-11d9-bed3-505054503030},Success and Failure,,3
+,System,Audit MPSSVC Rule-Level Policy Change,{0cce9232-69ae-11d9-bed3-505054503030},Success and Failure,,3
+,System,Audit Other Policy Change Events,{0cce9234-69ae-11d9-bed3-505054503030},Failure,,2
+,System,Audit Non Sensitive Privilege Use,{0cce9229-69ae-11d9-bed3-505054503030},Success and Failure,,3
+,System,Audit Sensitive Privilege Use,{0cce9228-69ae-11d9-bed3-505054503030},Success and Failure,,3
