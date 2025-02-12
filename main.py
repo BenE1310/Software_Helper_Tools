@@ -1,3 +1,4 @@
+import shutil
 import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
@@ -10,7 +11,51 @@ import pythoncom  # Import pythoncom for WMI operations
 from tkinter.messagebox import showinfo
 from tkinter.simpledialog import askstring
 import os
+import sys
+import tkinter as tk
 
+
+# Get the base directory (whether running from source or PyInstaller EXE)
+if getattr(sys, 'frozen', False):
+    base_dir = sys._MEIPASS  # PyInstaller EXE mode
+else:
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # Normal script mode
+
+# Locate all needed files and folders
+icon_path = os.path.join(base_dir, "icon.ico")
+logo_path = os.path.join(base_dir, "logo1.png")
+version_file = os.path.join(base_dir, "version.txt")
+functions_path = os.path.join(base_dir, "functions.py")
+tools_path = os.path.join(base_dir, "tools")  # Folder
+scripts_path = os.path.join(base_dir, "Scripts")  # Folder
+
+# Read version info
+VERSION = "Unknown"
+if os.path.exists(version_file):
+    with open(version_file, "r") as f:
+        VERSION = f.read().strip()
+
+# Get base directory (whether running as a script or inside an EXE)
+if getattr(sys, 'frozen', False):
+    base_dir = sys._MEIPASS  # PyInstaller temp directory
+else:
+    base_dir = os.path.dirname(os.path.abspath(__file__))  # Normal execution
+
+# Locate icon inside the PyInstaller bundle
+icon_source = os.path.join(base_dir, "icon.ico")
+logo_source = os.path.join(base_dir, "logo1.png")
+
+
+# Copy the icon to a writable temp directory if running as EXE
+temp_icon_path = os.path.join(os.path.expanduser("~"), "icon_temp.ico")
+temp_logo_path = os.path.join(os.path.expanduser("~"), "logo_temp.png")
+
+
+if os.path.exists(icon_source):
+    shutil.copy(icon_source, temp_icon_path)  # Copy icon to a valid location
+
+if os.path.exists(logo_source):
+    shutil.copy(logo_source, temp_logo_path)
 
 # Button hover effect
 def on_enter(button):
@@ -35,6 +80,9 @@ def clear_all_buttons():
     for button in buttons:
         button.destroy()
 
+def coming_soon():
+    messagebox.showinfo("coming Soon", "Coming soon!")
+
 
 # Main Application
 root = tk.Tk()
@@ -42,7 +90,7 @@ root.title("Software Helper Tools")
 root.geometry("600x750")
 root.resizable(False, False)
 # root.eval('tk::PlaceWindow . center')
-root.iconbitmap("icon.ico")
+root.iconbitmap(temp_icon_path)
 
 
 # Protect application
@@ -57,7 +105,7 @@ root.iconbitmap("icon.ico")
 #     showinfo("Master key successful", "Welcome to \"FBE Software Helper Tool\"")
 
 # Set Background Image
-bg_image = PhotoImage(file='logo1.png')  # Ensure this image is in your directory
+bg_image = PhotoImage(file=temp_logo_path)  # Ensure this image is in your directory
 canvas = tk.Canvas(root, width=600, height=750, highlightthickness=0, borderwidth=0)
 canvas.place(x=0, y=0)
 canvas.create_image(0, 0, anchor='nw', image=bg_image)
@@ -155,7 +203,7 @@ def open_battery_database_window():
     database_window_battery.geometry("400x470")
     database_window_battery.resizable(False, False)
     database_window_battery.configure(bg="#004d4d")
-    database_window_battery.iconbitmap("icon.ico")
+    database_window_battery.iconbitmap(temp_icon_path)
 
     # Title Label
     title_label = tk.Label(
@@ -366,7 +414,7 @@ def open_vsil_window():
     vsil_window.geometry("1000x900")
     vsil_window.resizable(False, False)
     vsil_window.configure(bg="#FF69B4")  # Dark teal background
-    vsil_window.iconbitmap("icon.ico")
+    vsil_window.iconbitmap(temp_icon_path)
 
     global progress_bar_ping
     global progress_bar_permissions
@@ -905,7 +953,7 @@ def open_simulator_window():
     simulator_window.geometry("1000x900")
     simulator_window.resizable(False, False)
     simulator_window.configure(bg="#228B22")  # Dark teal background
-    simulator_window.iconbitmap("icon.ico")
+    simulator_window.iconbitmap(temp_icon_path)
 
     global progress_bar_ping
     global progress_bar_permissions
@@ -1360,7 +1408,7 @@ def open_regional_window():
     regional_window.geometry("1000x900")
     regional_window.resizable(False, False)
     regional_window.configure(bg="#663399")  # Dark teal background
-    regional_window.iconbitmap("icon.ico")
+    regional_window.iconbitmap(temp_icon_path)
 
     global progress_bar_ping
     global progress_bar_permissions
@@ -1836,7 +1884,7 @@ def open_battery_window():
     battery_window.geometry("1000x900")
     battery_window.resizable(False, False)
     battery_window.configure(bg="#004d4d")  # Dark teal background
-    battery_window.iconbitmap("icon.ico")
+    battery_window.iconbitmap(temp_icon_path)
     global progress_bar_ping
     global progress_bar_permissions
     global progress_bar_disk
@@ -1866,7 +1914,6 @@ def open_battery_window():
         "Client3": f"10.11.{BN}8.8",
         "Client4": f"10.11.{BN}8.9",
         "Client5": f"10.11.{BN}8.10",
-        "Client6": f"192.168.{BN}.141",
     }
 
     # Map host to corresponding bat file paths
@@ -2088,19 +2135,20 @@ def open_battery_window():
 
                     # Determine the file path based on the host type
                     if host.startswith("DB"):
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                        file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
                     else:
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                        file_path = r"c$\Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
 
                     # Call the version checker
                     version_info = get_remote_file_version(ip, file_path)
 
                     if "error" in version_info:
                         labels[host].config(fg="red")
+                        labels[host].config(text=f"{host} (IP: {ip}) V")
                         logs.append(f"{host} (IP: {ip}): Version check failed - {version_info['error']}")
                     else:
                         product_version = version_info.get("Product Version", "Unknown")
-                        0
+                        labels[host].config(fg="green")
                         logs.append(f"{host} (IP: {ip}): Version: {product_version}")
 
             # Stop the progress bar and display results
@@ -2342,7 +2390,7 @@ def rai_screen():
 
     # Add Label
     rai_label = tk.Label(root, text='Installation Phase', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
-    rai_label.place(x=138, y=10)
+    rai_label.place(x=170, y=10)
     buttons.append(rai_label)
 
     # Create Buttons with Hover Effects
@@ -2368,14 +2416,14 @@ def db_screen():
     on_button_click()
 
     # Add Label
-    rai_label = tk.Label(root, text='Installation Phase', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
-    rai_label.place(x=138, y=10)
+    rai_label = tk.Label(root, text='Database Phase', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    rai_label.place(x=180, y=10)
     buttons.append(rai_label)
 
     # Create Buttons with Hover Effects
-    battery_install_window = create_button(root, 'Battery', open_battery_window, 178, 420)
-    regional_install_window = create_button(root, 'Regional', open_regional_window, 178, 490)
-    vsil_install_window = create_button(root, 'VSIL', open_vsil_window, 178, 560)
+    battery_install_window = create_button(root, 'Battery', open_battery_database_window, 178, 420)
+    regional_install_window = create_button(root, 'Regional', coming_soon, 178, 490)
+    vsil_install_window = create_button(root, 'VSIL', coming_soon, 178, 560)
 
     if BN == "VSIL":
         disable_button(battery_install_window)
@@ -2396,7 +2444,7 @@ def phases_app_installation_screen():
 
     # Add Label
     phases_app_installation_label = tk.Label(root, text='Remote App Installation', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
-    phases_app_installation_label.place(x=170, y=10)
+    phases_app_installation_label.place(x=145, y=10)
     buttons.append(phases_app_installation_label)
 
     # Create Buttons with Hover Effects
@@ -2415,7 +2463,6 @@ def main_screen():
         if selected_value == "Select a number":
             return
         BN = selected_value
-        print(f"Saved value: {selected_value}")
         messagebox.showinfo("Save", f"The battery number was update to {BN}")
 
     # Add Main Label
@@ -2442,9 +2489,9 @@ def main_screen():
 
     # Create Buttons with Hover Effects
     create_button(root, 'App Installation', phases_app_installation_screen, 178, 420)
-    create_button(root, 'Checks Components', open_vsil_window, 178, 490)
-    create_button(root, 'Cyber Deployment', open_battery_database_window, 178, 560)
-    create_button(root, 'Tools', lambda: on_click(None), 360, 690, button_style_small)
+    create_button(root, 'Checks Components', coming_soon, 178, 490)
+    create_button(root, 'Cyber Deployment', coming_soon, 178, 560)
+    create_button(root, 'Tools', coming_soon, 360, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
 

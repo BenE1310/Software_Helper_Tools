@@ -1,0 +1,3 @@
+﻿pyinstaller --onefile --console --icon="C:\Users\bene\PycharmProjects\Software_Helper_Tools\icon.ico" --name=SoftwareHelperTool --version-file="C:\Users\bene\PycharmProjects\Software_Helper_Tools\version_info.txt" --add-data "C:\Users\bene\PycharmProjects\Software_Helper_Tools\icon.ico;." --add-data "C:\Users\bene\PycharmProjects\Software_Helper_Tools\logo1.png;." --add-data "C:\Users\bene\PycharmProjects\Software_Helper_Tools\version.txt;." --add-data "C:\Users\bene\PycharmProjects\Software_Helper_Tools\functions.py;." --add-data "C:\Users\bene\PycharmProjects\Software_Helper_Tools\Scripts;Scripts" "C:\Users\bene\PycharmProjects\Software_Helper_Tools\main.py"
+
+## --add-data "C:\Users\bene\PycharmProjects\Software_Helper_Tools\tools;tools"
