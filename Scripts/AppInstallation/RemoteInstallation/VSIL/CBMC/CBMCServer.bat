@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 03022025
+rem Version 1.0.1.0 By Ben Eytan 12022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 :Check_Permissions
@@ -40,11 +40,11 @@ for /f "tokens=2 delims==" %%i in ('wmic os get localdatetime /value ^| find "="
 set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%datetime:~10,2%-%datetime:~12,2%
 
 :: Variables
-set RemoteComputer=\\10.11.%BN%8.%PN%
+set RemoteComputer=\\10.11.218.%PN%
 set RemoteShare=C$
 set TargetFolder=VSIL
 set NewFolderName=VSIL_%mydate%
-set DestPath="\\10.11.%BN%8.%PN%\c$\VSIL"
+set DestPath="\\10.11.218.%PN%\c$\VSIL"
 echo %RemoteComputer%
 
 :: Map Remote Share
@@ -55,6 +55,17 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
+echo ----------------------------------------------------------
+echo Installation Path: %DestPath%
+echo ----------------------------------------------------------
+
+@echo Kill Processes...
+psservice \\10.11.218.%PN% stop "VSIL Watchdog"
+pskill \\10.11.218.%PN%  FBEIronDomeRegionalVSILServer.exe
+pskill \\10.11.218.%PN% FBEIronDomeBmcServerForwarder.exe
+
+timeout /t 10
 
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
@@ -74,17 +85,6 @@ if exist "T:\%TargetFolder%" (
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
 
-echo ----------------------------------------------------------
-echo Installation Path: %DestPath%
-echo ----------------------------------------------------------
-
-@echo Kill Processes...
-sc \\10.11.%BN%8.%PN% stop "VSIL Watchdog"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "VSIL Watchdog"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeRegionalVSILServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeBmcServerForwarder.exe
-
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\VSIL') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
 :CBMC_Server
@@ -98,7 +98,7 @@ echo Copying Safeties Transport Catalog, Please Wait...
 
 echo.
 echo Moving mDRSStorage to the new version, Please Wait...
-robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\BMC\Regional\VSIL\Server\mDRSStorage %DestPath%\BMC\Regional\VSIL\Server\mDRSStorage
+robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\BMC\Regional\VSIL\Server\mDRSStorage %DestPath%\BMC\Regional\VSIL\Server\mDRSStorage
 echo.
 goto Maps
 
@@ -108,8 +108,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start VSIL Watchdog Service
-sc \\10.11.%BN%8.%PN% start "VSIL Watchdog"
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Start "VSIL Watchdog"
+psservice \\10.11.218.%PN% start "VSIL Watchdog"
 goto EOF
 
 :EOF

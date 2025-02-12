@@ -55,6 +55,18 @@ if errorlevel 1 (
     exit /b 1
 )
 
+echo ----------------------------------------------------------
+echo Installation Path: %DestPath%
+echo ----------------------------------------------------------
+
+@echo Kill Processes...
+psservice \\10.11.%BN%8.%PN% stop "VSIL Watchdog"
+pskill \\10.11.%BN%8.%PN% FBEIronDomeRegionalVSILServer.exe
+pskill \\10.11.%BN%8.%PN% FBEIronDomeVSILServer.exe
+pskill \\10.11.%BN%8.%PN% FBEIronDomeBmcRegionalOperationalDebriefingClient.exe
+
+timeout /t 10
+
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
     echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
@@ -74,17 +86,6 @@ if exist "T:\%TargetFolder%" (
 NET USE T: /DELETE >nul 2>&1
 
 
-echo ----------------------------------------------------------
-echo Installation Path: %DestPath%
-echo ----------------------------------------------------------
-
-@echo Kill Processes...
-sc \\10.11.%BN%8.%PN% stop "VSIL Watchdog"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "VSIL Watchdog"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeRegionalVSILServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeVSILServer.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeBmcRegionalOperationalDebriefingClient.exe
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\VSIL') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
@@ -97,7 +98,7 @@ echo.
 echo.
 echo.
 echo Moving mDRSStorage to the new version, Please Wait...
-robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\BMC\Regional\Regional\Server\mDRSStorage %DestPath%\BMC\Regional\Regional\Server\mDRSStorage
+robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\BMC\Regional\Regional\Server\mDRSStorage %DestPath%\BMC\Regional\Regional\Server\mDRSStorage
 echo.
 goto Maps
 
@@ -107,8 +108,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start VSIL Watchdog Service
-sc \\10.11.%BN%8.%PN% start "VSIL Watchdog"
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Start "VSIL Watchdog"
+psservice \\10.11.%BN%8.%PN% start "VSIL Watchdog"
 goto EOF
 
 :EOF

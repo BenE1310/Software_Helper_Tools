@@ -96,14 +96,14 @@ echo Installing FBE ICS, Please Wait...
 echo.
 echo.
 rem robocopy /e /w:3 /r:3 %DestPath%%mydate%\Maps %DestPath%\Maps
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\BMC\Battery\Operational\ICS %DestPath%\BMC\Battery\Operational\ICS AddressBook.ini
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\BMC\Battery\Operational\ICS %DestPath%\BMC\Battery\Operational\ICS IcsParams.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\BMC\Battery\Operational\ICS %DestPath%\BMC\Battery\Operational\ICS AddressBook.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\BMC\Battery\Operational\ICS %DestPath%\BMC\Battery\Operational\ICS IcsParams.ini
 
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\BMC\Battery\Training\ICS %DestPath%\BMC\Battery\Training\ICS AddressBook.ini
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\BMC\Battery\Training\ICS %DestPath%\BMC\Battery\Training\ICS IcsParams.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\BMC\Battery\Training\ICS %DestPath%\BMC\Battery\Training\ICS AddressBook.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\BMC\Battery\Training\ICS %DestPath%\BMC\Battery\Training\ICS IcsParams.ini
 
 echo Moving mDRSStorage to the new version, Please Wait...
-robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%_%mydate%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
+robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
 echo.
 goto Maps
 

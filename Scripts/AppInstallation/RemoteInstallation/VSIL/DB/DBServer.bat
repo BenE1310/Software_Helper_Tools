@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.6 By Ben Eytan 10022025
+rem Version 1.0.1.0 By Ben Eytan 12022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -63,6 +63,20 @@ if errorlevel 1 (
     exit /b 1
 )
 
+
+
+echo ----------------------------------------------------------
+echo Installation Path: %DestPath%
+echo Installation Path: %DestPath_mDRS%
+echo ----------------------------------------------------------
+
+@echo Kill Processes...
+psservice \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
+psservice \\10.11.%BN%8.%PN% stop "mDRS Server Service"
+psservice \\10.11.%BN%8.%PN% stop "VSIL Watchdog"
+
+timeout /t 10
+
 :: Check and Rename Folder VSIL
 if exist "T:\%TargetFolder%" (
     echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
@@ -110,20 +124,6 @@ if exist "T:\%TargetFolder_DB%" (
 
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
-
-echo ----------------------------------------------------------
-echo Installation Path: %DestPath%
-echo Installation Path: %DestPath_mDRS%
-echo ----------------------------------------------------------
-
-@echo Kill Processes...
-sc \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
-sc \\10.11.%BN%8.%PN% stop "mDRS Server Service"
-sc \\10.11.%BN%8.%PN% stop "VSIL Watchdog"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "mDRS Agent Service"
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "mDRS Server Service"
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "VSIL Watchdog"
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\VSIL') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 

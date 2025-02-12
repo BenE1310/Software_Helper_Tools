@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 30012025
+rem Version 1.0.1.0 By Ben Eytan 12022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -46,6 +46,18 @@ set NewFolderName=VSIL_%mydate%
 set DestPath="\\10.12.%BN%8.%PN%\c$\VSIL"
 echo %RemoteComputer%
 
+
+
+echo ----------------------------------------------------------
+echo Installation Path: %DestPath%
+echo ----------------------------------------------------------
+
+@echo Kill Processes...
+psservice \\10.12.%BN%8.%PN% stop "VSIL Watchdog"
+pskill \\10.12.%BN%8.%PN% IcsMainAppWithoutSafeties.exe
+
+timeout /t 10
+
 :: Map Remote Share
 echo Mapping %RemoteComputer%\%RemoteShare% to T:...
 NET USE T: %RemoteComputer%\%RemoteShare% >nul 2>&1
@@ -73,16 +85,6 @@ if exist "T:\%TargetFolder%" (
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
 
-echo ----------------------------------------------------------
-echo Installation Path: %DestPath%
-echo ----------------------------------------------------------
-
-@echo Kill Processes...
-sc \\10.12.%BN%8.%PN% stop "VSIL Watchdog"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "VSIL Watchdog"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IcsMainAppWithoutSafeties.exe
-
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\VSIL') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
 :ICS
@@ -93,12 +95,12 @@ echo Installing VSIL ICS, Please Wait...
 echo.
 echo.
 
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\BMC\Battery\VSIL\ICS %DestPath%\BMC\Battery\VSIL\ICS AddressBook.ini
-robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\BMC\Battery\VSIL\ICS %DestPath%\BMC\Battery\VSIL\ICS IcsParams.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\BMC\Battery\VSIL\ICS %DestPath%\BMC\Battery\VSIL\ICS AddressBook.ini
+robocopy /e /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\BMC\Battery\VSIL\ICS %DestPath%\BMC\Battery\VSIL\ICS IcsParams.ini
 
 
 echo Moving mDRSStorage to the new version, Please Wait...
-robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %DestPath%%mydate%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
+robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
 echo.
 goto Maps
 
@@ -108,7 +110,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start VSIL Watchdog Service
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Start "VSIL Watchdog"
+psservice \\10.12.%BN%8.%PN% start "VSIL Watchdog"
 goto EOF
 
 :EOF
