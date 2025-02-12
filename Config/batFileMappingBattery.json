@@ -1,0 +1,14 @@
+{
+        "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryServer.bat",
+        "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryServer.bat",
+        "ICS1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\ICS.bat",
+        "ICS2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\ICS.bat",
+        "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\DB\\mDRS.bat",
+        "DB2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\DB\\mDRS.bat",
+        "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
+        "Client6": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient_test.bat"
+}

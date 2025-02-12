@@ -1,3 +1,4 @@
+import json
 import shutil
 import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
@@ -23,7 +24,7 @@ else:
 
 # Locate all needed files and folders
 icon_path = os.path.join(base_dir, "icon.ico")
-logo_path = os.path.join(base_dir, "logo1.png")
+logo_path = os.path.join(base_dir, "background.png")
 version_file = os.path.join(base_dir, "version.txt")
 functions_path = os.path.join(base_dir, "functions.py")
 tools_path = os.path.join(base_dir, "tools")  # Folder
@@ -43,7 +44,7 @@ else:
 
 # Locate icon inside the PyInstaller bundle
 icon_source = os.path.join(base_dir, "icon.ico")
-logo_source = os.path.join(base_dir, "logo1.png")
+logo_source = os.path.join(base_dir, "background.png")
 
 
 # Copy the icon to a writable temp directory if running as EXE
@@ -81,7 +82,7 @@ def clear_all_buttons():
         button.destroy()
 
 def coming_soon():
-    messagebox.showinfo("coming Soon", "Coming soon!")
+    messagebox.showinfo("Coming Soon", "Coming soon!")
 
 
 # Main Application
@@ -519,8 +520,6 @@ def open_vsil_window():
         """
         Start the installation process for all selected hosts.
         """
-
-
 
         def install_task():
             global VSIL_BN
@@ -970,8 +969,8 @@ def open_simulator_window():
     simulator_window.protocol("WM_DELETE_WINDOW", on_close)
 
     # Hostnames and IPs
-    hostnames = {
-        "Sim Server": f"192.168.{BN}.141",
+    default_hostnames_simulator = {
+        "Sim Server": f"10.11.{BN}8.2",
         "Client1": f"192.168.{BN}8.6",
         "Client2": f"192.168.{BN}8.7",
         "Client3": f"192.168.{BN}8.8",
@@ -979,7 +978,21 @@ def open_simulator_window():
         "Client5": f"192.168.{BN}8.10",
     }
 
-    sim_file_mapping = {
+    hostnames_file_path = ".\\Config\\hostnameSimulator.json."
+
+    if os.path.exists(hostnames_file_path):
+        # If the JSON file exists, read hostnames from it
+        with open(hostnames_file_path, 'r') as file:
+            hostnames = json.load(file)
+        print("Loaded hostnames from JSON file.")
+    else:
+        # If the JSON file does not exist, use the default dictionary
+        hostnames = default_hostnames_simulator
+        print("Loaded hostnames from default dictionary.")
+
+
+
+    default_sim_file_mapping = {
         "Sim Server": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorServer.bat",
         "Client1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorClient.bat",
         "Client2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorClient.bat",
@@ -988,6 +1001,19 @@ def open_simulator_window():
         "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\Simulator\\SimulatorClient.bat",
 
     }
+
+    bat_file_sim_file_mapping = ".\\Config\\batFileMappingSimulator.json"
+
+    if os.path.exists(bat_file_sim_file_mapping):
+        # If the JSON file exists, read hostnames from it
+        with open(bat_file_sim_file_mapping, 'r') as file:
+            sim_file_mapping = json.load(file)
+        print("Loaded Bat file mapping from JSON file.")
+    else:
+        # If the JSON file does not exist, use the default dictionary
+        sim_file_mapping = default_sim_file_mapping
+        print("Loaded Bat file mapping from default dictionary.")
+
 
     # Track selections
     selections = {host: tk.BooleanVar() for host in hostnames}
@@ -1426,7 +1452,7 @@ def open_regional_window():
 
 ### We can save the hostnames in JSON file
     # Hostnames and IPs
-    hostnames = {
+    default_hostnames_regional = {
         "CBMC1": "192.168.218.1",
         "CBMC2": "192.168.218.2",
         "DB1": "192.168.218.3",
@@ -1441,8 +1467,20 @@ def open_regional_window():
         "Client8": "192.168.3.141",
     }
 
+    hostnames_file_path_regional = ".\\Config\\hostnameRegional.json"
+
+    if os.path.exists(hostnames_file_path_regional):
+        # If the JSON file exists, read hostnames from it
+        with open(hostnames_file_path_regional, 'r') as file:
+            hostnames = json.load(file)
+        print("Loaded hostnames from JSON file.")
+    else:
+        # If the JSON file does not exist, use the default dictionary
+        hostnames = default_hostnames_regional
+        print("Loaded hostnames from default dictionary.")
+
     # Map host to corresponding bat file paths
-    reg_file_mapping = {
+    default_reg_file_mapping = {
         "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalServer.bat",
         "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalServer.bat",
         "DB1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\DB\\mDRS.bat",
@@ -1454,8 +1492,20 @@ def open_regional_window():
         "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
         "Client6": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
         "Client7": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
-        "Client8": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient_test.bat",
+        "Client8": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\CBMC\\RegionalClient.bat",
     }
+
+    bat_file_mapping_file_path = ".\\Config\\batFileMappingRegional.json"
+
+    if os.path.exists(bat_file_mapping_file_path):
+        # If the JSON file exists, read hostnames from it
+        with open(bat_file_mapping_file_path, 'r') as file:
+            bat_file_mapping = json.load(file)
+        print("Loaded Bat file mapping from JSON file.")
+    else:
+        # If the JSON file does not exist, use the default dictionary
+        hostnames = default_reg_file_mapping
+        print("Loaded Bat file mapping from default dictionary.")
 
     def on_install():
 
@@ -1899,10 +1949,10 @@ def open_battery_window():
         progress_bar_version = None  # Global variable for the version check progress bar
         battery_window.destroy()  # Close the window
 
-    x = battery_window.protocol("WM_DELETE_WINDOW", on_close)
+    battery_window.protocol("WM_DELETE_WINDOW", on_close)
 
     # Hostnames and IPs
-    hostnames = {
+    default_hostnames_battery = {
         "BMC1": f"10.11.{BN}8.1",
         "BMC2": f"10.11.{BN}8.2",
         "ICS1": f"10.12.{BN}8.13",
@@ -1916,8 +1966,20 @@ def open_battery_window():
         "Client5": f"10.11.{BN}8.10",
     }
 
+    hostnames_file_path = ".\\Config\\hostnamesBattery.json"
+
+    if os.path.exists(hostnames_file_path):
+        # If the JSON file exists, read hostnames from it
+        with open(hostnames_file_path, 'r') as file:
+            hostnames = json.load(file)
+        print("Loaded hostnames from JSON file.")
+    else:
+        # If the JSON file does not exist, use the default dictionary
+        hostnames = default_hostnames_battery
+        print("Loaded hostnames from default dictionary.")
+
     # Map host to corresponding bat file paths
-    bat_file_mapping = {
+    default_bat_file_mapping = {
         "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryServer.bat",
         "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryServer.bat",
         "ICS1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\ICS.bat",
@@ -1930,8 +1992,19 @@ def open_battery_window():
         "Client4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
         "Client5": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient.bat",
         "Client6": ".\\Scripts\\AppInstallation\\RemoteInstallation\\FBE\\BMC\\BatteryClient_test.bat",
-
     }
+
+    bat_file_mapping_file_path = ".\\Config\\batFileMappingBattery.json"
+
+    if os.path.exists(bat_file_mapping_file_path):
+        # If the JSON file exists, read hostnames from it
+        with open(bat_file_mapping_file_path, 'r') as file:
+            bat_file_mapping = json.load(file)
+        print("Loaded Bat file mapping from JSON file.")
+    else:
+        # If the JSON file does not exist, use the default dictionary
+        hostnames = default_bat_file_mapping
+        print("Loaded Bat file mapping from default dictionary.")
 
     # Track selections
     selections = {host: tk.BooleanVar() for host in hostnames}

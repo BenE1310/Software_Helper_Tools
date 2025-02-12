@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.0.5 By Ben Eytan 09022025
+rem Version 1.0.1.0 By Ben Eytan 11022025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -39,11 +39,11 @@ for /f "tokens=2 delims==" %%i in ('wmic os get localdatetime /value ^| find "="
 set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%datetime:~10,2%-%datetime:~12,2%
 
 :: Variables
-set RemoteComputer=\\192.168.%BN%.%PN%
+set RemoteComputer=\\172.16.%BN%.%PN%
 set RemoteShare=C$
 set TargetFolder=Firebolt
 set NewFolderName=Firebolt_%mydate%
-set DestPath="\\192.168.%BN%.%PN%\c$\Firebolt"
+set DestPath="\\172.16.%BN%.%PN%\c$\Firebolt"
 echo %RemoteComputer%
 
 :: Map Remote Share
@@ -54,6 +54,24 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
+
+:: Continue with BatteryClient Logic
+echo ----------------------------------------------------------
+echo Installation Path: %DestPath%
+echo ----------------------------------------------------------
+
+@echo Kill Processes...
+
+psservice \\172.16.%BN%.%PN% stop "Spooler"
+pskill \\172.16.%BN%.%PN% IronDomeMdrsAgent.exe
+pskill \\172.16.%BN%.%PN% LoginApp.exe
+pskill \\172.16.%BN%.%PN% FBETrainerClient.exe
+pskill \\172.16.%BN%.%PN% FBEMaintenance.exe
+pskill \\172.16.%BN%.%PN% FBEIronDomeBmcOperationalClient.exe
+pskill \\172.16.%BN%.%PN% FBEIronDomeTrainingClient.exe
+pskill \\172.16.%BN%.%PN% FBEPlaybackClient.exe
+
+timeout /t 2
 
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
@@ -72,23 +90,6 @@ if exist "T:\%TargetFolder%" (
 
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
-
-:: Continue with BatteryClient Logic
-echo ----------------------------------------------------------
-echo Installation Path: %DestPath%
-echo ----------------------------------------------------------
-
-@echo Kill Processes...
-:: sc \\172.16.%BN%.%PN% stop "Spooler"
-timeout /t 6
-"%~dp0..\..\Tools"\"PsService.exe" -accepteula Stop "Spooler"
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t IronDomeMdrsAgent.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t LoginApp.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBETrainerClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEMaintenance.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeBmcOperationalClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEIronDomeTrainingClient.exe
-"%~dp0..\..\Tools"\"PsKill.exe" -accepteula -t FBEPlaybackClient.exe
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
@@ -117,7 +118,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-sc \\192.168.%BN%.%PN%  start "Spooler"
+psservice \\172.16.%BN%.%PN% start "Spooler"
 goto EOF
 
 :EOF
