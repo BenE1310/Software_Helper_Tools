@@ -1,0 +1,20 @@
+{
+    "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
+    "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
+    "BMC3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
+    "BMC4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
+    "ICS1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\ICS.bat",
+    "ICS2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\ICS.bat",
+    "ICS3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\ICS.bat",
+    "ICS4": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\ICS.bat",
+    "DB-BAT": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\DB\\DBServer.bat",
+    "CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\CBMC\\CBMCServer.bat",
+    "DB-CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\DB\\DBServer.bat",
+    "TCS-Server": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\TCS\\TCSServer.bat",
+    "TCS-Client": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\TCS\\TCSClient.bat",
+    "CBMC-Client": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\CBMC\\CBMCClient.bat",
+    "AD-BAT": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\ADServer.bat",
+    "AD-CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\ADServer.bat",
+    "AV-BAT": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\AVServer.bat",
+    "AV-CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\AVServer.bat"
+}
