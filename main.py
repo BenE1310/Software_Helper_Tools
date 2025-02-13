@@ -193,11 +193,44 @@ def enable_button(window):
 #     credentials_window.wait_window()  # Block execution until window is closed
 # Function to open a new window for the Database
 
+def set_server_Battery(choice):
+    """Stores the server choice and moves to the next screen"""
+    global server_choice, selection_window_DB
+    server_choice = choice
+    selection_window_DB.destroy()  # Close the selection popup
+    open_battery_database_window()  # Open the next screen
+
+def selection_window():
+    global set_server, set_server_Battery
+    # Create the first popup for server selection
+    selection_window_DB = tk.Toplevel()
+    selection_window_DB.title("Select Server")
+    selection_window_DB.geometry("400x250")
+    selection_window_DB.configure(bg="#2C3E50")
+    selection_window_DB.resizable(False, False)
+    # selection_window.protocol("WM_DELETE_WINDOW",
+    #                           lambda: messagebox.showerror("Error", "You must select a server!"))
+
+    # Header label
+    tk.Label(selection_window_DB, text="Choose DB Server", font=("Arial", 16, "bold"), fg="white", bg="#2C3E50").pack(
+        pady=15)
+
+    # Buttons
+    btn1 = tk.Button(selection_window_DB, text="DB01", font=("Arial", 14, "bold"), fg="white", bg="#2196F3",
+                     padx=20, pady=10, relief="flat", borderwidth=3, highlightthickness=0,
+                     command=lambda: set_server_Battery(1))
+    btn1.pack(pady=10)
+
+    btn2 = tk.Button(selection_window_DB, text="DB02", font=("Arial", 14, "bold"), fg="white", bg="#2196F3",
+                     padx=20, pady=10, relief="flat", borderwidth=3, highlightthickness=0,
+                     command=lambda: set_server_Battery(2))
+    btn2.pack(pady=10)
+
 def open_battery_database_window():
     global BN
 
-    # Ask for credentials before opening the main window
-    # prompt_for_credentials()
+    # Define parameters based on the server choice
+
 
     database_window_battery = tk.Toplevel()
     database_window_battery.title("Table Management")
@@ -260,10 +293,10 @@ def open_battery_database_window():
             return
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN,current_bat_file=bat_file_name, results_text=results_text)
+        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text)
 
     def create_empty_databases():
         threading.Thread(target=handle_create_empty_tables).start()
@@ -291,10 +324,10 @@ def open_battery_database_window():
             return
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN,current_bat_file=bat_file_name, results_text=results_text)
+        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text)
 
     def delete_databases():
         threading.Thread(target=handle_delete_tables).start()
@@ -322,11 +355,11 @@ def open_battery_database_window():
             return
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, BAT_FILE_NAME=bat_file_name,
-                                results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, current_bat_file=bat_file_name, results_text=results_text)
+        handle_tables_battery(BN, PN,current_bat_file=bat_file_name, results_text=results_text)
 
     def import_tables():
         threading.Thread(target=handle_import_tables).start()
@@ -351,7 +384,7 @@ def open_battery_database_window():
         elif training_var.get():
             bat_file_name = "AddingLaunchersTrainingFBE.bat"
             sql_file_name = "adding_launcher_training_mode.sql"
-            sql_code = generate_sql_script_training_launchers(BN)
+            sql_code = generate_sql_script_training_launchers(BN, BN)
 
             # Write it to a file
             with open(f"Scripts/SQL/adding_launcher_training_mode.sql", "w") as file:
@@ -361,7 +394,7 @@ def open_battery_database_window():
             return
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, BAT_FILE_NAME=bat_file_name,
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name,
                                 results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
@@ -434,29 +467,41 @@ def open_vsil_window():
     vsil_window.protocol("WM_DELETE_WINDOW", on_close)
 
     # Hostnames and IPs
-    hostnames = {
-        "BMC1": "192.168.3.154",
-        "BMC2": "192.168.28.1",
-        "BMC3": "192.168.38.1",
-        "BMC4": "192.168.48.1",
-        "ICS1": "192.169.18.13",
-        "ICS2": "192.169.28.13",
-        "ICS3": "192.169.38.13",
-        "ICS4": "192.169.48.13",
-        "DB-BAT": "192.168.18.3",
-        "CBMC": "192.168.218.1",
-        "DB-CBMC": "192.168.218.3",
-        "TCS-Server": "192.168.18.2",
-        "TCS-Client": "192.168.218.11",
-        "CBMC-Client": "192.168.218.50",
-        "AD-BAT": "192.168.13.20",
-        "AD-CBMC": "192.168.213.20",
-        "AV-BAT": "192.168.13.22",
-        "AV-CBMC": "192.168.213.22",
+    default_hostnames_VSIL = {
+        "BMC1": "192.168.1.1",
+        "BMC2": "10.11.28.1",
+        "BMC3": "10.11.38.1",
+        "BMC4": "10.11.48.1",
+        "ICS1": "10.12.18.13",
+        "ICS2": "10.12.28.13",
+        "ICS3": "10.12.38.13",
+        "ICS4": "10.12.48.13",
+        "DB-BAT": "10.11.18.3",
+        "CBMC": "10.11.218.1",
+        "DB-CBMC": "10.11.218.3",
+        "TCS-Server": "10.11.18.2",
+        "TCS-Client": "10.11.218.11",
+        "CBMC-Client": "10.11.218.50",
+        "AD-BAT": "10.11.13.20",
+        "AD-CBMC": "10.11.213.20",
+        "AV-BAT": "10.11.13.22",
+        "AV-CBMC": "10.11.213.22",
     }
 
+    hostnames_file_path_VSIL = ".\\Config\\hostnamesVSIL.json"
+
+    if os.path.exists(hostnames_file_path_VSIL):
+        # If the JSON file exists, read hostnames from it
+        with open(hostnames_file_path_VSIL, 'r') as file:
+            hostnames = json.load(file)
+        print("Loaded hostnames from JSON file.")
+    else:
+        # If the JSON file does not exist, use the default dictionary
+        hostnames = default_hostnames_VSIL
+        print("Loaded hostnames from default dictionary.")
+
     # Map host to corresponding bat file paths
-    bat_file_mapping = {
+    default_VSIL_bat_file_mapping = {
         "BMC1": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
         "BMC2": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
         "BMC3": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\BMC\\BMCServer.bat",
@@ -475,8 +520,19 @@ def open_vsil_window():
         "AD-CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\ADServer.bat",
         "AV-BAT": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\AVServer.bat",
         "AV-CBMC": ".\\Scripts\\AppInstallation\\RemoteInstallation\\VSIL\\GeneralServer\\AVServer.bat",
-
     }
+
+    bat_file_VSIL_file_mapping = ".\\Config\\batFileMappingVSIL.json"
+
+    if os.path.exists(bat_file_VSIL_file_mapping):
+        # If the JSON file exists, read hostnames from it
+        with open(bat_file_VSIL_file_mapping, 'r') as file:
+            VSIL_file_mapping = json.load(file)
+        print("Loaded Bat file mapping from JSON file.")
+    else:
+        # If the JSON file does not exist, use the default dictionary
+        VSIL_file_mapping = default_VSIL_bat_file_mapping
+        print("Loaded Bat file mapping from default dictionary.")
 
     # Track selections
     selections = {host: tk.BooleanVar() for host in hostnames}
@@ -546,7 +602,7 @@ def open_vsil_window():
                     # Extract details for the host
                     fourth_octet = ip.split(".")[-1]
                     PN = fourth_octet
-                    bat_file_path = bat_file_mapping.get(host)
+                    bat_file_path = VSIL_file_mapping.get(host)
                     print(bat_file_path)
 
                     if "AD-CBMC" in hostnames or "CBMC" in hostnames or "CBMC-Client" in hostnames or "DB-CBMC" in hostnames or "TCS-Client" in hostnames:
@@ -1500,11 +1556,11 @@ def open_regional_window():
     if os.path.exists(bat_file_mapping_file_path):
         # If the JSON file exists, read hostnames from it
         with open(bat_file_mapping_file_path, 'r') as file:
-            bat_file_mapping = json.load(file)
+            reg_file_mapping = json.load(file)
         print("Loaded Bat file mapping from JSON file.")
     else:
         # If the JSON file does not exist, use the default dictionary
-        hostnames = default_reg_file_mapping
+        reg_file_mapping = default_reg_file_mapping
         print("Loaded Bat file mapping from default dictionary.")
 
     def on_install():
@@ -2494,7 +2550,7 @@ def db_screen():
     buttons.append(rai_label)
 
     # Create Buttons with Hover Effects
-    battery_install_window = create_button(root, 'Battery', open_battery_database_window, 178, 420)
+    battery_install_window = create_button(root, 'Battery', selection_window, 178, 420)
     regional_install_window = create_button(root, 'Regional', coming_soon, 178, 490)
     vsil_install_window = create_button(root, 'VSIL', coming_soon, 178, 560)
 

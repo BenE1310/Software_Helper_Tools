@@ -3,6 +3,8 @@ import subprocess
 import platform
 import time
 from datetime import datetime
+from tkinter import messagebox
+
 import pefile
 import win32file
 import wmi
@@ -495,20 +497,28 @@ def handle_adding_launchers_battery(bat_num, current_bat_file, current_sql_file,
         log_message = f"Mapping {unc_path} to {drive_letter}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        os.system(f"net use {drive_letter} {unc_path}")
+        mapping_result = subprocess.run(f'net use {drive_letter} {unc_path}', shell=True, capture_output=True, text=True)
+        if "System error 64" in mapping_result.stderr:
+            raise Exception("System error 64: The specified network name is no longer available.")
 
         # Step 2: Copy the script
         scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
         sql_dest = f"{drive_letter}\\DB\\sql\\"
         remote_bat_path = f"{scripts_dest}{current_bat_file}"
+
         log_message = f"Copying script file to {scripts_dest}..."
-        log_message_sql = f"Copying sql script file to {sql_dest}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        os.system(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I")
+        copy_result_bat_script = subprocess.run(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I", shell=True, capture_output=True, text=True)
+        if "The system cannot find the drive specified" in copy_result_bat_script.stderr:
+            raise Exception("Invalid drive specification: The network connection could not be found.")
+
+        log_message_sql = f"Copying sql script file to {sql_dest}..."
         logs.append(log_message_sql)
         update_results_text(results_text, log_message_sql)
-        os.system(f"echo D | xcopy \"{sql_script_src}\" \"{sql_dest}\" /E /Y /I")
+        copy_result_sql_script = subprocess.run(f"echo D | xcopy \"{sql_script_src}\" \"{sql_dest}\" /E /Y /I", shell=True, capture_output=True, text=True)
+        if "The system cannot find the drive specified" in copy_result_sql_script.stderr:
+            raise Exception("Invalid drive specification: The network connection could not be found.")
 
         # Step 3: Execute the batch file
         log_message = f"Executing batch file {remote_bat_path}..."
@@ -520,6 +530,8 @@ def handle_adding_launchers_battery(bat_num, current_bat_file, current_sql_file,
         log_message = f"Error during execution: {e}"
         logs.append(log_message)
         update_results_text(results_text, log_message)
+        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and communication stability to the DB server and try again.")
+
 
     finally:
         # Step 4: Unmap the drive
@@ -529,13 +541,13 @@ def handle_adding_launchers_battery(bat_num, current_bat_file, current_sql_file,
         os.system(f"net use {drive_letter} /delete")
 
 
-def handle_tables_battery(bat_num, current_bat_file, logs=None, results_text=None):
+def handle_tables_battery(bat_num, bat_pos, current_bat_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
     logs = logs or []
     drive_letter = "P:"  # Use any available drive letter
-    db_ip = f"10.11.{bat_num}8.3"
+    db_ip = f"10.11.{bat_num}8.{bat_pos}"
     unc_path = f"\\\\{db_ip}\\c$"
     scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
 
@@ -545,7 +557,10 @@ def handle_tables_battery(bat_num, current_bat_file, logs=None, results_text=Non
         log_message = f"Mapping {unc_path} to {drive_letter}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        os.system(f"net use {drive_letter} {unc_path}")
+        mapping_result = subprocess.run(f'net use {drive_letter} {unc_path}', shell=True, capture_output=True, text=True)
+
+        if "System error 64" in mapping_result.stderr:
+            raise Exception("System error 64: The specified network name is no longer available.")
 
         # Step 2: Copy the script
         scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
@@ -553,7 +568,10 @@ def handle_tables_battery(bat_num, current_bat_file, logs=None, results_text=Non
         log_message = f"Copying script file to {scripts_dest}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        os.system(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I")
+        copy_result = subprocess.run(f'echo D | xcopy "{scripts_src}" "{scripts_dest}" /E /Y /I', shell=True, capture_output=True, text=True)
+        if "The system cannot find the drive specified" in copy_result.stderr:
+            raise Exception("Invalid drive specification: The network connection could not be found.")
+
 
         # Step 3: Execute the batch file
         log_message = f"Executing batch file {remote_bat_path}..."
@@ -565,6 +583,8 @@ def handle_tables_battery(bat_num, current_bat_file, logs=None, results_text=Non
         log_message = f"Error during execution: {e}"
         logs.append(log_message)
         update_results_text(results_text, log_message)
+        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and communication stability to the DB server and try again.")
+        return
 
     finally:
         # Step 4: Unmap the drive
@@ -573,7 +593,7 @@ def handle_tables_battery(bat_num, current_bat_file, logs=None, results_text=Non
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
 
-def write_bat_file_db_phase(BN, BAT_FILE_NAME, logs=None, results_text=None):
+def write_bat_file_db_phase(BN, PN, BAT_FILE_NAME, logs=None, results_text=None):
     """
     Writes BN, SQL_USER, and SQL_PASS values to lines 3, 4, and 5 in the BAT file.
     If the file exists, it updates only those lines. Otherwise, it creates a new file.
@@ -582,6 +602,7 @@ def write_bat_file_db_phase(BN, BAT_FILE_NAME, logs=None, results_text=None):
 
     new_lines = [
         f"set /a BN={BN}\n",
+        f"set /a PN={PN}\n",
     ]
 
     BAT_FILE_PATH = f".\\Scripts\\SQL\\{BAT_FILE_NAME}"
@@ -591,19 +612,21 @@ def write_bat_file_db_phase(BN, BAT_FILE_NAME, logs=None, results_text=None):
             existing_lines = file.readlines()
 
         # Ensure the file has at least 5 lines
-        while len(existing_lines) < 3:
+        while len(existing_lines) < 4:
             existing_lines.append("\n")
 
         # Overwrite only lines 3, 4, and 5
         existing_lines[2] = new_lines[0]  # Line 3
+        existing_lines[3] = new_lines[1]  # Line 4
+
 
         with open(BAT_FILE_PATH, "w") as file:
             file.writelines(existing_lines)
 
-        log_message = f"Updated lines 3 in existing batch file: {BAT_FILE_PATH}"
+        log_message = f"Updated lines 3-4 in existing batch file: {BAT_FILE_PATH}"
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        print(f"Updated lines 3 in existing batch file: {BAT_FILE_PATH}")
+        print(f"Updated lines 3-4 in existing batch file: {BAT_FILE_PATH}")
 
     else:
         # If the file doesn't exist, create at least 2 empty lines before writing the values
@@ -623,7 +646,7 @@ def update_results_text(results_text, message):
         results_text.update_idletasks()  # Refresh GUI
 
 
-def generate_sql_script_training_launchers(octet_value):
+def generate_sql_script_training_launchers(octet_value, bat_pos):
     sql_script = f"""
     -- Query for CombainTraining & Training Mode --
     DECLARE @serialNumber INTEGER
@@ -635,7 +658,7 @@ def generate_sql_script_training_launchers(octet_value):
 
     WHILE @serialNumber < 325 
     BEGIN 
-        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.12.{octet_value}8.3', @sendPort, @recievePort)
+        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.12.{octet_value}8.{bat_pos}', @sendPort, @recievePort)
         SET @sendPort = @sendPort + 1;
         SET @serialNumber = @serialNumber + 1;
         SET @recievePort = @recievePort + 1;
