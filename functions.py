@@ -480,13 +480,13 @@ def cleanup_temp_files():
     print("Temporary files cleaned up.")
 
 
-def handle_adding_launchers_battery(bat_num, current_bat_file, current_sql_file, logs=None, results_text=None):
+def handle_adding_launchers_battery(bat_num, pos_num, current_bat_file, current_sql_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
     logs = logs or []
     drive_letter = "P:"  # Use any available drive letter
-    db_ip = f"10.11.{bat_num}8.3"
+    db_ip = f"10.11.{bat_num}8.{pos_num}"
     unc_path = f"\\\\{db_ip}\\c$"
     scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
     sql_script_src = f".\\Scripts\\SQL\\{current_sql_file}"
@@ -497,9 +497,17 @@ def handle_adding_launchers_battery(bat_num, current_bat_file, current_sql_file,
         log_message = f"Mapping {unc_path} to {drive_letter}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
+
         mapping_result = subprocess.run(f'net use {drive_letter} {unc_path}', shell=True, capture_output=True, text=True)
-        if "System error 64" in mapping_result.stderr:
-            raise Exception("System error 64: The specified network name is no longer available.")
+        if mapping_result.stderr:
+            print("Copy Error Output:")
+            for line in mapping_result.stderr.splitlines():
+                print(line)  # Print each line separately
+
+        if "System error 64" in mapping_result.stderr or "System error 67" in mapping_result.stderr:
+            messagebox.showerror("Error", "Network issue detected! Ensure the drive is not already mapped.")
+            update_results_text(results_text, "Error: Network issue detected! Ensure the drive is not already mapped.")
+            raise Exception(f"Mapping failed: {mapping_result.stderr.strip()}")  # Stops function execution
 
         # Step 2: Copy the script
         scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
@@ -509,75 +517,29 @@ def handle_adding_launchers_battery(bat_num, current_bat_file, current_sql_file,
         log_message = f"Copying script file to {scripts_dest}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        copy_result_bat_script = subprocess.run(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I", shell=True, capture_output=True, text=True)
-        if "The system cannot find the drive specified" in copy_result_bat_script.stderr:
-            raise Exception("Invalid drive specification: The network connection could not be found.")
+        subprocess.run(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I", shell=True, capture_output=True, text=True)
 
         log_message_sql = f"Copying sql script file to {sql_dest}..."
         logs.append(log_message_sql)
         update_results_text(results_text, log_message_sql)
-        copy_result_sql_script = subprocess.run(f"echo D | xcopy \"{sql_script_src}\" \"{sql_dest}\" /E /Y /I", shell=True, capture_output=True, text=True)
-        if "The system cannot find the drive specified" in copy_result_sql_script.stderr:
-            raise Exception("Invalid drive specification: The network connection could not be found.")
-
-        # Step 3: Execute the batch file
-        log_message = f"Executing batch file {remote_bat_path}..."
-        logs.append(log_message)
-        update_results_text(results_text, log_message)
-        subprocess.run(["cmd", "/c", remote_bat_path])
-
-    except Exception as e:
-        log_message = f"Error during execution: {e}"
-        logs.append(log_message)
-        update_results_text(results_text, log_message)
-        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and communication stability to the DB server and try again.")
-
-
-    finally:
-        # Step 4: Unmap the drive
-        log_message = f"Unmapping {drive_letter}..."
-        logs.append(log_message)
-        update_results_text(results_text, log_message)
-        os.system(f"net use {drive_letter} /delete")
-
-
-def handle_tables_battery(bat_num, bat_pos, current_bat_file, logs=None, results_text=None):
-    """
-    Prepare the installation process for a host.
-    """
-    logs = logs or []
-    drive_letter = "P:"  # Use any available drive letter
-    db_ip = f"10.11.{bat_num}8.{bat_pos}"
-    unc_path = f"\\\\{db_ip}\\c$"
-    scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
-
-    # Determine the destination folder based on host type
-    try:
-        # Step 1: Map the drive
-        log_message = f"Mapping {unc_path} to {drive_letter}..."
-        logs.append(log_message)
-        update_results_text(results_text, log_message)
-        mapping_result = subprocess.run(f'net use {drive_letter} {unc_path}', shell=True, capture_output=True, text=True)
-
-        if "System error 64" in mapping_result.stderr:
-            raise Exception("System error 64: The specified network name is no longer available.")
-
-        # Step 2: Copy the script
-        scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
-        remote_bat_path = f"{scripts_dest}{current_bat_file}"
-        log_message = f"Copying script file to {scripts_dest}..."
-        logs.append(log_message)
-        update_results_text(results_text, log_message)
-        copy_result = subprocess.run(f'echo D | xcopy "{scripts_src}" "{scripts_dest}" /E /Y /I', shell=True, capture_output=True, text=True)
-        if "The system cannot find the drive specified" in copy_result.stderr:
-            raise Exception("Invalid drive specification: The network connection could not be found.")
+        subprocess.run(f"echo D | xcopy \"{sql_script_src}\" \"{sql_dest}\" /E /Y /I", shell=True, capture_output=True, text=True)
 
 
         # Step 3: Execute the batch file
         log_message = f"Executing batch file {remote_bat_path}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        subprocess.run(["cmd", "/c", remote_bat_path])
+        run_remote_script = subprocess.run(["cmd", "/c", remote_bat_path], shell=True, capture_output=True, text=True)
+
+        if run_remote_script.stderr:
+            print("Copy Error Output:")
+            for line in run_remote_script.stderr.splitlines():
+                print(line)  # Print each line separately
+
+        if "'sqlcmd' is not recognized as an internal or external command" in run_remote_script.stderr:
+            messagebox.showerror("Error", "Check whether you have 'sqlcmd' installed in the component you are trying to install from.")
+            update_results_text(results_text, "Error: 'sqlcmd' is not recognized as an internal or external command")
+            raise Exception(f"Mapping failed: {run_remote_script.stderr.strip()}")  # Stops function execution
 
     except Exception as e:
         log_message = f"Error during execution: {e}"
@@ -592,6 +554,64 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, logs=None, results
         logs.append(log_message)
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
+
+
+
+def handle_tables_battery(bat_num, bat_pos, current_bat_file, logs=None, results_text=None):
+    """
+    Prepare the installation process for a host.
+    """
+    logs = logs or []
+    drive_letter = "P:"  # Use any available drive letter
+    db_ip = f"10.11.{bat_num}8.{bat_pos}"
+    unc_path = f"\\\\{db_ip}\\c$"
+    scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
+
+    try:
+        # Step 1: Map the drive
+        log_message = f"Mapping {unc_path} to {drive_letter}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+
+        mapping_result = subprocess.run(f'net use {drive_letter} {unc_path}', shell=True, capture_output=True, text=True)
+
+        if mapping_result.returncode != 0 or "System error 64" in mapping_result.stderr:
+            raise Exception(f"System error 64: {mapping_result.stderr.strip()}")
+
+        # Step 2: Copy the script
+        scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
+        remote_bat_path = f"{scripts_dest}{current_bat_file}"
+        log_message = f"Copying script file to {scripts_dest}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+
+        copy_result = subprocess.run(f'echo D | xcopy "{scripts_src}" "{scripts_dest}" /E /Y /I', shell=True, capture_output=True, text=True)
+
+        if copy_result.returncode != 0 or "The system cannot find the drive specified" in copy_result.stderr:
+            raise Exception(f"Invalid drive specification: {copy_result.stderr.strip()}")
+
+        # Step 3: Execute the batch file
+        log_message = f"Executing batch file {remote_bat_path}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        subprocess.run(["cmd", "/c", remote_bat_path])
+
+    except Exception as e:
+        log_message = f"Error during execution: {e}"
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+
+        # Ensure the error popup appears
+        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and check DB server connection.")
+
+    finally:
+        # Step 4: Unmap the drive
+        log_message = f"Unmapping {drive_letter}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        os.system(f"net use {drive_letter} /delete")
+
+
 
 def write_bat_file_db_phase(BN, PN, BAT_FILE_NAME, logs=None, results_text=None):
     """
@@ -646,7 +666,7 @@ def update_results_text(results_text, message):
         results_text.update_idletasks()  # Refresh GUI
 
 
-def generate_sql_script_training_launchers(octet_value, bat_pos):
+def generate_sql_script_training_launchers(octet_value):
     sql_script = f"""
     -- Query for CombainTraining & Training Mode --
     DECLARE @serialNumber INTEGER
@@ -658,7 +678,7 @@ def generate_sql_script_training_launchers(octet_value, bat_pos):
 
     WHILE @serialNumber < 325 
     BEGIN 
-        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.12.{octet_value}8.{bat_pos}', @sendPort, @recievePort)
+        INSERT INTO dbo.MfuAddressBook VALUES (@serialNumber, '10.12.{octet_value}8.2', @sendPort, @recievePort)
         SET @sendPort = @sendPort + 1;
         SET @serialNumber = @serialNumber + 1;
         SET @recievePort = @recievePort + 1;

@@ -94,6 +94,7 @@ root.resizable(False, False)
 root.iconbitmap(temp_icon_path)
 
 
+
 # Protect application
 # try:
 #     key = askstring('Lock', "Enter Master Key", show='*')
@@ -143,6 +144,8 @@ progress_bar_ping = None
 progress_bar_permissions = None
 progress_bar_disk = None
 progress_bar_version = None
+selection_window_DB = None
+server_choice = None
 
 
 # Reusable function to create a button with hover effects
@@ -193,19 +196,21 @@ def enable_button(window):
 #     credentials_window.wait_window()  # Block execution until window is closed
 # Function to open a new window for the Database
 
+
 def set_server_Battery(choice):
     """Stores the server choice and moves to the next screen"""
-    global server_choice, selection_window_DB
-    server_choice = choice
-    selection_window_DB.destroy()  # Close the selection popup
+    global selection_window_DB, server_choice
+    server_choice = choice  # Store choice if needed
+    if selection_window_DB:
+        selection_window_DB.destroy()  # Destroy the first popup
     open_battery_database_window()  # Open the next screen
 
-def selection_window():
-    global set_server, set_server_Battery
+def selection_DB_window():
+    global set_server, set_server_Battery, selection_window_DB
     # Create the first popup for server selection
     selection_window_DB = tk.Toplevel()
     selection_window_DB.title("Select Server")
-    selection_window_DB.geometry("400x250")
+    selection_window_DB.geometry("300x250")
     selection_window_DB.configure(bg="#2C3E50")
     selection_window_DB.resizable(False, False)
     # selection_window.protocol("WM_DELETE_WINDOW",
@@ -230,8 +235,6 @@ def open_battery_database_window():
     global BN
 
     # Define parameters based on the server choice
-
-
     database_window_battery = tk.Toplevel()
     database_window_battery.title("Table Management")
     database_window_battery.geometry("400x470")
@@ -239,11 +242,17 @@ def open_battery_database_window():
     database_window_battery.configure(bg="#004d4d")
     database_window_battery.iconbitmap(temp_icon_path)
 
+    if server_choice == "DB01":
+        PN = 3
+    else:
+        PN = 4
+
+
     # Title Label
     title_label = tk.Label(
-        database_window_battery, text=f"Database Battery {BN}", font=("Arial", 14, "bold"), fg="white", bg="#004d4d"
+        database_window_battery, text=f"Database Battery {BN} DB0{server_choice}", font=("Arial", 14, "bold"), fg="white", bg="#004d4d"
     )
-    title_label.place(x=100, y=5)
+    title_label.place(x=80, y=5)
 
     # Checkbox Variables
     operational_var = tk.BooleanVar()
@@ -384,7 +393,7 @@ def open_battery_database_window():
         elif training_var.get():
             bat_file_name = "AddingLaunchersTrainingFBE.bat"
             sql_file_name = "adding_launcher_training_mode.sql"
-            sql_code = generate_sql_script_training_launchers(BN, BN)
+            sql_code = generate_sql_script_training_launchers(BN)
 
             # Write it to a file
             with open(f"Scripts/SQL/adding_launcher_training_mode.sql", "w") as file:
@@ -398,7 +407,7 @@ def open_battery_database_window():
                                 results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_adding_launchers_battery(bat_num=BN, current_sql_file=sql_file_name, current_bat_file=bat_file_name, results_text=results_text)
+        handle_adding_launchers_battery(bat_num=BN,pos_num=PN, current_sql_file=sql_file_name, current_bat_file=bat_file_name, results_text=results_text)
 
     def adding_launchers():
         threading.Thread(target=handle_adding_launchers).start()
@@ -444,10 +453,10 @@ def open_battery_database_window():
 # Function to open a new window for the App Installation
 def open_vsil_window():
     vsil_window = tk.Toplevel(root)
-    vsil_window.title("Remote App Installation - VSIL")
+    vsil_window.title("Remote App Installation - VSIL/CIWS")
     vsil_window.geometry("1000x900")
     vsil_window.resizable(False, False)
-    vsil_window.configure(bg="#FF69B4")  # Dark teal background
+    vsil_window.configure(bg="#872657")  # Dark teal background
     vsil_window.iconbitmap(temp_icon_path)
 
     global progress_bar_ping
@@ -539,17 +548,17 @@ def open_vsil_window():
     labels = {}
 
     # Title Label
-    title_label = tk.Label(vsil_window, text=f"Remote App Installation - VSIL", font=("Arial", 20, "bold"), fg="white",
-                           bg="#FF69B4")
-    title_label.place(x=330, y=10)
+    title_label = tk.Label(vsil_window, text=f"Remote App Installation - VSIL/CIWS", font=("Arial", 20, "bold"), fg="white",
+                           bg="#872657")
+    title_label.place(x=270, y=10)
 
     # Create a scrollable frame for hostnames
-    scroll_frame = tk.Frame(vsil_window, bg="#FF69B4")
+    scroll_frame = tk.Frame(vsil_window, bg="#872657")
     scroll_frame.place(x=10, y=70, width=900, height=600)  # Ensure the frame starts at the correct position
 
-    canvas = tk.Canvas(scroll_frame, bg="#FF69B4", highlightthickness=0)
+    canvas = tk.Canvas(scroll_frame, bg="#872657", highlightthickness=0)
     scrollbar = tk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
-    host_frame = tk.Frame(canvas, bg="#FF69B4")  # This will contain the hostnames and checkboxes
+    host_frame = tk.Frame(canvas, bg="#872657")  # This will contain the hostnames and checkboxes
 
     # Configure the canvas and scrollbar
     host_frame.bind(
@@ -683,17 +692,17 @@ def open_vsil_window():
 
     for host, ip in hostnames.items():
         # Create a frame for the checkbox and label
-        item_frame = tk.Frame(host_frame, bg="#FF69B4")  # Matches the background color
+        item_frame = tk.Frame(host_frame, bg="#872657")  # Matches the background color
 
         # Add the checkbox
         tk.Checkbutton(
             item_frame,
             variable=selections[host],
-            bg="#FF69B4",
+            bg="#872657",
             fg="white",
-            selectcolor="#FF69B4",
+            selectcolor="#872657",
             anchor="w"
-        ).pack(side="left", padx=2)  # Pack the checkbox to the left with padding
+        ).pack(side="left", padx=0)  # Pack the checkbox to the left with padding
 
         # Add the label
         labels[host] = tk.Label(
@@ -701,13 +710,13 @@ def open_vsil_window():
             text=f"{host} (IP: {ip})",
             font=("Arial", 14),
             fg="white",
-            bg="#FF69B4",
+            bg="#872657",
             anchor="w"
         )
-        labels[host].pack(side="left", padx=2)  # Pack the label to the right of the checkbox with spacing
+        labels[host].pack(side="left", padx=10)  # Pack the label to the right of the checkbox with spacing
 
         # Pack the row into the scrollable host frame
-        item_frame.pack(fill="x", pady=10)  # Add vertical space between rows
+        item_frame.pack(fill="x", pady=12)  # Add vertical space between rows
 
     # Functions for Check All and Uncheck All
     def check_all():
@@ -718,15 +727,6 @@ def open_vsil_window():
         for var in selections.values():
             var.set(False)
 
-        # test bat number
-
-    # for hostnames, ip in hostnames.items():
-    #     if "AD CBMC" in hostnames or "CBMC" in hostnames or "CBMC Client" in hostnames or "DB CBMC" in hostnames or "TCS Client" in hostnames:
-    #         first_digits = 21
-    #     else:
-    #         first_digits = ip.split('.')[2][0]
-    #     print(first_digits)
-
     # Buttons on the right
     button_x = 760
     button_width = 200
@@ -735,9 +735,9 @@ def open_vsil_window():
         text="Check All",
         command=check_all,
         font=("Arial", 14),
-        bg="#FF1493",
+        bg="#C71585",
         fg="white",
-        activebackground="#008080"
+        activebackground="#C71585"
     ).place(x=button_x, y=100, width=button_width, height=50)
 
     tk.Button(
@@ -745,13 +745,13 @@ def open_vsil_window():
         text="Uncheck All",
         command=uncheck_all,
         font=("Arial", 14),
-        bg="#FF1493",
+        bg="#C71585",
         fg="white",
-        activebackground="#008080"
+        activebackground="#C71585"
     ).place(x=button_x, y=170, width=button_width, height=50)
 
     # Results Display
-    results_text = tk.Text(vsil_window, height=10, width=60, bg="#C71585", fg="white", font=("Arial", 12))
+    results_text = tk.Text(vsil_window, height=10, width=60, bg="#65000B", fg="white", font=("Arial", 12))
     results_text.place(x=50, y=700, width=700, height=150)
 
     def display_results(results):
@@ -945,9 +945,9 @@ def open_vsil_window():
         text="Get Version",
         command=perform_version_check,
         font=("Arial", 14),
-        bg="#C71585",
+        bg="#65000B",
         fg="white",
-        activebackground="#008080"
+        activebackground="#65000B"
     ).place(x=button_x, y=240, width=button_width, height=50)
 
     tk.Button(
@@ -955,9 +955,9 @@ def open_vsil_window():
         text="Communication Test",
         command=perform_communication_test,
         font=("Arial", 14),
-        bg="#FF1493",
+        bg="#C71585",
         fg="white",
-        activebackground="#008080"
+        activebackground="#C71585"
     ).place(x=button_x, y=310, width=button_width, height=50)
 
     tk.Button(
@@ -965,9 +965,9 @@ def open_vsil_window():
         text="Permission Test",
         command=perform_permission_test,
         font=("Arial", 14),
-        bg="#FF1493",
+        bg="#C71585",
         fg="white",
-        activebackground="#008080"
+        activebackground="#C71585"
     ).place(x=button_x, y=380, width=button_width, height=50)
 
     tk.Button(
@@ -975,9 +975,9 @@ def open_vsil_window():
         text="Disk Volume Test",
         command=perform_disk_volume_test,
         font=("Arial", 14),
-        bg="#FF1493",
+        bg="#C71585",
         fg="white",
-        activebackground="#008080"
+        activebackground="#C71585"
     ).place(x=button_x, y=450, width=button_width, height=50)
 
     tk.Button(
@@ -985,9 +985,9 @@ def open_vsil_window():
         text="Install App",
         command=on_install,
         font=("Arial", 14, 'bold'),
-        bg="#FF1493",
+        bg="#C71585",
         fg="white",
-        activebackground="#008080"
+        activebackground="#C71585"
     ).place(x=button_x, y=590, width=button_width, height=50)
 
     # Close button in the middle at the bottom
@@ -996,9 +996,9 @@ def open_vsil_window():
         text="Close",
         command=on_close,
         font=("Arial", 14),
-        bg="#800000",
+        bg="#A91B60",
         fg="white",
-        activebackground="#990000"
+        activebackground="#A91B60"
     ).place(x=450, y=855, width=100, height=40)
 
 
@@ -2526,9 +2526,9 @@ def rai_screen():
     battery_install_window = create_button(root, 'Battery', open_battery_window, 178, 420)
     regional_install_window = create_button(root, 'Regional', open_regional_window, 178, 490)
     simulator_install_window = create_button(root, 'Simulator', open_simulator_window, 178, 560)
-    vsil_install_window = create_button(root, 'VSIL', open_vsil_window, 178, 630)
+    vsil_install_window = create_button(root, 'VSIL/CIWS', open_vsil_window, 178, 630)
 
-    if BN == "VSIL":
+    if BN == "VSIL/CIWS":
         disable_button(battery_install_window)
         disable_button(regional_install_window)
         disable_button(simulator_install_window)
@@ -2550,11 +2550,11 @@ def db_screen():
     buttons.append(rai_label)
 
     # Create Buttons with Hover Effects
-    battery_install_window = create_button(root, 'Battery', selection_window, 178, 420)
+    battery_install_window = create_button(root, 'Battery', selection_DB_window, 178, 420)
     regional_install_window = create_button(root, 'Regional', coming_soon, 178, 490)
-    vsil_install_window = create_button(root, 'VSIL', coming_soon, 178, 560)
+    vsil_install_window = create_button(root, 'VSIL/CIWS', coming_soon, 178, 560)
 
-    if BN == "VSIL":
+    if BN == "VSIL/CIWS":
         disable_button(battery_install_window)
         disable_button(regional_install_window)
     else:
@@ -2591,7 +2591,10 @@ def main_screen():
         selected_value = dropdown_var.get()
         if selected_value == "Select a number":
             return
-        BN = selected_value
+        elif selected_value == "Regional":
+            BN = 21
+        else:
+            BN = selected_value
         messagebox.showinfo("Save", f"The battery number was update to {BN}")
 
     # Add Main Label
@@ -2606,7 +2609,7 @@ def main_screen():
     buttons.append(dropdown_label)
 
     dropdown = ttk.Combobox(root, textvariable=dropdown_var, state="readonly", font=('Arial', 10))
-    dropdown['values'] = [1, 2, 3, 4, 5, 6,10, 21, "VSIL"]
+    dropdown['values'] = [1, 2, 3, 4, 5, 6,10, "Regional", "VSIL/CIWS"]
     dropdown.place(x=10, y=40)
     buttons.append(dropdown)
 

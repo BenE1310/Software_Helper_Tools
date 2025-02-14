@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
-set /a BN=0
-
+set /a BN=1
+set /a PN=4
 echo Creating Databases For Battery number %BN% Training Mode
 set CDBase="C:\Windows\Temp\CDBase.sql"
 del %CDBase%
@@ -48,4 +48,4 @@ for %%A in (
 >> %CDBase% echo EXEC sp_addrolemember N'db_datareader', N'IronDomeClient1'
 ))
 
-sqlcmd -S 10.11.%BN%8.3 -i %CDBase%
+sqlcmd -S 10.11.%BN%8.%PN% -i %CDBase%
