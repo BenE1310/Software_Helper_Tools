@@ -1,5 +1,6 @@
 import json
 import shutil
+import subprocess
 import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
@@ -148,6 +149,44 @@ selection_window_DB = None
 server_choice = None
 
 
+# Tools phase
+def open_finishscript():
+    try:
+        script_path = ".\\tools\\FinishScripts\\RunME.bat"
+
+        if not os.path.exists(script_path):
+            raise FileNotFoundError("FinishScript not found.")
+
+        # Open in a new cmd window
+        subprocess.Popen(f'start cmd /k "{script_path}"', shell=True)
+
+    except FileNotFoundError:
+        messagebox.showerror("Error", "FinishScript is not found.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to start FinishScript: {e}")
+
+def run_finishScript():
+    threading.Thread(target=open_finishscript).start()
+
+def open_ilspy():
+    try:
+        if not os.path.exists(".\\tools\\ILSpy\\ILSpy.exe"):
+            raise FileNotFoundError("ILSpy.exe not found.")
+
+        subprocess.run(".\\tools\\ILSpy\\ILSpy.exe", shell=True, check=True)
+    except FileNotFoundError:
+        messagebox.showerror("Error", "The file ILSpy.exe is not found.")
+    except subprocess.CalledProcessError as e:
+        messagebox.showerror("Error", f"Failed to start ILSpy.exe: {e}")
+
+
+def run_ilspy():
+    threading.Thread(target=open_ilspy).start()
+
+
+def start_services_file():
+    subprocess.Popen(["python", ".\\tools\\services.py"])
+
 # Reusable function to create a button with hover effects
 def create_button(parent, text, command, x, y, style=button_style, state='normal'):
     button = tk.Button(parent, text=text, **style, command=command, state=state)
@@ -166,8 +205,231 @@ def disable_button(window):
 def enable_button(window):
     window.config(state='normal')  # Enable the grayed-out button
 
+# Database VSIL windows and functions
 
-# Databae Regional windows and functions
+def set_server_vsil(choice):
+    """Stores the server choice and moves to the next screen"""
+    global selection_db_window_vsil, server_choice
+    server_choice = choice  # Store choice if needed
+    if selection_db_window_vsil:
+        selection_db_window_vsil.destroy()  # Destroy the first popup
+    open_vsil_database_window()  # Open the next screen
+
+def selection_db_window_vsil_function():
+    global set_server, selection_db_window_vsil
+    # Create the first popup for server selection
+    selection_db_window_vsil = tk.Toplevel()
+    selection_db_window_vsil.title("Select DB")
+    selection_db_window_vsil.geometry("250x250")
+    selection_db_window_vsil.configure(bg="#C74375")
+    selection_db_window_vsil.resizable(False, False)
+    # selection_window.protocol("WM_DELETE_WINDOW",
+    #                           lambda: messagebox.showerror("Error", "You must select a server!"))
+
+    # Header label
+    tk.Label(selection_db_window_vsil, text="Choose DB Server", font=("Arial", 16, "bold"), fg="white", bg="#C74375").pack(
+        pady=15)
+
+    # Buttons
+    btn1 = tk.Button(selection_db_window_vsil, text="DB-BAT", font=("Arial", 14, "bold"), fg="white", bg="#9E003A",
+                     padx=20, pady=10, relief="flat", borderwidth=3, highlightthickness=0, width=8,
+                     command=lambda: set_server_vsil(1))
+    btn1.pack(pady=10)
+
+    btn2 = tk.Button(selection_db_window_vsil, text="DB-CBMC", font=("Arial", 14, "bold"), fg="white", bg="#9E003A",
+                     padx=20, pady=10, relief="flat", borderwidth=3, highlightthickness=0, width=8,
+                     command=lambda: set_server_vsil(2))
+    btn2.pack(pady=10)
+
+def open_vsil_database_window():
+
+    # Define parameters based on the server choice
+    database_window_vsil = tk.Toplevel()
+    database_window_vsil.title("Table Management")
+    database_window_vsil.geometry("400x500")
+    database_window_vsil.resizable(False, False)
+    database_window_vsil.configure(bg="#872657")
+    database_window_vsil.iconbitmap(temp_icon_path)
+    PN = 3
+
+    if server_choice == 1:
+        BN = 1
+        hostname = "DB-BAT"
+    else:
+        BN = 21
+        hostname = "DB-CBMC"
+    print(server_choice)
+    print(BN)
+
+    # Title Label
+    title_label = tk.Label(
+        database_window_vsil, text=f"Database VSIL {hostname}", font=("Arial", 14, "bold"), fg="white", bg="#872657"
+    )
+    title_label.place(x=80, y=5)
+
+    # Checkbox Variables
+    operational_var = tk.BooleanVar()
+    training_var = tk.BooleanVar()
+
+    tk.Checkbutton(
+        database_window_vsil, text="Operational", variable=operational_var,
+        bg="#872657", fg="white", selectcolor="#872657", font=("Arial", 12)
+    ).place(x=20, y=50)
+
+    tk.Checkbutton(
+        database_window_vsil, text="Training", variable=training_var,
+        bg="#872657", fg="white", selectcolor="#872657", font=("Arial", 12)
+    ).place(x=20, y=90)
+
+    def on_close():
+        database_window_vsil.destroy()  # Close the window
+
+    def yes_no_keep_delete():
+        response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?", parent=None)
+        if response:
+            handle_delete_tables()
+        else:
+            return
+
+    # Progress Bar
+    progress_bar = ttk.Progressbar(database_window_vsil, orient="horizontal", mode="indeterminate", length=360)
+    progress_bar.place(x=60, y=290, width=280, height=20)
+
+    def start_progress():
+        progress_bar.start(10)  # Starts animation with 10ms step
+
+    def stop_progress():
+        progress_bar.stop()  # Stops the animation
+
+    # Wrap the existing functions with progress updates
+    def run_with_progress(target_function):
+        if not (operational_var.get() or training_var.get()):
+            messagebox.showwarning("No Selection", "Please select at least one mode.", parent=None)
+            return
+        def wrapper():
+            start_progress()
+            target_function()
+            stop_progress()
+        threading.Thread(target=wrapper).start()
+
+
+    def handle_create_empty_tables():
+        global bat_file_name
+
+        """
+        Handles the "Create Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "CreateEmptyTablesOperational.bat"
+        elif training_var.get():
+            bat_file_name = "CreateEmptyTablesTraining.bat"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+
+        # Step 2: Transfer & Execute Remotely
+        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=None)
+
+    def create_empty_databases():
+        run_with_progress(handle_create_empty_tables)
+
+
+    def handle_delete_tables():
+        global bat_file_name
+
+        """
+        Handles the "Create Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "DeleteDatabasesOperational.bat"
+        elif training_var.get():
+            bat_file_name = "DeleteDatabasesTraining.bat"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+
+        # Step 2: Transfer & Execute Remotely
+        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=None)
+
+    def delete_databases():
+        run_with_progress(handle_delete_tables)
+
+    def handle_import_tables():
+        global bat_file_name
+
+        """
+        Handles the "Import Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "CreateTablesOperationalFBE.bat"
+        elif training_var.get():
+            bat_file_name = "CreateTablesTrainingFBE.bat"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+
+
+        # Step 2: Transfer & Execute Remotely
+        handle_tables_battery(BN, PN,current_bat_file=bat_file_name, results_text=results_text, parent_window=None)
+
+
+    def import_tables():
+        run_with_progress(handle_import_tables)
+
+    # Buttons on the right
+    button_x = 210
+    button_width = 170
+    button_height = 40
+    y_start = 50
+    y_gap = 60
+
+    tk.Button(
+        database_window_vsil, text="Create Tables", font=("Arial", 12), bg="#C71585", fg="white",
+        activebackground="#DC143C", command=create_empty_databases
+    ).place(x=button_x, y=y_start, width=button_width, height=button_height)
+    tk.Button(
+        database_window_vsil, text="Delete Tables", font=("Arial", 12), bg="#C71585", fg="white",
+        activebackground="#DC143C", command=yes_no_keep_delete
+    ).place(x=button_x, y=y_start + y_gap, width=button_width, height=button_height)
+
+    tk.Button(
+        database_window_vsil, text="Import Tables", font=("Arial", 12), bg="#C71585", fg="white",
+        activebackground="#DC143C", command=import_tables
+    ).place(x=button_x, y=y_start + 2 * y_gap, width=button_width, height=button_height)
+
+    tk.Button(
+        database_window_vsil, text="Close", font=("Arial", 12), bg="#673147", fg="white",
+        activebackground="#DC143C", command=on_close
+    ).place(x=162, y=460, width=80, height=30)
+
+    # Close button in the middle at the bottom
+
+
+    # Results Display
+    results_text = tk.Text(database_window_vsil, height=5, width=50, bg="#65000B", fg="white", font=("Arial", 10))
+    results_text.place(x=20, y=330, width=360, height=120)
+
+
+# Database Regional windows and functions
+
 def set_server_regional(choice):
     """Stores the server choice and moves to the next screen"""
     global selection_DB_window_regional, server_choice
@@ -217,10 +479,7 @@ def open_regional_database_window():
         PN = 3
     else:
         PN = 4
-    print(server_choice)
-    print(PN)
 
-    bat_num = 21
     # Title Label
     title_label = tk.Label(
         database_window_regional, text=f"Database Regional DB0{server_choice}", font=("Arial", 14, "bold"), fg="white", bg="#663399"
@@ -388,36 +647,37 @@ def open_regional_database_window():
     results_text.place(x=20, y=330, width=360, height=120)
 
 # Database Battery windows and functions
+
 def set_server_Battery(choice):
     """Stores the server choice and moves to the next screen"""
-    global selection_window_DB, server_choice
+    global selection_window_db_battery, server_choice
     server_choice = choice  # Store choice if needed
-    if selection_window_DB:
-        selection_window_DB.destroy()  # Destroy the first popup
+    if selection_window_db_battery:
+        selection_window_db_battery.destroy()  # Destroy the first popup
     open_battery_database_window()  # Open the next screen
 
-def selection_DB_window():
-    global set_server, set_server_Battery, selection_window_DB
+def selection_db_window_battery():
+    global set_server, set_server_Battery, selection_window_db_battery
     # Create the first popup for server selection
-    selection_window_DB = tk.Toplevel()
-    selection_window_DB.title("Select DB")
-    selection_window_DB.geometry("250x250")
-    selection_window_DB.configure(bg="#2C3E50")
-    selection_window_DB.resizable(False, False)
+    selection_window_db_battery = tk.Toplevel()
+    selection_window_db_battery.title("Select DB")
+    selection_window_db_battery.geometry("250x250")
+    selection_window_db_battery.configure(bg="#2C3E50")
+    selection_window_db_battery.resizable(False, False)
     # selection_window.protocol("WM_DELETE_WINDOW",
     #                           lambda: messagebox.showerror("Error", "You must select a server!"))
 
     # Header label
-    tk.Label(selection_window_DB, text="Choose DB Server", font=("Arial", 16, "bold"), fg="white", bg="#2C3E50").pack(
+    tk.Label(selection_window_db_battery, text="Choose DB Server", font=("Arial", 16, "bold"), fg="white", bg="#2C3E50").pack(
         pady=15)
 
     # Buttons
-    btn1 = tk.Button(selection_window_DB, text="DB01", font=("Arial", 14, "bold"), fg="white", bg="#2196F3",
+    btn1 = tk.Button(selection_window_db_battery, text="DB01", font=("Arial", 14, "bold"), fg="white", bg="#2196F3",
                      padx=20, pady=10, relief="flat", borderwidth=3, highlightthickness=0,
                      command=lambda: set_server_Battery(1))
     btn1.pack(pady=10)
 
-    btn2 = tk.Button(selection_window_DB, text="DB02", font=("Arial", 14, "bold"), fg="white", bg="#2196F3",
+    btn2 = tk.Button(selection_window_db_battery, text="DB02", font=("Arial", 14, "bold"), fg="white", bg="#2196F3",
                      padx=20, pady=10, relief="flat", borderwidth=3, highlightthickness=0,
                      command=lambda: set_server_Battery(2))
     btn2.pack(pady=10)
@@ -897,7 +1157,7 @@ def open_vsil_window():
             fg="white",
             selectcolor="#872657",
             anchor="w"
-        ).pack(side="left", padx=4)  # Pack the checkbox to the left with padding
+        ).pack(side="left", padx=2)  # Pack the checkbox to the left with padding
 
         # Add the label
         labels[host] = tk.Label(
@@ -908,7 +1168,7 @@ def open_vsil_window():
             bg="#872657",
             anchor="w"
         )
-        labels[host].pack(side="left", padx=10)  # Pack the label to the right of the checkbox with spacing
+        labels[host].pack(side="left", padx=4)  # Pack the label to the right of the checkbox with spacing
 
         # Pack the row into the scrollable host frame
         item_frame.pack(fill="x", pady=12)  # Add vertical space between rows
@@ -1191,7 +1451,7 @@ def open_vsil_window():
         text="Close",
         command=on_close,
         font=("Arial", 14),
-        bg="#A91B60",
+        bg="#673147",
         fg="white",
         activebackground="#A91B60"
     ).place(x=450, y=855, width=100, height=40)
@@ -2712,6 +2972,26 @@ def open_battery_window():
     #     installation_app_remote_message.append("onetime")
 
 
+def tools_screen():
+    # Clear existing buttons
+    on_button_click()
+
+    # Add Label
+    tools_label = tk.Label(root, text='Tools', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    tools_label.place(x=250, y=10)
+    buttons.append(tools_label)
+
+    # Create Buttons with Hover Effects
+    create_button(root, 'Services', start_services_file, 178, 420)
+    create_button(root, 'FinishScript', run_finishScript, 178, 490)
+    create_button(root, 'Wireshark' , coming_soon, 178, 560)
+    create_button(root, 'ILSpy', run_ilspy, 178, 630)
+
+
+    create_button(root, 'Back', main_screen, 14, 690, button_style_small)
+    create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
+
+
 def rai_screen():
     # Clear existing buttons
     on_button_click()
@@ -2749,9 +3029,9 @@ def db_screen():
     buttons.append(rai_label)
 
     # Create Buttons with Hover Effects
-    battery_install_window = create_button(root, 'Battery', selection_DB_window, 178, 420)
+    battery_install_window = create_button(root, 'Battery', selection_db_window_battery, 178, 420)
     regional_install_window = create_button(root, 'Regional', selection_db_window_regional, 178, 490)
-    vsil_install_window = create_button(root, 'VSIL/CIWS', coming_soon, 178, 560)
+    vsil_install_window = create_button(root, 'VSIL/CIWS', selection_db_window_vsil_function, 178, 560)
 
     if BN == "VSIL/CIWS":
         disable_button(battery_install_window)
@@ -2822,7 +3102,7 @@ def main_screen():
     create_button(root, 'App Installation', phases_app_installation_screen, 178, 420)
     create_button(root, 'Checks Components', coming_soon, 178, 490)
     create_button(root, 'Cyber Deployment', coming_soon, 178, 560)
-    create_button(root, 'Tools', coming_soon, 360, 690, button_style_small)
+    create_button(root, 'Tools', tools_screen, 360, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
 
