@@ -21,7 +21,7 @@ for %%A in (
 >> %CDBase% echo GO
 ))
 
-sqlcmd -S 10.11.%BN%8.3 -i %CDBase%
+sqlcmd -S 10.11.%BN%8.%PN% -i %CDBase%
 
 echo Removing database files...
 for %%A in (

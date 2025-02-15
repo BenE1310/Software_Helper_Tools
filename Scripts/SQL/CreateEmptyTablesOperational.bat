@@ -1,7 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
-set /a BN=1
-
+set /a BN=21
+set /a PN=3
 echo Creating Databases For Battery number %BN% Operational Mode
 set CDBase="C:\Windows\Temp\CDBase.sql"
 del %CDBase%
