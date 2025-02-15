@@ -101,6 +101,7 @@ def get_remote_file_version(remote_server, file_path):
     try:
         # Construct the UNC path for the remote file
         unc_path = fr"\\{remote_server}\{file_path}"
+        print(unc_path)
 
         # Open the remote file
         handle = win32file.CreateFile(
@@ -480,7 +481,7 @@ def cleanup_temp_files():
     print("Temporary files cleaned up.")
 
 
-def handle_adding_launchers_battery(bat_num, pos_num, current_bat_file, current_sql_file, logs=None, results_text=None):
+def handle_adding_launchers_battery(bat_num, pos_num, parent_window, current_bat_file, current_sql_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
@@ -505,7 +506,7 @@ def handle_adding_launchers_battery(bat_num, pos_num, current_bat_file, current_
                 print(line)  # Print each line separately
 
         if "System error 64" in mapping_result.stderr or "System error 67" in mapping_result.stderr:
-            messagebox.showerror("Error", "Network issue detected! Ensure the drive is not already mapped.")
+            messagebox.showerror("Error", "Network issue detected! Ensure the drive is not already mapped.", parent=parent_window)
             update_results_text(results_text, "Error: Network issue detected! Ensure the drive is not already mapped.")
             raise Exception(f"Mapping failed: {mapping_result.stderr.strip()}")  # Stops function execution
 
@@ -537,7 +538,7 @@ def handle_adding_launchers_battery(bat_num, pos_num, current_bat_file, current_
                 print(line)  # Print each line separately
 
         if "'sqlcmd' is not recognized as an internal or external command" in run_remote_script.stderr:
-            messagebox.showerror("Error", "Check whether you have 'sqlcmd' installed in the component you are trying to install from.")
+            messagebox.showerror("Error", "Check whether you have 'sqlcmd' installed in the component you are trying to install from.", parent=parent_window)
             update_results_text(results_text, "Error: 'sqlcmd' is not recognized as an internal or external command")
             raise Exception(f"Mapping failed: {run_remote_script.stderr.strip()}")  # Stops function execution
 
@@ -545,7 +546,7 @@ def handle_adding_launchers_battery(bat_num, pos_num, current_bat_file, current_
         log_message = f"Error during execution: {e}"
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and communication stability to the DB server and try again.")
+        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and communication stability to the DB server and try again.", parent=parent_window)
         return
 
     finally:
@@ -557,7 +558,7 @@ def handle_adding_launchers_battery(bat_num, pos_num, current_bat_file, current_
 
 
 
-def handle_tables_battery(bat_num, bat_pos, current_bat_file, logs=None, results_text=None):
+def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
@@ -574,27 +575,43 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, logs=None, results
         update_results_text(results_text, log_message)
 
         mapping_result = subprocess.run(f'net use {drive_letter} {unc_path}', shell=True, capture_output=True, text=True)
+        if mapping_result.stderr:
+            print("Copy Error Output:")
+            for line in mapping_result.stderr.splitlines():
+                print(line)  # Print each line separately
 
-        if mapping_result.returncode != 0 or "System error 64" in mapping_result.stderr:
-            raise Exception(f"System error 64: {mapping_result.stderr.strip()}")
+        if "System error 64" in mapping_result.stderr or "System error 67" in mapping_result.stderr:
+            messagebox.showerror("Error", "Network issue detected! Ensure the drive is not already mapped.",parent=parent_window)
+            update_results_text(results_text, "Error: Network issue detected! Ensure the drive is not already mapped.")
+            raise Exception(f"Mapping failed: {mapping_result.stderr.strip()}")  # Stops function execution
 
         # Step 2: Copy the script
         scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
         remote_bat_path = f"{scripts_dest}{current_bat_file}"
+
         log_message = f"Copying script file to {scripts_dest}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
+        subprocess.run(f'echo D | xcopy "{scripts_src}" "{scripts_dest}" /E /Y /I', shell=True, capture_output=True, text=True)
 
-        copy_result = subprocess.run(f'echo D | xcopy "{scripts_src}" "{scripts_dest}" /E /Y /I', shell=True, capture_output=True, text=True)
-
-        if copy_result.returncode != 0 or "The system cannot find the drive specified" in copy_result.stderr:
-            raise Exception(f"Invalid drive specification: {copy_result.stderr.strip()}")
 
         # Step 3: Execute the batch file
         log_message = f"Executing batch file {remote_bat_path}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
-        subprocess.run(["cmd", "/c", remote_bat_path])
+        run_remote_script = subprocess.run(["cmd", "/c", remote_bat_path], shell=True, capture_output=True, text=True)
+
+        if run_remote_script.stderr:
+            print("Copy Error Output:")
+            for line in run_remote_script.stderr.splitlines():
+                print(line)  # Print each line separately
+
+        if "'sqlcmd' is not recognized as an internal or external command" in run_remote_script.stderr:
+            messagebox.showerror("Error",
+                                 "Check whether you have 'sqlcmd' installed in the component you are trying to install from.", parent=parent_window)
+            update_results_text(results_text, "Error: 'sqlcmd' is not recognized as an internal or external command")
+            raise Exception(f"Mapping failed: {run_remote_script.stderr.strip()}")  # Stops function execution
+
 
     except Exception as e:
         log_message = f"Error during execution: {e}"
@@ -602,7 +619,7 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, logs=None, results
         update_results_text(results_text, log_message)
 
         # Ensure the error popup appears
-        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and check DB server connection.")
+        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and check DB server connection.", parent=parent_window)
 
     finally:
         # Step 4: Unmap the drive

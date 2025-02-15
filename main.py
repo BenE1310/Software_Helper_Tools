@@ -166,37 +166,228 @@ def disable_button(window):
 def enable_button(window):
     window.config(state='normal')  # Enable the grayed-out button
 
-# def prompt_for_credentials():
-#     global SQL_USER, SQL_PASS
-#
-#     # Create a dialog to request credentials
-#     credentials_window = tk.Toplevel()
-#     credentials_window.title("Enter SQL Credentials")
-#     credentials_window.geometry("300x200")
-#     credentials_window.resizable(False, False)
-#     credentials_window.grab_set()  # Make it modal
-#     credentials_window.iconbitmap("icon.ico")
-#
-#     tk.Label(credentials_window, text="Username:", font=("Arial", 12)).pack(pady=5)
-#     username_entry = tk.Entry(credentials_window, font=("Arial", 12))
-#     username_entry.pack(pady=5)
-#
-#     tk.Label(credentials_window, text="Password:", font=("Arial", 12)).pack(pady=5)
-#     password_entry = tk.Entry(credentials_window, font=("Arial", 12), show="*")
-#     password_entry.pack(pady=5)
-#
-#     def save_credentials():
-#         global SQL_USER, SQL_PASS
-#         SQL_USER = username_entry.get()
-#         SQL_PASS = password_entry.get()
-#         credentials_window.destroy()  # Close the credentials window
-#
-#     tk.Button(credentials_window, text="Submit", command=save_credentials, font=("Arial", 12)).pack(pady=10)
-#
-#     credentials_window.wait_window()  # Block execution until window is closed
-# Function to open a new window for the Database
+
+# Databae Regional windows and functions
+def set_server_regional(choice):
+    """Stores the server choice and moves to the next screen"""
+    global selection_DB_window_regional, server_choice
+    server_choice = choice  # Store choice if needed
+    if selection_db_window_regional:
+        selection_db_window_regional.destroy()  # Destroy the first popup
+    open_regional_database_window()  # Open the next screen
+
+def selection_db_window_regional():
+    global set_server, set_server_Battery, selection_db_window_regional
+    # Create the first popup for server selection
+    selection_db_window_regional = tk.Toplevel()
+    selection_db_window_regional.title("Select DB")
+    selection_db_window_regional.geometry("250x250")
+    selection_db_window_regional.configure(bg="#301934")
+    selection_db_window_regional.resizable(False, False)
+    # selection_window.protocol("WM_DELETE_WINDOW",
+    #                           lambda: messagebox.showerror("Error", "You must select a server!"))
+
+    # Header label
+    tk.Label(selection_db_window_regional, text="Choose DB Server", font=("Arial", 16, "bold"), fg="white", bg="#301934").pack(
+        pady=15)
+
+    # Buttons
+    btn1 = tk.Button(selection_db_window_regional, text="DB01", font=("Arial", 14, "bold"), fg="white", bg="#6F2DA8",
+                     padx=20, pady=10, relief="flat", borderwidth=3, highlightthickness=0,
+                     command=lambda: set_server_regional(1))
+    btn1.pack(pady=10)
+
+    btn2 = tk.Button(selection_db_window_regional, text="DB02", font=("Arial", 14, "bold"), fg="white", bg="#6F2DA8",
+                     padx=20, pady=10, relief="flat", borderwidth=3, highlightthickness=0,
+                     command=lambda: set_server_regional(2))
+    btn2.pack(pady=10)
+
+def open_regional_database_window():
+    global BN
+
+    # Define parameters based on the server choice
+    database_window_regional = tk.Toplevel()
+    database_window_regional.title("Table Management")
+    database_window_regional.geometry("400x500")
+    database_window_regional.resizable(False, False)
+    database_window_regional.configure(bg="#663399")
+    database_window_regional.iconbitmap(temp_icon_path)
+
+    if server_choice == 1:
+        PN = 3
+    else:
+        PN = 4
+    print(server_choice)
+    print(PN)
+
+    bat_num = 21
+    # Title Label
+    title_label = tk.Label(
+        database_window_regional, text=f"Database Regional DB0{server_choice}", font=("Arial", 14, "bold"), fg="white", bg="#663399"
+    )
+    title_label.place(x=80, y=5)
+
+    # Checkbox Variables
+    operational_var = tk.BooleanVar()
+    training_var = tk.BooleanVar()
+
+    tk.Checkbutton(
+        database_window_regional, text="Operational", variable=operational_var,
+        bg="#663399", fg="white", selectcolor="#663399", font=("Arial", 12)
+    ).place(x=20, y=50)
+
+    tk.Checkbutton(
+        database_window_regional, text="Training", variable=training_var,
+        bg="#663399", fg="white", selectcolor="#663399", font=("Arial", 12)
+    ).place(x=20, y=90)
+
+    def on_close():
+        database_window_regional.destroy()  # Close the window
+
+    def yes_no_keep_delete():
+        response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?", parent=database_window_regional)
+        if response:
+            handle_delete_tables()
+        else:
+            return
+
+    # Progress Bar
+    progress_bar = ttk.Progressbar(database_window_regional, orient="horizontal", mode="indeterminate", length=360)
+    progress_bar.place(x=60, y=290, width=280, height=20)
+
+    def start_progress():
+        progress_bar.start(10)  # Starts animation with 10ms step
+
+    def stop_progress():
+        progress_bar.stop()  # Stops the animation
+
+    # Wrap the existing functions with progress updates
+    def run_with_progress(target_function):
+        if not (operational_var.get() or training_var.get()):
+            messagebox.showwarning("No Selection", "Please select at least one mode.", parent=database_window_regional)
+            return
+        def wrapper():
+            start_progress()
+            target_function()
+            stop_progress()
+        threading.Thread(target=wrapper).start()
 
 
+    def handle_create_empty_tables():
+        global bat_num, bat_file_name
+
+        """
+        Handles the "Create Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "CreateEmptyTablesOperational.bat"
+        elif training_var.get():
+            bat_file_name = "CreateEmptyTablesTraining.bat"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+
+        # Step 2: Transfer & Execute Remotely
+        handle_tables_battery(21, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
+
+    def create_empty_databases():
+        run_with_progress(handle_create_empty_tables)
+
+
+    def handle_delete_tables():
+        global bat_num, bat_file_name
+
+        """
+        Handles the "Create Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "DeleteDatabasesOperational.bat"
+        elif training_var.get():
+            bat_file_name = "DeleteDatabasesTraining.bat"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+
+        # Step 2: Transfer & Execute Remotely
+        handle_tables_battery(21, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
+
+    def delete_databases():
+        run_with_progress(handle_delete_tables)
+
+    def handle_import_tables():
+        global bat_file_name
+
+        """
+        Handles the "Import Tables" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get():
+            bat_file_name = "CreateTablesOperationalFBE.bat"
+        elif training_var.get():
+            bat_file_name = "CreateTablesTrainingFBE.bat"
+        else:
+            print("No mode selected.")
+            return
+
+        # Step 1: Write BAT File
+        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+
+
+        # Step 2: Transfer & Execute Remotely
+        handle_tables_battery(21, PN,current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
+
+
+    def import_tables():
+        run_with_progress(handle_import_tables)
+
+    # Buttons on the right
+    button_x = 210
+    button_width = 170
+    button_height = 40
+    y_start = 50
+    y_gap = 60
+
+    tk.Button(
+        database_window_regional, text="Create Tables", font=("Arial", 12), bg="#663399", fg="white",
+        activebackground="#4c2f66", command=create_empty_databases
+    ).place(x=button_x, y=y_start, width=button_width, height=button_height)
+    tk.Button(
+        database_window_regional, text="Delete Tables", font=("Arial", 12), bg="#663399", fg="white",
+        activebackground="#4c2f66", command=yes_no_keep_delete
+    ).place(x=button_x, y=y_start + y_gap, width=button_width, height=button_height)
+
+    tk.Button(
+        database_window_regional, text="Import Tables", font=("Arial", 12), bg="#663399", fg="white",
+        activebackground="#4c2f66", command=import_tables
+    ).place(x=button_x, y=y_start + 2 * y_gap, width=button_width, height=button_height)
+
+    tk.Button(
+        database_window_regional, text="Close", font=("Arial", 12), bg="#A9A9A9", fg="black",
+        activebackground="#F5F5DC", command=on_close
+    ).place(x=162, y=460, width=80, height=30)
+
+    # Close button in the middle at the bottom
+
+
+    # Results Display
+    results_text = tk.Text(database_window_regional, height=5, width=50, bg="#4c2f66", fg="white", font=("Arial", 10))
+    results_text.place(x=20, y=330, width=360, height=120)
+
+# Database Battery windows and functions
 def set_server_Battery(choice):
     """Stores the server choice and moves to the next screen"""
     global selection_window_DB, server_choice
@@ -209,8 +400,8 @@ def selection_DB_window():
     global set_server, set_server_Battery, selection_window_DB
     # Create the first popup for server selection
     selection_window_DB = tk.Toplevel()
-    selection_window_DB.title("Select Server")
-    selection_window_DB.geometry("300x250")
+    selection_window_DB.title("Select DB")
+    selection_window_DB.geometry("250x250")
     selection_window_DB.configure(bg="#2C3E50")
     selection_window_DB.resizable(False, False)
     # selection_window.protocol("WM_DELETE_WINDOW",
@@ -233,19 +424,20 @@ def selection_DB_window():
 
 def open_battery_database_window():
     global BN
-
     # Define parameters based on the server choice
     database_window_battery = tk.Toplevel()
     database_window_battery.title("Table Management")
-    database_window_battery.geometry("400x470")
+    database_window_battery.geometry("400x500")
     database_window_battery.resizable(False, False)
     database_window_battery.configure(bg="#004d4d")
     database_window_battery.iconbitmap(temp_icon_path)
 
-    if server_choice == "DB01":
+    if server_choice == 1:
         PN = 3
     else:
         PN = 4
+    print(server_choice)
+    print(PN)
 
 
     # Title Label
@@ -272,20 +464,36 @@ def open_battery_database_window():
         database_window_battery.destroy()  # Close the window
 
     def yes_no_keep_delete():
-        response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?")
+        response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?", parent=database_window_battery)
         if response:
             handle_delete_tables()
         else:
             return
 
+    # Progress Bar
+    progress_bar = ttk.Progressbar(database_window_battery, orient="horizontal", mode="indeterminate", length=360)
+    progress_bar.place(x=60, y=290, width=280, height=20)
+
+    def start_progress():
+        progress_bar.start(10)  # Starts animation with 10ms step
+
+    def stop_progress():
+        progress_bar.stop()  # Stops the animation
+
+    # Wrap the existing functions with progress updates
+    def run_with_progress(target_function):
+        if not (operational_var.get() or training_var.get()):
+            messagebox.showwarning("No Selection", "Please select at least one mode.", parent=database_window_battery)
+            return
+        def wrapper():
+            start_progress()
+            target_function()
+            stop_progress()
+        threading.Thread(target=wrapper).start()
+
 
     def handle_create_empty_tables():
         global BN, bat_file_name
-
-        # Ensure at least one mode is selected
-        if not (operational_var.get() or training_var.get()):
-            messagebox.showwarning("No Selection", "Please select at least one mode.")
-            return
 
         """
         Handles the "Create Tables" button click.
@@ -305,19 +513,15 @@ def open_battery_database_window():
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text)
+        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
 
     def create_empty_databases():
-        threading.Thread(target=handle_create_empty_tables).start()
+        run_with_progress(handle_create_empty_tables)
 
 
     def handle_delete_tables():
         global BN, bat_file_name
 
-        # Ensure at least one mode is selected
-        if not (operational_var.get() or training_var.get()):
-            messagebox.showwarning("No Selection", "Please select at least one mode.")
-            return
         """
         Handles the "Create Tables" button click.
         - Checks if either checkbox is selected.
@@ -336,18 +540,13 @@ def open_battery_database_window():
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text)
+        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
 
     def delete_databases():
-        threading.Thread(target=handle_delete_tables).start()
+        run_with_progress(handle_delete_tables)
 
     def handle_import_tables():
         global BN, bat_file_name
-
-        # Ensure at least one mode is selected
-        if not (operational_var.get() or training_var.get()):
-            messagebox.showwarning("No Selection", "Please select at least one mode.")
-            return
 
         """
         Handles the "Import Tables" button click.
@@ -368,18 +567,14 @@ def open_battery_database_window():
 
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN,current_bat_file=bat_file_name, results_text=results_text)
+        handle_tables_battery(BN, PN,current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
+
 
     def import_tables():
-        threading.Thread(target=handle_import_tables).start()
+        run_with_progress(handle_import_tables)
 
     def handle_adding_launchers():
         global BN, bat_file_name
-
-        # Ensure at least one mode is selected
-        if not (operational_var.get() or training_var.get()):
-            messagebox.showwarning("No Selection", "Please select at least one mode.")
-            return
 
         """
         Handles the "Adding launchers" button click.
@@ -407,10 +602,10 @@ def open_battery_database_window():
                                 results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_adding_launchers_battery(bat_num=BN,pos_num=PN, current_sql_file=sql_file_name, current_bat_file=bat_file_name, results_text=results_text)
+        handle_adding_launchers_battery(bat_num=BN,pos_num=PN, current_sql_file=sql_file_name, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
 
     def adding_launchers():
-        threading.Thread(target=handle_adding_launchers).start()
+        run_with_progress(handle_adding_launchers)
 
     # Buttons on the right
     button_x = 210
@@ -441,14 +636,14 @@ def open_battery_database_window():
     tk.Button(
         database_window_battery, text="Close", font=("Arial", 12), bg="#800000", fg="white",
         activebackground="#990000", command=on_close
-    ).place(x=162, y=430, width=80, height=30)
+    ).place(x=162, y=460, width=80, height=30)
 
     # Close button in the middle at the bottom
 
 
     # Results Display
     results_text = tk.Text(database_window_battery, height=5, width=50, bg="#003333", fg="white", font=("Arial", 10))
-    results_text.place(x=20, y=300, width=360, height=120)
+    results_text.place(x=20, y=330, width=360, height=120)
 
 # Function to open a new window for the App Installation
 def open_vsil_window():
@@ -597,7 +792,7 @@ def open_vsil_window():
 
             selected_hosts = [host for host, var in selections.items() if var.get()]
             if not selected_hosts:
-                messagebox.showwarning("No Selection", "Please select at least one hostname.")
+                messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=vsil_window)
                 return
 
             total_hosts = len(selected_hosts)
@@ -675,7 +870,7 @@ def open_vsil_window():
 
                 except Exception as e:
                     logs.append(f"Error during installation for {host} ({ip}): {e}")
-                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
+                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}", parent=vsil_window)
                     display_results(logs)
 
             # Final progress update and logs
@@ -684,7 +879,7 @@ def open_vsil_window():
             cleanup_temp_files()
             logs.append("All installations completed.")
 
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
+            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.", parent=vsil_window)
 
             display_results(logs)
 
@@ -702,7 +897,7 @@ def open_vsil_window():
             fg="white",
             selectcolor="#872657",
             anchor="w"
-        ).pack(side="left", padx=0)  # Pack the checkbox to the left with padding
+        ).pack(side="left", padx=4)  # Pack the checkbox to the left with padding
 
         # Add the label
         labels[host] = tk.Label(
@@ -764,7 +959,7 @@ def open_vsil_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=vsil_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -783,9 +978,9 @@ def open_vsil_window():
 
                     # Determine the file path based on the host type
                     if host.startswith("DB"):
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                        file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
                     else:
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                        file_path = r"c$\VSIL\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
 
                     # Call the version checker
                     version_info = get_remote_file_version(ip, file_path)
@@ -811,7 +1006,7 @@ def open_vsil_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=vsil_window)
             return
 
         # Create and show the progress bar the first time the button is pressed
@@ -849,7 +1044,7 @@ def open_vsil_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=vsil_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -890,7 +1085,7 @@ def open_vsil_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=vsil_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -1104,7 +1299,7 @@ def open_simulator_window():
 
             selected_hosts = [host for host, var in selections.items() if var.get()]
             if not selected_hosts:
-                messagebox.showwarning("No Selection", "Please select at least one hostname.")
+                messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=simulator_window)
                 return
 
             total_hosts = len(selected_hosts)
@@ -1164,7 +1359,7 @@ def open_simulator_window():
 
                 except Exception as e:
                     logs.append(f"Error during installation for {host} ({ip}): {e}")
-                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
+                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}", parent=simulator_window)
                     display_results(logs)
 
             # Final progress update and logs
@@ -1173,7 +1368,7 @@ def open_simulator_window():
             cleanup_temp_files()
             logs.append("All installations completed.")
 
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
+            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.", parent=simulator_window)
 
             display_results(logs)
 
@@ -1249,7 +1444,7 @@ def open_simulator_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=simulator_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -1267,10 +1462,11 @@ def open_simulator_window():
                     ip = hostnames[host]
 
                     # Determine the file path based on the host type
+                    ### need to change ###
                     if host.startswith("DB"):
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                        file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
                     else:
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                        file_path = r"c$\Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
 
                     # Call the version checker
                     version_info = get_remote_file_version(ip, file_path)
@@ -1296,7 +1492,7 @@ def open_simulator_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=simulator_window)
             return
 
         # Create and show the progress bar the first time the button is pressed
@@ -1334,7 +1530,7 @@ def open_simulator_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=simulator_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -1375,7 +1571,7 @@ def open_simulator_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=simulator_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -1492,6 +1688,7 @@ def open_regional_window():
     regional_window.configure(bg="#663399")  # Dark teal background
     regional_window.iconbitmap(temp_icon_path)
 
+
     global progress_bar_ping
     global progress_bar_permissions
 
@@ -1587,7 +1784,7 @@ def open_regional_window():
 
             selected_hosts = [host for host, var in selections.items() if var.get()]
             if not selected_hosts:
-                messagebox.showwarning("No Selection", "Please select at least one hostname.")
+                messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=regional_window)
                 return
 
             total_hosts = len(selected_hosts)
@@ -1619,7 +1816,7 @@ def open_regional_window():
                     # Step 1: Customize the .bat file
                     logs.append(f"Customizing batch file for {host} ({ip})...")
                     change_bat_pos_function(
-                        bat_file_path, BN=BN, PN=PN, output_path=temp_bat_path, logs=logs
+                        bat_file_path, BN=21, PN=PN, output_path=temp_bat_path, logs=logs
                     )
                     progress_var.set(progress_var.get() + step_increment)
                     progress_label.config(text=f"{int(progress_var.get())}%")
@@ -1642,7 +1839,7 @@ def open_regional_window():
 
                 except Exception as e:
                     logs.append(f"Error during installation for {host} ({ip}): {e}")
-                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
+                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}", parent=regional_window)
                     display_results(logs)
 
             # Final progress update and logs
@@ -1651,7 +1848,7 @@ def open_regional_window():
             cleanup_temp_files()
             logs.append("All installations completed.")
 
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
+            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.", parent=regional_window)
 
             display_results(logs)
 
@@ -1726,7 +1923,7 @@ def open_regional_window():
     def perform_test(test_function):
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=regional_window)
             return
         results = [test_function(host, hostnames[host]) for host in selected_hosts]
         display_results(results)
@@ -1745,7 +1942,7 @@ def open_regional_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=regional_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -1764,9 +1961,9 @@ def open_regional_window():
 
                     # Determine the file path based on the host type
                     if host.startswith("DB"):
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                        file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
                     else:
-                        file_path = r"c$\Program Files\7-Zip\7z.exe"
+                        file_path = r"c$\Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
 
                     # Call the version checker
                     version_info = get_remote_file_version(ip, file_path)
@@ -1792,7 +1989,7 @@ def open_regional_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=regional_window)
             return
 
         # Create and show the progress bar the first time the button is pressed
@@ -1830,7 +2027,7 @@ def open_regional_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=regional_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -1871,7 +2068,7 @@ def open_regional_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=regional_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -2072,7 +2269,7 @@ def open_battery_window():
     title_label.place(x=270, y=10)
 
     def yes_no_keep_install():
-        response = messagebox.askyesno("Install App", "Are you sure you want to install the Battery?")
+        response = messagebox.askyesno("Install App", "Are you sure you want to install the Battery?", parent=battery_window)
         if response:
             on_install()
         else:
@@ -2102,7 +2299,7 @@ def open_battery_window():
 
             selected_hosts = [host for host, var in selections.items() if var.get()]
             if not selected_hosts:
-                messagebox.showwarning("No Selection", "Please select at least one hostname.")
+                messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=battery_window)
                 return
 
             total_hosts = len(selected_hosts)
@@ -2160,7 +2357,7 @@ def open_battery_window():
 
                 except Exception as e:
                     logs.append(f"Error during installation for {host} ({ip}): {e}")
-                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}")
+                    messagebox.showerror("Installation Error", f"Failed for {host} ({ip}): {e}", parent=battery_window)
                     display_results(logs)
 
             # Final progress update and logs
@@ -2169,7 +2366,7 @@ def open_battery_window():
             cleanup_temp_files()
             logs.append("All installations completed.")
 
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.")
+            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.", parent=battery_window)
 
             display_results(logs)
 
@@ -2245,7 +2442,7 @@ def open_battery_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=battery_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -2265,8 +2462,10 @@ def open_battery_window():
                     # Determine the file path based on the host type
                     if host.startswith("DB"):
                         file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
+                        print("select - DB")
                     else:
                         file_path = r"c$\Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
+                        print("select - not DB")
 
                     # Call the version checker
                     version_info = get_remote_file_version(ip, file_path)
@@ -2293,7 +2492,7 @@ def open_battery_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=battery_window)
             return
 
         # Create and show the progress bar the first time the button is pressed
@@ -2332,7 +2531,7 @@ def open_battery_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=battery_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -2399,7 +2598,7 @@ def open_battery_window():
 
         selected_hosts = [host for host, var in selections.items() if var.get()]
         if not selected_hosts:
-            messagebox.showwarning("No Selection", "Please select at least one hostname.")
+            messagebox.showwarning("No Selection", "Please select at least one hostname.", parent=battery_window)
             return
 
         # Create and show the progress bar if it's not already created
@@ -2551,7 +2750,7 @@ def db_screen():
 
     # Create Buttons with Hover Effects
     battery_install_window = create_button(root, 'Battery', selection_DB_window, 178, 420)
-    regional_install_window = create_button(root, 'Regional', coming_soon, 178, 490)
+    regional_install_window = create_button(root, 'Regional', selection_db_window_regional, 178, 490)
     vsil_install_window = create_button(root, 'VSIL/CIWS', coming_soon, 178, 560)
 
     if BN == "VSIL/CIWS":
