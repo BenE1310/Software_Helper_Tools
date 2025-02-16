@@ -148,6 +148,150 @@ progress_bar_version = None
 selection_window_DB = None
 server_choice = None
 
+import tkinter as tk
+from tkinter import messagebox, ttk
+import json
+import os
+import threading
+
+
+def check_communication(ip):
+    return False  # Simulate no communication
+
+
+def check_services(ip, services):
+    return {service: False for service in services}  # Simulate service down
+
+
+def check_service_user(ip, service):
+    return "InvalidUser"  # Simulate invalid user
+
+
+def check_service_recovery(ip, service):
+    return False  # Simulate incorrect recovery settings
+
+
+def perform_tests(selected_hosts, labels, progress_bar):
+    total_tests = len(selected_hosts)
+    if total_tests == 0:
+        messagebox.showwarning("No Selection", "Please select at least one host.")
+        return
+
+    progress_bar["value"] = 0
+    step = 100 / total_tests
+
+    for index, host in enumerate(selected_hosts):
+        ip = selected_hosts[host]["ip"]
+        if not check_communication(ip):
+            labels[host].config(fg="black", text=f"{host} (No Communication)")
+        else:
+            services_status = check_services(ip, selected_hosts[host]["services"])
+            for service, status in services_status.items():
+                if not status:
+                    labels[host].config(fg="red", text=f"{host} (Service Down)")
+                    break
+            else:
+                for service in selected_hosts[host]["services"]:
+                    if check_service_user(ip, service) != "LocalSystem":
+                        labels[host].config(fg="yellow", text=f"{host} (Invalid Running User)")
+                        break
+                else:
+                    for service in selected_hosts[host]["services"]:
+                        if not check_service_recovery(ip, service):
+                            labels[host].config(fg="yellow", text=f"{host} (Recovery is Invalid)")
+                            break
+                    else:
+                        labels[host].config(fg="green", text=f"{host} (Service OK)")
+
+        progress_bar["value"] += step
+
+    progress_bar["value"] = 100
+
+
+def start_services(selected_hosts):
+    messagebox.showinfo("Start", f"Starting services on: {', '.join(selected_hosts)}")
+
+
+def stop_services(selected_hosts):
+    messagebox.showinfo("Stop", f"Stopping services on: {', '.join(selected_hosts)}")
+
+
+def open_service_window():
+    service_window = tk.Toplevel()
+    service_window.title("Service")
+    service_window.geometry("800x600")
+    service_window.resizable(False, False)
+    service_window.configure(bg="#808080")
+
+    default_hosts = {
+        "Server1": {"ip": "192.168.1.10", "services": ["ServiceA", "ServiceB"]},
+        "Server2": {"ip": "192.168.1.20", "services": ["ServiceC"]},
+        "DB-Server": {"ip": "192.168.1.30", "services": ["DatabaseService1", "DatabaseService2"]}
+    }
+
+    services_file = "services.json"
+    if os.path.exists(services_file):
+        with open(services_file, 'r') as file:
+            hosts = json.load(file)
+    else:
+        hosts = default_hosts
+        messagebox.showinfo("Info", "Using default host list as services.json was not found.")
+
+    selections = {host: tk.BooleanVar() for host in hosts}
+    labels = {}
+
+    tk.Label(service_window, text="Service Management", font=("Arial", 24, "bold"), bg="#808080", fg="white").pack(
+        pady=10)
+
+    progress_bar = ttk.Progressbar(service_window, orient="horizontal", mode="determinate", length=400)
+    progress_bar.pack(pady=10)
+
+    scroll_frame = tk.Frame(service_window, bg="#808080")
+    scroll_frame.pack(pady=10, fill=tk.BOTH, expand=True)
+
+    canvas = tk.Canvas(scroll_frame, bg="#808080", highlightthickness=0)
+    scrollbar = tk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
+    host_frame = tk.Frame(canvas, bg="#808080")
+
+    canvas.create_window((0, 0), window=host_frame, anchor="nw")
+    canvas.configure(yscrollcommand=scrollbar.set)
+
+    scrollbar.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+
+    def update_scroll_region(event):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+
+    host_frame.bind("<Configure>", update_scroll_region)
+
+    for host, info in hosts.items():
+        row_frame = tk.Frame(host_frame, bg="#808080")
+        row_frame.pack(fill="x", pady=2)
+        tk.Checkbutton(row_frame, variable=selections[host], bg="#808080", fg="white", selectcolor="#808080").pack(
+            side="left", padx=5)
+        labels[host] = tk.Label(row_frame, text=host, font=("Arial", 16), bg="#808080", fg="white")
+        labels[host].pack(side="left")
+
+    threading.Thread(target=perform_tests, args=(hosts, labels, progress_bar)).start()
+
+    button_frame = tk.Frame(service_window, bg="#808080")
+    button_frame.pack(pady=10)
+
+    tk.Button(button_frame, text="Mark All", command=lambda: [var.set(True) for var in selections.values()],
+              font=("Arial", 16), bg="#505050", fg="white").grid(row=0, column=0, padx=5)
+    tk.Button(button_frame, text="Unmark All", command=lambda: [var.set(False) for var in selections.values()],
+              font=("Arial", 16), bg="#505050", fg="white").grid(row=0, column=1, padx=5)
+    tk.Button(button_frame, text="Start",
+              command=lambda: start_services([host for host, var in selections.items() if var.get()]),
+              font=("Arial", 16), bg="#007B00", fg="white").grid(row=0, column=2, padx=5)
+    tk.Button(button_frame, text="Stop",
+              command=lambda: stop_services([host for host, var in selections.items() if var.get()]),
+              font=("Arial", 16), bg="#B00000", fg="white").grid(row=0, column=3, padx=5)
+    tk.Button(button_frame, text="Refresh", command=lambda: threading.Thread(target=perform_tests, args=(
+    {host: hosts[host] for host in hosts if selections[host].get()}, labels, progress_bar)).start(), font=("Arial", 16),
+              bg="#0000B0", fg="white").grid(row=0, column=4, padx=5)
+
+    service_window.mainloop()
 
 # Tools phase
 def open_finishscript():
@@ -183,9 +327,6 @@ def open_ilspy():
 def run_ilspy():
     threading.Thread(target=open_ilspy).start()
 
-
-def start_services_file():
-    subprocess.Popen(["python", ".\\tools\\services.py"])
 
 # Reusable function to create a button with hover effects
 def create_button(parent, text, command, x, y, style=button_style, state='normal'):
@@ -2982,7 +3123,7 @@ def tools_screen():
     buttons.append(tools_label)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Services', start_services_file, 178, 420)
+    create_button(root, 'Services', open_service_window, 178, 420)
     create_button(root, 'FinishScript', run_finishScript, 178, 490)
     create_button(root, 'Wireshark' , coming_soon, 178, 560)
     create_button(root, 'ILSpy', run_ilspy, 178, 630)

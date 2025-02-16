@@ -1,0 +1,14 @@
+{
+    "Server1": {
+        "ip": "192.168.1.10",
+        "services": ["ServiceA", "ServiceB"]
+    },
+    "Server2": {
+        "ip": "192.168.1.20",
+        "services": ["ServiceC"]
+    },
+    "DB-Server": {
+        "ip": "192.168.1.30",
+        "services": ["DatabaseService1", "DatabaseService2"]
+    }
+}
