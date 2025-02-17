@@ -3,6 +3,9 @@ import shutil
 import subprocess
 import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
+import pythoncom
+import wmi
+
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
     prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery, handle_adding_launchers_battery, \
@@ -94,8 +97,6 @@ root.resizable(False, False)
 # root.eval('tk::PlaceWindow . center')
 root.iconbitmap(temp_icon_path)
 
-
-
 # Protect application
 # try:
 #     key = askstring('Lock', "Enter Master Key", show='*')
@@ -108,6 +109,8 @@ root.iconbitmap(temp_icon_path)
 #     showinfo("Master key successful", "Welcome to \"FBE Software Helper Tool\"")
 
 # Set Background Image
+
+
 bg_image = PhotoImage(file=temp_logo_path)  # Ensure this image is in your directory
 canvas = tk.Canvas(root, width=600, height=750, highlightthickness=0, borderwidth=0)
 canvas.place(x=0, y=0)
@@ -136,6 +139,17 @@ button_style_small = {
     'relief': 'flat'
 }
 
+button_style_medium = {
+    'width': 12,
+    'height': 2,
+    'bg': '#444444',
+    'fg': 'white',
+    'font': ('Arial', 12, 'bold'),
+    'activebackground': '#555555',
+    'borderwidth': 0,
+    'relief': 'flat'
+}
+
 BN = 0
 VSIL_BN = 0
 
@@ -148,72 +162,175 @@ progress_bar_version = None
 selection_window_DB = None
 server_choice = None
 
-import tkinter as tk
-from tkinter import messagebox, ttk
-import json
-import os
-import threading
-
 
 def check_communication(ip):
-    return False  # Simulate no communication
+    """Attempts to ping the given IP and returns True if successful, False otherwise."""
+    try:
+        result = subprocess.run(["ping", "-n", "1", ip], capture_output=True, text=True, timeout=2)
+        if result.returncode == 0:
+            print(f"SUCCESS: Communication with {ip} is OK.")
+            return True
+        else:
+            print(f"ERROR: No communication with {ip}. Ping output:\n{result.stdout}")
+            return False
+    except Exception as e:
+        print(f"EXCEPTION: Failed to check communication with {ip}. Error: {e}")
+        return False
 
 
 def check_services(ip, services):
-    return {service: False for service in services}  # Simulate service down
-
+    """Check if services are running on a remote machine using WMI."""
+    try:
+        pythoncom.CoInitialize()
+        print(f"[DEBUG] Connecting to {ip} for service status check...")
+        conn = wmi.WMI(ip)
+        service_status = {}
+        for service_name in services:
+            print(f"[DEBUG] Checking service: {service_name} on {ip}...")
+            service = conn.Win32_Service(Name=service_name)
+            if service:
+                actual_state = service[0].State
+                print(f"[DEBUG] {service_name} is {actual_state}")
+                service_status[service_name] = actual_state == "Running"
+            else:
+                print(f"[ERROR] Service {service_name} not found on {ip}")
+                service_status[service_name] = False
+        return service_status
+    except Exception as e:
+        print(f"[EXCEPTION] Error checking services on {ip}: {e}")
+        return {service: False for service in services}
+    finally:
+        pythoncom.CoUninitialize()
 
 def check_service_user(ip, service):
-    return "InvalidUser"  # Simulate invalid user
+    """Check which user a service is running under."""
+    try:
+        pythoncom.CoInitialize()
+        print(f"[DEBUG] Checking logon user for service {service} on {ip}...")
+        conn = wmi.WMI(ip)
+        service_obj = conn.Win32_Service(Name=service)
+        if service_obj:
+            user = service_obj[0].StartName
+            print(f"[DEBUG] {service} is running under {user}")
+            return user
+        else:
+            print(f"[ERROR] Service {service} not found on {ip}")
+            return "Unknown"
+    except Exception as e:
+        print(f"[EXCEPTION] Error checking service user for {service} on {ip}: {e}")
+        return "Unknown"
+    finally:
+        pythoncom.CoUninitialize()
 
 
 def check_service_recovery(ip, service):
-    return False  # Simulate incorrect recovery settings
+    """Check the recovery settings for a Windows service."""
+    try:
+        pythoncom.CoInitialize()
+        print(f"[DEBUG] Checking recovery settings for {service} on {ip}...")
+
+        # Ensure correct SC command formatting
+        command = ["sc"]
+        if ip != "127.0.0.1":
+            command.append(f"\\{ip}")
+        command.extend(["qfailure", service])
+
+        result = subprocess.run(command, capture_output=True, text=True)
+        output = result.stdout.lower()
+        print(f"[DEBUG] Raw SC Output:\n{output}")
+
+        restart_count = output.count("restart -- delay")
+        valid_recovery = restart_count == 3  # Expect exactly three occurrences
+        print(f"[DEBUG] Recovery restart occurrences: {restart_count}")
+        print(f"[DEBUG] Recovery settings valid: {valid_recovery}")
+        return valid_recovery
+    except Exception as e:
+        print(f"[EXCEPTION] Error checking recovery settings for {service} on {ip}: {e}")
+        return False
+    finally:
+        pythoncom.CoUninitialize()
 
 
-def perform_tests(selected_hosts, labels, progress_bar):
-    total_tests = len(selected_hosts)
-    if total_tests == 0:
-        messagebox.showwarning("No Selection", "Please select at least one host.")
+def refresh_selected_hosts(selected_hosts, hosts, labels, progress_bar):
+    if not selected_hosts:
+        messagebox.showwarning("No Selection", "Please select at least one host to refresh.")
         return
 
     progress_bar["value"] = 0
-    step = 100 / total_tests
-
-    for index, host in enumerate(selected_hosts):
-        ip = selected_hosts[host]["ip"]
+    step = 100 / len(selected_hosts)
+    for host in selected_hosts:
+        ip = hosts[host]["ip"]
         if not check_communication(ip):
             labels[host].config(fg="black", text=f"{host} (No Communication)")
         else:
-            services_status = check_services(ip, selected_hosts[host]["services"])
+            services_status = check_services(ip, hosts[host]["services"])
             for service, status in services_status.items():
                 if not status:
                     labels[host].config(fg="red", text=f"{host} (Service Down)")
                     break
             else:
-                for service in selected_hosts[host]["services"]:
+                for service in hosts[host]["services"]:
+                    if not check_service_recovery(ip, service):
+                        labels[host].config(fg="yellow", text=f"{host} (Recovery is Invalid)")
+                        break
+                else:
+                    labels[host].config(fg="green", text=f"{host} (Service OK)")
+        progress_bar["value"] += step
+    progress_bar["value"] = 100
+
+
+def perform_tests(hosts, labels, progress_bar):
+    total_tests = len(hosts)
+    if total_tests == 0:
+        return
+
+    progress_bar["value"] = 0
+    step = 100 / total_tests
+
+    for index, (host, info) in enumerate(hosts.items()):
+        ip = info["ip"]
+        if not check_communication(ip):
+            labels[host].config(fg="black", text=f"{host} (No Communication)")
+        else:
+            services_status = check_services(ip, info["services"])
+            for service, status in services_status.items():
+                if not status:
+                    labels[host].config(fg="red", text=f"{host} (Service Down)")
+                    break
+            else:
+                for service in info["services"]:
                     if check_service_user(ip, service) != "LocalSystem":
                         labels[host].config(fg="yellow", text=f"{host} (Invalid Running User)")
                         break
                 else:
-                    for service in selected_hosts[host]["services"]:
+                    for service in info["services"]:
                         if not check_service_recovery(ip, service):
                             labels[host].config(fg="yellow", text=f"{host} (Recovery is Invalid)")
                             break
                     else:
                         labels[host].config(fg="green", text=f"{host} (Service OK)")
-
         progress_bar["value"] += step
-
     progress_bar["value"] = 100
 
 
-def start_services(selected_hosts):
-    messagebox.showinfo("Start", f"Starting services on: {', '.join(selected_hosts)}")
+def start_services(selected_hosts, hosts, labels):
+    """Simulates starting services and updates UI."""
+    for host in selected_hosts:
+        for service in hosts[host]["services"]:
+            print(f"Starting {service} on {host}")
+            # Simulate the service being started
+            labels[host].config(fg="green", text=f"{host} (Service Running)")
+    messagebox.showinfo("Start", f"Started services on: {', '.join(selected_hosts)}")
 
+def stop_services(selected_hosts, hosts, labels):
+    """Simulates stopping services and updates UI."""
+    for host in selected_hosts:
+        for service in hosts[host]["services"]:
+            print(f"Stopping {service} on {host}")
+            # Simulate the service being stopped
+            labels[host].config(fg="red", text=f"{host} (Service Stopped)")
+    messagebox.showinfo("Stop", f"Stopped services on: {', '.join(selected_hosts)}")
 
-def stop_services(selected_hosts):
-    messagebox.showinfo("Stop", f"Stopping services on: {', '.join(selected_hosts)}")
 
 
 def open_service_window():
@@ -224,7 +341,7 @@ def open_service_window():
     service_window.configure(bg="#808080")
 
     default_hosts = {
-        "Server1": {"ip": "192.168.1.10", "services": ["ServiceA", "ServiceB"]},
+        "Ben": {"ip": "127.0.0.1", "services": ["Spooler"]},
         "Server2": {"ip": "192.168.1.20", "services": ["ServiceC"]},
         "DB-Server": {"ip": "192.168.1.30", "services": ["DatabaseService1", "DatabaseService2"]}
     }
@@ -256,13 +373,8 @@ def open_service_window():
     canvas.create_window((0, 0), window=host_frame, anchor="nw")
     canvas.configure(yscrollcommand=scrollbar.set)
 
-    scrollbar.pack(side="right", fill="y")
+    scrollbar.pack(side="left", fill="y")
     canvas.pack(side="left", fill="both", expand=True)
-
-    def update_scroll_region(event):
-        canvas.configure(scrollregion=canvas.bbox("all"))
-
-    host_frame.bind("<Configure>", update_scroll_region)
 
     for host, info in hosts.items():
         row_frame = tk.Frame(host_frame, bg="#808080")
@@ -277,21 +389,22 @@ def open_service_window():
     button_frame = tk.Frame(service_window, bg="#808080")
     button_frame.pack(pady=10)
 
-    tk.Button(button_frame, text="Mark All", command=lambda: [var.set(True) for var in selections.values()],
+    tk.Button(button_frame, text="Set All", command=lambda: [var.set(True) for var in selections.values()],
               font=("Arial", 16), bg="#505050", fg="white").grid(row=0, column=0, padx=5)
-    tk.Button(button_frame, text="Unmark All", command=lambda: [var.set(False) for var in selections.values()],
+    tk.Button(button_frame, text="Clear All", command=lambda: [var.set(False) for var in selections.values()],
               font=("Arial", 16), bg="#505050", fg="white").grid(row=0, column=1, padx=5)
-    tk.Button(button_frame, text="Start",
-              command=lambda: start_services([host for host, var in selections.items() if var.get()]),
-              font=("Arial", 16), bg="#007B00", fg="white").grid(row=0, column=2, padx=5)
-    tk.Button(button_frame, text="Stop",
-              command=lambda: stop_services([host for host, var in selections.items() if var.get()]),
-              font=("Arial", 16), bg="#B00000", fg="white").grid(row=0, column=3, padx=5)
-    tk.Button(button_frame, text="Refresh", command=lambda: threading.Thread(target=perform_tests, args=(
-    {host: hosts[host] for host in hosts if selections[host].get()}, labels, progress_bar)).start(), font=("Arial", 16),
-              bg="#0000B0", fg="white").grid(row=0, column=4, padx=5)
+    tk.Button(button_frame, text="Refresh", command=lambda: threading.Thread(target=refresh_selected_hosts, args=(
+    [host for host, var in selections.items() if var.get()], hosts, labels, progress_bar)).start(), font=("Arial", 16),
+              bg="#0000B0", fg="white").grid(row=0, column=2, padx=5)
+    tk.Button(button_frame, text="Start", command=lambda: threading.Thread(target=start_services, args=(
+    [host for host, var in selections.items() if var.get()], hosts, labels)).start(), font=("Arial", 16), bg="#007B00",
+              fg="white").grid(row=0, column=3, padx=5)
+    tk.Button(button_frame, text="Stop", command=lambda: threading.Thread(target=stop_services, args=(
+    [host for host, var in selections.items() if var.get()], hosts, labels)).start(), font=("Arial", 16), bg="#B00000",
+              fg="white").grid(row=0, column=4, padx=5)
 
     service_window.mainloop()
+
 
 # Tools phase
 def open_finishscript():
@@ -3123,10 +3236,12 @@ def tools_screen():
     buttons.append(tools_label)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Services', open_service_window, 178, 420)
-    create_button(root, 'FinishScript', run_finishScript, 178, 490)
-    create_button(root, 'Wireshark' , coming_soon, 178, 560)
-    create_button(root, 'ILSpy', run_ilspy, 178, 630)
+    create_button(root, 'Services', open_service_window, 156, 420, button_style_medium)
+    create_button(root, 'FinishScript', run_finishScript, 320, 420, button_style_medium)
+    create_button(root, 'Wireshark' , coming_soon, 156, 490, button_style_medium)
+    create_button(root, 'ILSpy', run_ilspy, 320, 490, button_style_medium)
+    create_button(root, 'Ping Tester', None, 156, 560, button_style_medium)
+    create_button(root, 'Dep.', None, 320, 560, button_style_medium)
 
 
     create_button(root, 'Back', main_screen, 14, 690, button_style_small)
