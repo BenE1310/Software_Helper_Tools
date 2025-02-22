@@ -202,34 +202,33 @@ def check_services(ip, services):
     finally:
         pythoncom.CoUninitialize()
 
-def check_service_user(ip, service):
-    """Check which user a service is running under."""
+def check_service_user(ip, service, expected_user):
+    """Check which user a service is running under and compare it with the expected user."""
     try:
         pythoncom.CoInitialize()
-        print(f"[DEBUG] Checking logon user for service {service} on {ip}...")
         conn = wmi.WMI(ip)
         service_obj = conn.Win32_Service(Name=service)
         if service_obj:
-            user = service_obj[0].StartName
-            print(f"[DEBUG] {service} is running under {user}")
-            return user
+            actual_user = service_obj[0].StartName
+            if actual_user != expected_user:
+                print(f"[ERROR] Service {service} is running under {actual_user}, expected {expected_user}.")
+                return False
+            return True
         else:
             print(f"[ERROR] Service {service} not found on {ip}")
-            return "Unknown"
+            return False
     except Exception as e:
         print(f"[EXCEPTION] Error checking service user for {service} on {ip}: {e}")
-        return "Unknown"
+        return False
     finally:
         pythoncom.CoUninitialize()
 
 
-def check_service_recovery(ip, service):
-    """Check the recovery settings for a Windows service."""
+
+def check_service_recovery(ip, service, expected_recovery):
+    """Check the recovery settings for a Windows service and compare it with expected recovery type."""
     try:
         pythoncom.CoInitialize()
-        print(f"[DEBUG] Checking recovery settings for {service} on {ip}...")
-
-        # Ensure correct SC command formatting
         command = ["sc"]
         if ip != "127.0.0.1":
             command.append(f"\\{ip}")
@@ -237,12 +236,14 @@ def check_service_recovery(ip, service):
 
         result = subprocess.run(command, capture_output=True, text=True)
         output = result.stdout.lower()
-        print(f"[DEBUG] Raw SC Output:\n{output}")
 
         restart_count = output.count("restart -- delay")
-        valid_recovery = restart_count == 3  # Expect exactly three occurrences
-        print(f"[DEBUG] Recovery restart occurrences: {restart_count}")
-        print(f"[DEBUG] Recovery settings valid: {valid_recovery}")
+        valid_recovery = (expected_recovery == "Restart" and restart_count == 3) or \
+                          (expected_recovery == "RunProgram" and "run program" in output) or \
+                          (expected_recovery == "None" and "none" in output)
+
+        if not valid_recovery:
+            print(f"[ERROR] Recovery settings for {service} are not as expected ({expected_recovery}).")
         return valid_recovery
     except Exception as e:
         print(f"[EXCEPTION] Error checking recovery settings for {service} on {ip}: {e}")
@@ -251,32 +252,45 @@ def check_service_recovery(ip, service):
         pythoncom.CoUninitialize()
 
 
-def refresh_selected_hosts(selected_hosts, hosts, labels, progress_bar):
-    if not selected_hosts:
-        messagebox.showwarning("No Selection", "Please select at least one host to refresh.")
+
+def refresh_all_hosts(hosts, labels, progress_bar):
+    """Performs refresh check on all hosts and their services."""
+    if not hosts:
+        messagebox.showwarning("No Hosts", "No hosts to refresh.")
         return
 
     progress_bar["value"] = 0
-    step = 100 / len(selected_hosts)
-    for host in selected_hosts:
-        ip = hosts[host]["ip"]
+    step = 100 / len(hosts)
+
+    for host, info in hosts.items():
+        ip = info["ip"]
         if not check_communication(ip):
             labels[host].config(fg="black", text=f"{host} (No Communication)")
         else:
-            services_status = check_services(ip, hosts[host]["services"])
+            services_status = check_services(ip, info["services"])
             for service, status in services_status.items():
                 if not status:
                     labels[host].config(fg="red", text=f"{host} (Service Down)")
                     break
             else:
-                for service in hosts[host]["services"]:
-                    if not check_service_recovery(ip, service):
-                        labels[host].config(fg="yellow", text=f"{host} (Recovery is Invalid)")
+                # Check user and recovery type for each service
+                for service_info in info["services"]:
+                    service_name = service_info["name"]
+                    expected_user = service_info["user"]
+                    expected_recovery = service_info["recovery"]
+
+                    if not check_service_user(ip, service_name, expected_user):
+                        labels[host].config(fg="yellow", text=f"{host} (Invalid User for {service_name})")
+                        break
+                    if not check_service_recovery(ip, service_name, expected_recovery):
+                        labels[host].config(fg="yellow", text=f"{host} (Invalid Recovery for {service_name})")
                         break
                 else:
                     labels[host].config(fg="green", text=f"{host} (Service OK)")
         progress_bar["value"] += step
     progress_bar["value"] = 100
+
+
 
 
 def perform_tests(hosts, labels, progress_bar):
@@ -298,19 +312,29 @@ def perform_tests(hosts, labels, progress_bar):
                     labels[host].config(fg="red", text=f"{host} (Service Down)")
                     break
             else:
-                for service in info["services"]:
-                    if check_service_user(ip, service) != "LocalSystem":
-                        labels[host].config(fg="yellow", text=f"{host} (Invalid Running User)")
+                # Check user and recovery type for each service
+                for service_info in info["services"]:
+                    service_name = service_info["name"]
+                    expected_user = service_info["user"]
+                    expected_recovery = service_info["recovery"]
+
+                    if not check_service_user(ip, service_name, expected_user):
+                        labels[host].config(fg="yellow", text=f"{host} (Invalid User for {service_name})")
+                        break
+                    if not check_service_recovery(ip, service_name, expected_recovery):
+                        labels[host].config(fg="yellow", text=f"{host} (Invalid Recovery for {service_name})")
                         break
                 else:
-                    for service in info["services"]:
-                        if not check_service_recovery(ip, service):
-                            labels[host].config(fg="yellow", text=f"{host} (Recovery is Invalid)")
-                            break
-                    else:
-                        labels[host].config(fg="green", text=f"{host} (Service OK)")
+                    labels[host].config(fg="green", text=f"{host} (Service OK)")
         progress_bar["value"] += step
     progress_bar["value"] = 100
+
+def add_log_to_result_bar(log_text, result_text_widget):
+    """Update the result bar with logs."""
+    result_text_widget.insert(tk.END, log_text + '\n')
+    result_text_widget.yview(tk.END)  # Auto-scroll to the bottom
+
+
 
 
 def start_services(selected_hosts, hosts, labels):
@@ -332,78 +356,120 @@ def stop_services(selected_hosts, hosts, labels):
     messagebox.showinfo("Stop", f"Stopped services on: {', '.join(selected_hosts)}")
 
 
+def open_utilities_window():
+    utilities_window = tk.Toplevel()
+    utilities_window.title("Utilities")
+    utilities_window.geometry("1000x720")
+    utilities_window.resizable(False, False)
+    utilities_window.configure(bg="#2E2E2E")
 
-def open_service_window():
-    service_window = tk.Toplevel()
-    service_window.title("Service")
-    service_window.geometry("800x600")
-    service_window.resizable(False, False)
-    service_window.configure(bg="#808080")
+    if BN == 21:
+        label_window = "Regional"
+    elif "VSIL" in str(BN):
+        label_window = "VSIL"
+    else:
+        label_window = f"Battery {BN}"
 
-    default_hosts = {
-        "Ben": {"ip": "127.0.0.1", "services": ["Spooler"]},
-        "Server2": {"ip": "192.168.1.20", "services": ["ServiceC"]},
-        "DB-Server": {"ip": "192.168.1.30", "services": ["DatabaseService1", "DatabaseService2"]}
+    # Sample dictionary fallback in case JSON file is not found
+    default_hostnames_utilities = {
+        "Ben": {"ip": "25.129.220.99", "services": [{"name": "ServiceA", "user": "admin", "recovery": "Restart"}]},
+        "Host2": {"ip": "192.168.0.2", "services": [{"name": "ServiceB", "user": "user1", "recovery": "RunProgram"}]},
     }
 
-    services_file = "services.json"
-    if os.path.exists(services_file):
-        with open(services_file, 'r') as file:
-            hosts = json.load(file)
+
+    hostnames_file_path_utilities = ".\\Config\\utilitisHostnames.json"
+
+    if os.path.exists(hostnames_file_path_utilities):
+        # If the JSON file exists, read hostnames from it
+        with open(hostnames_file_path_utilities, 'r') as file:
+            hostnames = json.load(file)
+        print("Loaded hostnames from JSON file.")
     else:
-        hosts = default_hosts
-        messagebox.showinfo("Info", "Using default host list as services.json was not found.")
+        # If the JSON file does not exist, use the default dictionary
+        hostnames = default_hostnames_utilities
+        print("Loaded hostnames from default dictionary.")
 
-    selections = {host: tk.BooleanVar() for host in hosts}
-    labels = {}
+    # Track selections
+    selections = {host: tk.BooleanVar() for host in hostnames}
 
-    tk.Label(service_window, text="Service Management", font=("Arial", 24, "bold"), bg="#808080", fg="white").pack(
-        pady=10)
+    # Add "Utilities" label
+    tk.Label(
+        utilities_window, text=f"Utilities - {label_window}", font=("Arial", 24, "bold"), bg="#2E2E2E", fg="white"
+    ).place(x=500, y=30, anchor="center")
 
-    progress_bar = ttk.Progressbar(service_window, orient="horizontal", mode="determinate", length=400)
-    progress_bar.pack(pady=10)
+    # Scrollable Frame for Host Details
+    scroll_frame = tk.Frame(utilities_window, bg="#2E2E2E")
+    scroll_frame.place(x=30, y=100, width=220, height=540)  # Moved slightly to the right
 
-    scroll_frame = tk.Frame(service_window, bg="#808080")
-    scroll_frame.pack(pady=10, fill=tk.BOTH, expand=True)
-
-    canvas = tk.Canvas(scroll_frame, bg="#808080", highlightthickness=0)
+    # Canvas & Scrollbar Setup
+    canvas = tk.Canvas(scroll_frame, bg="#2E2E2E", highlightthickness=0)
     scrollbar = tk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
-    host_frame = tk.Frame(canvas, bg="#808080")
+    host_frame = tk.Frame(canvas, bg="#2E2E2E")
 
-    canvas.create_window((0, 0), window=host_frame, anchor="nw")
-    canvas.configure(yscrollcommand=scrollbar.set)
+    host_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    canvas.create_window((10, 0), window=host_frame, anchor="nw")  # Moved content slightly right
 
+    # Keep scrollbar on left
     scrollbar.pack(side="left", fill="y")
-    canvas.pack(side="left", fill="both", expand=True)
+    canvas.pack(side="right", fill="both", expand=True)
 
-    for host, info in hosts.items():
-        row_frame = tk.Frame(host_frame, bg="#808080")
-        row_frame.pack(fill="x", pady=2)
-        tk.Checkbutton(row_frame, variable=selections[host], bg="#808080", fg="white", selectcolor="#808080").pack(
-            side="left", padx=5)
-        labels[host] = tk.Label(row_frame, text=host, font=("Arial", 16), bg="#808080", fg="white")
-        labels[host].pack(side="left")
+    # Display Hosts with Checkboxes (Moved Right)
+    for host in hostnames:
+        item_frame = tk.Frame(host_frame, bg="#2E2E2E")
 
-    threading.Thread(target=perform_tests, args=(hosts, labels, progress_bar)).start()
+        # Checkbox (Shifted Right)
+        checkbutton = tk.Checkbutton(
+            item_frame, variable=selections[host], bg="#2E2E2E", fg="white", selectcolor="#2E2E2E", anchor="w"
+        )
+        checkbutton.grid(row=0, column=0, padx=15)  # Increased padding for right shift
 
-    button_frame = tk.Frame(service_window, bg="#808080")
-    button_frame.pack(pady=10)
+        # Hostname Label (Shifted Right)
+        tk.Label(
+            item_frame, text=host, font=("Arial", 14, "bold"), fg="white", bg="#2E2E2E", anchor="w"
+        ).grid(row=0, column=1, padx=10)  # Increased padding for right shift
 
-    tk.Button(button_frame, text="Set All", command=lambda: [var.set(True) for var in selections.values()],
-              font=("Arial", 16), bg="#505050", fg="white").grid(row=0, column=0, padx=5)
-    tk.Button(button_frame, text="Clear All", command=lambda: [var.set(False) for var in selections.values()],
-              font=("Arial", 16), bg="#505050", fg="white").grid(row=0, column=1, padx=5)
-    tk.Button(button_frame, text="Refresh", command=lambda: threading.Thread(target=refresh_selected_hosts, args=(
-    [host for host, var in selections.items() if var.get()], hosts, labels, progress_bar)).start(), font=("Arial", 16),
-              bg="#0000B0", fg="white").grid(row=0, column=2, padx=5)
-    tk.Button(button_frame, text="Start", command=lambda: threading.Thread(target=start_services, args=(
-    [host for host, var in selections.items() if var.get()], hosts, labels)).start(), font=("Arial", 16), bg="#007B00",
-              fg="white").grid(row=0, column=3, padx=5)
-    tk.Button(button_frame, text="Stop", command=lambda: threading.Thread(target=stop_services, args=(
-    [host for host, var in selections.items() if var.get()], hosts, labels)).start(), font=("Arial", 16), bg="#B00000",
-              fg="white").grid(row=0, column=4, padx=5)
+        # Place in scroll area
+        item_frame.pack(anchor="w", pady=5)
 
-    service_window.mainloop()
+    # "Set All" & "Clear All" Functions
+    def check_all():
+        for var in selections.values():
+            var.set(True)
+
+    def uncheck_all():
+        for var in selections.values():
+            var.set(False)
+
+    # Keep all original buttons (UNCHANGED)
+    button_style = {"font": ("Arial", 14), "fg": "white", "bd": 3, "relief": "solid", "width": 18, "height": 2}
+
+    tk.Button(utilities_window, text="Mark All", command=check_all, bg="green",
+              **button_style).place(x=750, y=100)
+    tk.Button(utilities_window, text="Unmark All", command=uncheck_all, bg="red",
+              **button_style).place(x=750, y=180)
+    tk.Button(utilities_window, text="Restart Watchdog", command=lambda: print("Restarting Watchdog..."), bg="#0099cc",
+              **button_style).place(x=750, y=260)
+    tk.Button(utilities_window, text="Start Watchdog", command=lambda: print("Starting Watchdog..."), bg="#0099cc",
+              **button_style).place(x=750, y=340)
+    tk.Button(utilities_window, text="Stop Watchdog", command=lambda: print("Stopping Watchdog..."), bg="#0099cc",
+              **button_style).place(x=750, y=420)
+    tk.Button(utilities_window, text="Restart Component", command=lambda: print("Restart component..."),
+              bg="#0099cc", **button_style).place(x=750, y=500)
+    tk.Button(utilities_window, text="Shutdown Component", command=lambda: print("Shutting down component..."),
+              bg="#0099cc", **button_style).place(x=750, y=580)
+
+    # Close button (UNCHANGED)
+    close_button_style = {"font": ("Arial", 12), "fg": "white", "bd": 3, "relief": "solid", "width": 10, "height": 2}
+    tk.Button(utilities_window, text="Close", command=utilities_window.destroy, bg="gray", **close_button_style).place(
+        x=500, y=680, anchor="center")
+
+    # Result Bar (UNCHANGED)
+    result_text_widget = tk.Text(
+        utilities_window, width=48, height=29, wrap=tk.WORD, bg="#333333", fg="white", bd=2, font=("Arial", 12)
+    )
+    result_text_widget.place(x=278, y=106)
+
+
 
 
 # Tools phase
@@ -3231,12 +3297,12 @@ def tools_screen():
     on_button_click()
 
     # Add Label
-    tools_label = tk.Label(root, text='Tools', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    tools_label = tk.Label(root, text='Tools', fg='white', bg='#000000', font=('Arial', 20, 'bold'), anchor="center")
     tools_label.place(x=250, y=10)
     buttons.append(tools_label)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Services', open_service_window, 156, 420, button_style_medium)
+    create_button(root, 'Utilities', open_utilities_window, 156, 420, button_style_medium)
     create_button(root, 'FinishScript', run_finishScript, 320, 420, button_style_medium)
     create_button(root, 'Wireshark' , coming_soon, 156, 490, button_style_medium)
     create_button(root, 'ILSpy', run_ilspy, 320, 490, button_style_medium)
@@ -3333,7 +3399,7 @@ def main_screen():
         messagebox.showinfo("Save", f"The battery number was update to {BN}")
 
     # Add Main Label
-    main_label = tk.Label(root, text='Main', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    main_label = tk.Label(root, text='Main', fg='white', bg='#000000', font=('Arial', 20, 'bold'), anchor="center")
     main_label.place(x=266, y=10)
     buttons.append(main_label)
 
