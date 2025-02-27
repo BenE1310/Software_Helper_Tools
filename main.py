@@ -1,11 +1,11 @@
 import json
+import queue
 import shutil
 import subprocess
 import tkinter as tk
 from tkinter import PhotoImage, ttk, messagebox
 import pythoncom
 import wmi
-
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
     prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery, handle_adding_launchers_battery, \
@@ -163,312 +163,326 @@ selection_window_DB = None
 server_choice = None
 
 
+###############################################################################
+#                               CHECK FUNCTIONS                               #
+###############################################################################
+
 def check_communication(ip):
     """Attempts to ping the given IP and returns True if successful, False otherwise."""
     try:
-        result = subprocess.run(["ping", "-n", "1", ip], capture_output=True, text=True, timeout=2)
+        result = subprocess.run(["ping", "-n", "1", ip],
+                                capture_output=True, text=True, timeout=2)
         if result.returncode == 0:
-            print(f"SUCCESS: Communication with {ip} is OK.")
             return True
         else:
-            print(f"ERROR: No communication with {ip}. Ping output:\n{result.stdout}")
             return False
     except Exception as e:
-        print(f"EXCEPTION: Failed to check communication with {ip}. Error: {e}")
+        print(f"[EXCEPTION ping] {e}")
         return False
 
-
-def check_services(ip, services):
-    """Check if services are running on a remote machine using WMI."""
+def check_services(ip, service_names):
+    """
+    Check if each service in 'service_names' is running on the remote machine (WMI).
+    Returns dict {service_name: bool} indicating Running/NotRunning.
+    """
     try:
         pythoncom.CoInitialize()
-        print(f"[DEBUG] Connecting to {ip} for service status check...")
         conn = wmi.WMI(ip)
-        service_status = {}
-        for service_name in services:
-            print(f"[DEBUG] Checking service: {service_name} on {ip}...")
-            service = conn.Win32_Service(Name=service_name)
-            if service:
-                actual_state = service[0].State
-                print(f"[DEBUG] {service_name} is {actual_state}")
-                service_status[service_name] = actual_state == "Running"
+        statuses = {}
+        for name in service_names:
+            svc = conn.Win32_Service(Name=name)
+            if svc:
+                statuses[name] = (svc[0].State == "Running")
             else:
-                print(f"[ERROR] Service {service_name} not found on {ip}")
-                service_status[service_name] = False
-        return service_status
+                statuses[name] = False
+        return statuses
     except Exception as e:
-        print(f"[EXCEPTION] Error checking services on {ip}: {e}")
-        return {service: False for service in services}
+        print(f"[EXCEPTION services] {e}")
+        return {name: False for name in service_names}
     finally:
         pythoncom.CoUninitialize()
 
-def check_service_user(ip, service, expected_user):
-    """Check which user a service is running under and compare it with the expected user."""
+def check_service_user(ip, service_name, expected_user):
+    """Returns True if the service is running as 'expected_user', else False."""
     try:
         pythoncom.CoInitialize()
         conn = wmi.WMI(ip)
-        service_obj = conn.Win32_Service(Name=service)
-        if service_obj:
-            actual_user = service_obj[0].StartName
-            if actual_user != expected_user:
-                print(f"[ERROR] Service {service} is running under {actual_user}, expected {expected_user}.")
-                return False
-            return True
-        else:
-            print(f"[ERROR] Service {service} not found on {ip}")
-            return False
+        svc = conn.Win32_Service(Name=service_name)
+        if svc:
+            actual_user = svc[0].StartName
+            return (actual_user == expected_user)
+        return False
     except Exception as e:
-        print(f"[EXCEPTION] Error checking service user for {service} on {ip}: {e}")
+        print(f"[EXCEPTION user] {e}")
         return False
     finally:
         pythoncom.CoUninitialize()
 
-
-
-def check_service_recovery(ip, service, expected_recovery):
-    """Check the recovery settings for a Windows service and compare it with expected recovery type."""
+def check_service_recovery(ip, service_name, expected_recovery):
+    """
+    Checks the service recovery settings with 'sc qfailure' and compares them
+    to 'expected_recovery' (e.g. 'Restart', 'RunProgram', or 'None').
+    """
     try:
         pythoncom.CoInitialize()
-        command = ["sc"]
+        cmd = ["sc"]
         if ip != "127.0.0.1":
-            command.append(f"\\{ip}")
-        command.extend(["qfailure", service])
-
-        result = subprocess.run(command, capture_output=True, text=True)
+            cmd.append(f"\\\\{ip}")
+        cmd.extend(["qfailure", service_name])
+        result = subprocess.run(cmd, capture_output=True, text=True)
         output = result.stdout.lower()
-
         restart_count = output.count("restart -- delay")
-        valid_recovery = (expected_recovery == "Restart" and restart_count == 3) or \
-                          (expected_recovery == "RunProgram" and "run program" in output) or \
-                          (expected_recovery == "None" and "none" in output)
 
-        if not valid_recovery:
-            print(f"[ERROR] Recovery settings for {service} are not as expected ({expected_recovery}).")
-        return valid_recovery
+        valid = (
+            (expected_recovery == "Restart" and restart_count == 3) or
+            (expected_recovery == "RunProgram" and "run program" in output) or
+            (expected_recovery == "None" and "none" in output)
+        )
+        return valid
     except Exception as e:
-        print(f"[EXCEPTION] Error checking recovery settings for {service} on {ip}: {e}")
+        print(f"[EXCEPTION recovery] {e}")
         return False
     finally:
         pythoncom.CoUninitialize()
 
+###############################################################################
+#                          BACKGROUND TEST WORKER                             #
+###############################################################################
 
-
-def refresh_all_hosts(hosts, labels, progress_bar):
-    """Performs refresh check on all hosts and their services."""
-    if not hosts:
-        messagebox.showwarning("No Hosts", "No hosts to refresh.")
-        return
-
-    progress_bar["value"] = 0
-    step = 100 / len(hosts)
+def worker_thread_func(hosts, results_queue):
+    """
+    This function runs in a background thread.
+    For each host, it performs all checks and then puts the outcome
+    (host_name, color, final_label_text, logs_list) into the results_queue.
+    """
+    total = len(hosts)
+    index = 0
 
     for host, info in hosts.items():
         ip = info["ip"]
-        if not check_communication(ip):
-            labels[host].config(fg="black", text=f"{host} (No Communication)")
+        log_messages = []
+        color = "green"             # Start optimistic; change if something fails
+        label_text = f"{host} (OK)" # Will update as we go
+
+        # 1) Communication
+        comm_ok = check_communication(ip)
+        if not comm_ok:
+            color = "black"
+            label_text = f"{host} (C)"  # 'C' means no communication
+            log_messages.append(f"[{host}] No communication with {ip}")
+            # Put partial result in the queue so the UI can update
+            results_queue.put((host, color, label_text, log_messages, index, total))
+            index += 1
+            continue  # Move on to next host
+
+        # 2) Check if services are running
+        service_names = [s["name"] for s in info["services"]]
+        statuses = check_services(ip, service_names)
+        # If any service is down -> red
+        for svc_name in service_names:
+            if not statuses.get(svc_name, False):
+                color = "red"
+                label_text = f"{host} (Service Down)"
+                log_messages.append(f"[{host}] Watchdog service '{svc_name}' is down.")
+                break
+
+        if color == "red":
+            results_queue.put((host, color, label_text, log_messages, index, total))
+            index += 1
+            continue
+
+        # 3) If they're up, check each service's user & 4) recovery
+        for svc_info in info["services"]:
+            svc_name = svc_info["name"]
+            expected_user = svc_info["user"]
+            expected_recovery = svc_info["recovery"]
+
+            # Check user
+            user_ok = check_service_user(ip, svc_name, expected_user)
+            if not user_ok:
+                color = "yellow"
+                label_text = f"{host} (Invalid User)"
+                log_messages.append(f"[{host}] Invalid running user for '{svc_name}'.")
+                break
+
+            # Check recovery
+            recovery_ok = check_service_recovery(ip, svc_name, expected_recovery)
+            if not recovery_ok:
+                color = "yellow"
+                label_text = f"{host} (Invalid Recovery)"
+                log_messages.append(f"[{host}] Recovery settings incorrect for '{svc_name}'.")
+                break
+
+        # If we broke from the loop, put partial result. If not, everything's good.
+        if color not in ["black", "red", "yellow"]:
+            color = "green"
+            label_text = f"{host} (Service OK)"
+            log_messages.append(f"[{host}] Service is up properly.")
+
+        # Put the final result for this host in the queue
+        results_queue.put((host, color, label_text, log_messages, index, total))
+        index += 1
+
+###############################################################################
+#                            POLLING THE QUEUE                                #
+###############################################################################
+
+def poll_queue(utilities_window, results_queue, labels, result_text_widget, progress_bar):
+    """
+    This function is called periodically (with after(...)) in the main thread.
+    It checks for any new results from the worker thread and updates the UI.
+    """
+    while True:
+        try:
+            # Non-blocking get from the queue
+            host, color, text, logs, index, total = results_queue.get_nowait()
+        except queue.Empty:
+            break  # Nothing else to process right now
         else:
-            services_status = check_services(ip, info["services"])
-            for service, status in services_status.items():
-                if not status:
-                    labels[host].config(fg="red", text=f"{host} (Service Down)")
-                    break
-            else:
-                # Check user and recovery type for each service
-                for service_info in info["services"]:
-                    service_name = service_info["name"]
-                    expected_user = service_info["user"]
-                    expected_recovery = service_info["recovery"]
+            # Update label color/text
+            labels[host].config(fg=color, text=text)
+            # Update logs
+            for line in logs:
+                result_text_widget.insert(tk.END, line + '\n')
+            result_text_widget.yview(tk.END)
+            # Update progress
+            progress = int(((index + 1) / total) * 100)
+            progress_bar["value"] = progress
+            utilities_window.update_idletasks()
 
-                    if not check_service_user(ip, service_name, expected_user):
-                        labels[host].config(fg="yellow", text=f"{host} (Invalid User for {service_name})")
-                        break
-                    if not check_service_recovery(ip, service_name, expected_recovery):
-                        labels[host].config(fg="yellow", text=f"{host} (Invalid Recovery for {service_name})")
-                        break
-                else:
-                    labels[host].config(fg="green", text=f"{host} (Service OK)")
-        progress_bar["value"] += step
-    progress_bar["value"] = 100
+    # Schedule the next poll
+    utilities_window.after(200, lambda: poll_queue(
+        utilities_window, results_queue, labels, result_text_widget, progress_bar
+    ))
 
-
-
-
-def perform_tests(hosts, labels, progress_bar):
-    total_tests = len(hosts)
-    if total_tests == 0:
-        return
-
-    progress_bar["value"] = 0
-    step = 100 / total_tests
-
-    for index, (host, info) in enumerate(hosts.items()):
-        ip = info["ip"]
-        if not check_communication(ip):
-            labels[host].config(fg="black", text=f"{host} (No Communication)")
-        else:
-            services_status = check_services(ip, info["services"])
-            for service, status in services_status.items():
-                if not status:
-                    labels[host].config(fg="red", text=f"{host} (Service Down)")
-                    break
-            else:
-                # Check user and recovery type for each service
-                for service_info in info["services"]:
-                    service_name = service_info["name"]
-                    expected_user = service_info["user"]
-                    expected_recovery = service_info["recovery"]
-
-                    if not check_service_user(ip, service_name, expected_user):
-                        labels[host].config(fg="yellow", text=f"{host} (Invalid User for {service_name})")
-                        break
-                    if not check_service_recovery(ip, service_name, expected_recovery):
-                        labels[host].config(fg="yellow", text=f"{host} (Invalid Recovery for {service_name})")
-                        break
-                else:
-                    labels[host].config(fg="green", text=f"{host} (Service OK)")
-        progress_bar["value"] += step
-    progress_bar["value"] = 100
-
-def add_log_to_result_bar(log_text, result_text_widget):
-    """Update the result bar with logs."""
-    result_text_widget.insert(tk.END, log_text + '\n')
-    result_text_widget.yview(tk.END)  # Auto-scroll to the bottom
-
-
-
-
-def start_services(selected_hosts, hosts, labels):
-    """Simulates starting services and updates UI."""
-    for host in selected_hosts:
-        for service in hosts[host]["services"]:
-            print(f"Starting {service} on {host}")
-            # Simulate the service being started
-            labels[host].config(fg="green", text=f"{host} (Service Running)")
-    messagebox.showinfo("Start", f"Started services on: {', '.join(selected_hosts)}")
-
-def stop_services(selected_hosts, hosts, labels):
-    """Simulates stopping services and updates UI."""
-    for host in selected_hosts:
-        for service in hosts[host]["services"]:
-            print(f"Stopping {service} on {host}")
-            # Simulate the service being stopped
-            labels[host].config(fg="red", text=f"{host} (Service Stopped)")
-    messagebox.showinfo("Stop", f"Stopped services on: {', '.join(selected_hosts)}")
-
+###############################################################################
+#                           OPEN UTILITIES WINDOW                             #
+###############################################################################
 
 def open_utilities_window():
+    """
+    Creates the Toplevel Utilities window, shows it immediately, and then
+    runs the checks in a background thread so the UI remains responsive.
+    """
     utilities_window = tk.Toplevel()
     utilities_window.title("Utilities")
     utilities_window.geometry("1000x720")
     utilities_window.resizable(False, False)
     utilities_window.configure(bg="#2E2E2E")
 
-    if BN == 21:
-        label_window = "Regional"
-    elif "VSIL" in str(BN):
-        label_window = "VSIL"
-    else:
-        label_window = f"Battery {BN}"
+    label_window = "Regional"  # For demonstration
 
-    # Sample dictionary fallback in case JSON file is not found
+    # Example data:
     default_hostnames_utilities = {
-        "Ben": {"ip": "25.129.220.99", "services": [{"name": "ServiceA", "user": "admin", "recovery": "Restart"}]},
-        "Host2": {"ip": "192.168.0.2", "services": [{"name": "ServiceB", "user": "user1", "recovery": "RunProgram"}]},
+        "Ben": {
+            "ip": "12.9.95.10",
+            "services": [
+                {"name": "Spooler", "user": "admin", "recovery": "Restart"}
+            ]
+        },
+        "Host2": {
+            "ip": "192.168.0.2",
+            "services": [
+                {"name": "ServiceB", "user": "user1", "recovery": "RunProgram"}
+            ]
+        },
     }
 
-
-    hostnames_file_path_utilities = ".\\Config\\utilitisHostnames.json"
-
+    # If you have a JSON, load it
+    hostnames_file_path_utilities = ".\\Config\\utilitiesHostnames.json"
     if os.path.exists(hostnames_file_path_utilities):
-        # If the JSON file exists, read hostnames from it
         with open(hostnames_file_path_utilities, 'r') as file:
             hostnames = json.load(file)
-        print("Loaded hostnames from JSON file.")
     else:
-        # If the JSON file does not exist, use the default dictionary
         hostnames = default_hostnames_utilities
-        print("Loaded hostnames from default dictionary.")
 
-    # Track selections
-    selections = {host: tk.BooleanVar() for host in hostnames}
-
-    # Add "Utilities" label
     tk.Label(
-        utilities_window, text=f"Utilities - {label_window}", font=("Arial", 24, "bold"), bg="#2E2E2E", fg="white"
+        utilities_window, text=f"Utilities - {label_window}",
+        font=("Arial", 24, "bold"), bg="#2E2E2E", fg="white"
     ).place(x=500, y=30, anchor="center")
 
-    # Scrollable Frame for Host Details
+    # Scrollable host list
     scroll_frame = tk.Frame(utilities_window, bg="#2E2E2E")
-    scroll_frame.place(x=30, y=100, width=220, height=540)  # Moved slightly to the right
+    scroll_frame.place(x=30, y=100, width=220, height=540)
 
-    # Canvas & Scrollbar Setup
     canvas = tk.Canvas(scroll_frame, bg="#2E2E2E", highlightthickness=0)
     scrollbar = tk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
     host_frame = tk.Frame(canvas, bg="#2E2E2E")
 
     host_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-    canvas.create_window((10, 0), window=host_frame, anchor="nw")  # Moved content slightly right
-
-    # Keep scrollbar on left
+    canvas.create_window((10, 0), window=host_frame, anchor="nw")
     scrollbar.pack(side="left", fill="y")
     canvas.pack(side="right", fill="both", expand=True)
 
-    # Display Hosts with Checkboxes (Moved Right)
+    labels = {}
     for host in hostnames:
         item_frame = tk.Frame(host_frame, bg="#2E2E2E")
+        item_frame.pack(anchor="w", pady=10)
 
-        # Checkbox (Shifted Right)
-        checkbutton = tk.Checkbutton(
-            item_frame, variable=selections[host], bg="#2E2E2E", fg="white", selectcolor="#2E2E2E", anchor="w"
-        )
-        checkbutton.grid(row=0, column=0, padx=15)  # Increased padding for right shift
+        # Just show label (you can add checkboxes if you want)
+        label = tk.Label(item_frame, text=host, font=("Arial", 14, "bold"),
+                         fg="white", bg="#2E2E2E", anchor="w")
+        label.pack(side="left", padx=10)
+        labels[host] = label
 
-        # Hostname Label (Shifted Right)
-        tk.Label(
-            item_frame, text=host, font=("Arial", 14, "bold"), fg="white", bg="#2E2E2E", anchor="w"
-        ).grid(row=0, column=1, padx=10)  # Increased padding for right shift
+    # Buttons (optional)
+    button_style = {"font": ("Arial", 14), "fg": "white", "bd": 3,
+                    "relief": "solid", "width": 18, "height": 2}
+    tk.Button(utilities_window, text="Restart Watchdog",
+              command=lambda: print("Restarting Watchdog..."),
+              bg="#0099cc", **button_style).place(x=750, y=100)
 
-        # Place in scroll area
-        item_frame.pack(anchor="w", pady=5)
+    tk.Button(utilities_window, text="Start Watchdog",
+              command=lambda: print("Starting Watchdog..."),
+              bg="#0099cc", **button_style).place(x=750, y=180)
 
-    # "Set All" & "Clear All" Functions
-    def check_all():
-        for var in selections.values():
-            var.set(True)
+    tk.Button(utilities_window, text="Stop Watchdog",
+              command=lambda: print("Stopping Watchdog..."),
+              bg="#0099cc", **button_style).place(x=750, y=260)
 
-    def uncheck_all():
-        for var in selections.values():
-            var.set(False)
+    close_button_style = {"font": ("Arial", 12), "fg": "white", "bd": 3,
+                          "relief": "solid", "width": 10, "height": 2}
+    tk.Button(
+        utilities_window, text="Close", command=utilities_window.destroy,
+        bg="gray", **close_button_style
+    ).place(x=500, y=680, anchor="center")
 
-    # Keep all original buttons (UNCHANGED)
-    button_style = {"font": ("Arial", 14), "fg": "white", "bd": 3, "relief": "solid", "width": 18, "height": 2}
-
-    tk.Button(utilities_window, text="Mark All", command=check_all, bg="green",
-              **button_style).place(x=750, y=100)
-    tk.Button(utilities_window, text="Unmark All", command=uncheck_all, bg="red",
-              **button_style).place(x=750, y=180)
-    tk.Button(utilities_window, text="Restart Watchdog", command=lambda: print("Restarting Watchdog..."), bg="#0099cc",
-              **button_style).place(x=750, y=260)
-    tk.Button(utilities_window, text="Start Watchdog", command=lambda: print("Starting Watchdog..."), bg="#0099cc",
-              **button_style).place(x=750, y=340)
-    tk.Button(utilities_window, text="Stop Watchdog", command=lambda: print("Stopping Watchdog..."), bg="#0099cc",
-              **button_style).place(x=750, y=420)
-    tk.Button(utilities_window, text="Restart Component", command=lambda: print("Restart component..."),
-              bg="#0099cc", **button_style).place(x=750, y=500)
-    tk.Button(utilities_window, text="Shutdown Component", command=lambda: print("Shutting down component..."),
-              bg="#0099cc", **button_style).place(x=750, y=580)
-
-    # Close button (UNCHANGED)
-    close_button_style = {"font": ("Arial", 12), "fg": "white", "bd": 3, "relief": "solid", "width": 10, "height": 2}
-    tk.Button(utilities_window, text="Close", command=utilities_window.destroy, bg="gray", **close_button_style).place(
-        x=500, y=680, anchor="center")
-
-    # Result Bar (UNCHANGED)
+    # Result Text widget
     result_text_widget = tk.Text(
-        utilities_window, width=48, height=29, wrap=tk.WORD, bg="#333333", fg="white", bd=2, font=("Arial", 12)
+        utilities_window, width=48, height=29, wrap=tk.WORD,
+        bg="#333333", fg="white", bd=2, font=("Arial", 12)
     )
     result_text_widget.place(x=278, y=106)
 
+    # Progress bar
+    style = ttk.Style()
+    style.theme_use("default")
+    style.configure("TProgressbar", thickness=14)
+    progress_bar = ttk.Progressbar(
+        utilities_window, style="TProgressbar",
+        length=460, mode="determinate"
+    )
+    progress_bar.place(x=278, y=630)
+    progress_bar["value"] = 0
+    progress_bar["maximum"] = 100
+
+    # -------------------------------------------------------------------------
+    #  1) Create a queue for worker thread results
+    #  2) Start the background worker thread
+    #  3) Start polling the queue in the main thread
+    # -------------------------------------------------------------------------
+    results_queue = queue.Queue()
+
+    # This thread will do all checks and put results in 'results_queue'
+    thread = threading.Thread(
+        target=worker_thread_func,
+        args=(hostnames, results_queue),
+        daemon=True  # daemon=True so it won't block app shutdown
+    )
+    thread.start()
+
+    # Start polling for results and updating UI
+    poll_queue(utilities_window, results_queue, labels, result_text_widget, progress_bar)
 
 
 
@@ -1494,11 +1508,11 @@ def open_vsil_window():
         item_frame.pack(fill="x", pady=12)  # Add vertical space between rows
 
     # Functions for Check All and Uncheck All
-    def check_all():
+    def mark_all():
         for var in selections.values():
             var.set(True)
 
-    def uncheck_all():
+    def unmark_all():
         for var in selections.values():
             var.set(False)
 
@@ -1507,8 +1521,8 @@ def open_vsil_window():
     button_width = 200
     tk.Button(
         vsil_window,
-        text="Check All",
-        command=check_all,
+        text="Mark All",
+        command=mark_all,
         font=("Arial", 14),
         bg="#C71585",
         fg="white",
@@ -1517,8 +1531,8 @@ def open_vsil_window():
 
     tk.Button(
         vsil_window,
-        text="Uncheck All",
-        command=uncheck_all,
+        text="Unmark All",
+        command=unmark_all,
         font=("Arial", 14),
         bg="#C71585",
         fg="white",

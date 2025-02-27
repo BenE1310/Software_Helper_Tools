@@ -1,0 +1,118 @@
+{
+    "Ben-lp": {
+        "ip": "12.9.95.10",
+        "services": [
+            {
+                "name": "Spooler",
+                "user": "admin",
+                "recovery": "Restart"
+            }
+        ]
+    },
+    "BMC2": {
+        "ip": "192.168.18.2",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    },
+    "ICS1": {
+        "ip": "192.169.18.13",
+        "services": [
+            {
+                "name": "ServiceD",
+                "user": "admin",
+                "recovery": "Restart"
+            },
+            {
+                "name": "ServiceE",
+                "user": "user2",
+                "recovery": "RunProgram"
+            }
+        ]
+    },
+	"ICS2": {
+        "ip": "192.169.18.14",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"DB01": {
+        "ip": "192.168.18.3",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"DB02": {
+        "ip": "192.168.18.4",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"Client1": {
+        "ip": "192.168.18.6",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"Client2": {
+        "ip": "192.168.18.7",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"Client3": {
+        "ip": "192.168.18.8",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"Client4": {
+        "ip": "192.168.18.9",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"Client5": {
+        "ip": "192.168.18.10",
+        "services": [
+            {
+                "name": "ServiceC",
+                "user": "user1",
+                "recovery": "Restart"
+            }
+        ]
+    }
+	
+}
