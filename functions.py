@@ -495,7 +495,7 @@ def cleanup_temp_files():
             os.remove(os.path.join(temp_dir, file))
     print("Temporary files cleaned up.")
 
-
+# TODO: Add more argument to the function call 'folder' = FBE, VSIL or CIWS
 def handle_adding_launchers_battery(bat_num, pos_num, parent_window, current_bat_file, current_sql_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
@@ -571,8 +571,7 @@ def handle_adding_launchers_battery(bat_num, pos_num, parent_window, current_bat
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
 
-
-
+# TODO: Add more argument to the function call 'folder' = FBE, VSIL or CIWS
 def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
@@ -643,8 +642,7 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
 
-
-
+# TODO: Add more argument to the function call 'folder' = FBE, VSIL or CIWS
 def write_bat_file_db_phase(BN, PN, BAT_FILE_NAME, logs=None, results_text=None):
     """
     Writes BN, SQL_USER, and SQL_PASS values to lines 3, 4, and 5 in the BAT file.

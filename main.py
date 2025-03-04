@@ -467,7 +467,6 @@ def open_utilities_window():
     utilities_window.iconbitmap(temp_icon_path)
     utilities_window.resizable(False, False)
     utilities_window.configure(bg="#2E2E2E")
-    print(BN)
 
     if BN == 21:
         label_window = "- Regional"
@@ -477,7 +476,6 @@ def open_utilities_window():
         label_window = f"- Battery {BN}"
     else:
         label_window = ""
-    print(label_window)
 
     # Sample fallback data
     default_hostnames_utilities = {
