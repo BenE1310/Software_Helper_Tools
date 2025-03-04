@@ -1,0 +1,86 @@
+[
+  {
+    "hostname": "Ben-LP",
+    "ip": "192.168.3.154"
+  },
+  {
+    "hostname": "Ben-PC",
+    "ip": "192.168.3.141"
+  },
+  {
+    "hostname": "BMC1",
+    "ip": "10.11.18.1"
+  },
+  {
+    "hostname": "BMC2",
+    "ip": "10.11.18.2"
+  },
+  {
+    "hostname": "ICS1",
+    "ip": "10.12.18.13"
+  },
+  {
+    "hostname": "ICS2",
+    "ip": "10.12.18.14"
+  },
+  {
+    "hostname": "DB1",
+    "ip": "10.11.18.3"
+  },
+  {
+    "hostname": "DB2",
+    "ip": "10.11.18.4"
+  },
+  {
+    "hostname": "Client1",
+    "ip": "10.11.18.6"
+  },
+  {
+    "hostname": "Client2",
+    "ip": "10.11.18.7"
+  },
+  {
+    "hostname": "Client3",
+    "ip": "10.11.18.8"
+  },
+  {
+    "hostname": "Client4",
+    "ip": "10.11.18.9"
+  },
+  {
+    "hostname": "Client5",
+    "ip": "10.11.18.10"
+  },
+  {
+    "hostname": "SW-BMC1",
+    "ip": "10.11.18.251"
+  },
+  {
+    "hostname": "SW-BMC2",
+    "ip": "10.11.18.252"
+  },
+  {
+    "hostname": "SW-ICS1",
+    "ip": "10.12.18.251"
+  },
+  {
+    "hostname": "SW-ICS2",
+    "ip": "10.12.18.252"
+  },
+  {
+    "hostname": "FW-BMC",
+    "ip": "10.11.18.199"
+  },
+  {
+    "hostname": "FW-ICS",
+    "ip": "10.12.18.199"
+  },
+  {
+    "hostname": "RTR-BMC",
+    "ip": "10.10.10.2"
+  },
+  {
+    "hostname": "RTR-ICS",
+    "ip": "10.12.11.2"
+  }
+]

@@ -1,6 +1,8 @@
+import json
 import os
 import subprocess
 import platform
+import threading
 import time
 from datetime import datetime
 from tkinter import messagebox
@@ -169,12 +171,25 @@ def prepare_installation_vsil(ip_base, host_type, current_bat_file, scripts_src=
     """
     Prepare the installation process for a host.
     """
+    # Define the JSON file name
+    json_file = "Config\\site.json"
+
+    # Check if file exists
+    if not os.path.exists(json_file):
+        print("site.json file doesn't exist. Loading from default.")
+        site = "VSIL"
+    else:
+        # Load JSON data
+        with open(json_file, "r") as file:
+            data = json.load(file)
+        site = data.get("site")
+
     logs = logs or []
     drive_letter = "P:"  # Use any available drive letter
     unc_path = f"\\\\{ip_base}\\c$"
     timestamp = datetime.now().strftime("%Y-%m-%d_%H_%M_%S")
-    zip_src_db_1 = "C:\\VSIL\\Zip\\DB.7z"
-    zip_src_db_2 = "C:\\VSIL\\Zip\\WD_Common.7z"
+    zip_src_db_1 = f"C:\\{site}\\Zip\\DB.7z"
+    zip_src_db_2 = f"C:\\{site}\\Zip\\WD_Common.7z"
 
     # Determine the destination folder based on host type
     if "BMC1" in host_type or "BMC2" in host_type or "BMC3" in host_type or "BMC4" in host_type or "ICS1" in host_type or "ICS2" in host_type or "ICS3" in host_type or "ICS4" in host_type:
@@ -194,29 +209,29 @@ def prepare_installation_vsil(ip_base, host_type, current_bat_file, scripts_src=
         os.system(f"net use {drive_letter} {unc_path}")
 
         # Define paths using the mapped drive and determined folder name
-        scripts_dest = f"{drive_letter}\\VSIL_{timestamp}\\Scripts\\{folder_name}"
-        zip_dest = f"{drive_letter}\\VSIL_{timestamp}\\Zip"
-        tools_dest = f"{drive_letter}\\VSIL_{timestamp}\\Tools"
+        scripts_dest = f"{drive_letter}\\{site}_{timestamp}\\Scripts\\{folder_name}"
+        zip_dest = f"{drive_letter}\\{site}_{timestamp}\\Zip"
+        tools_dest = f"{drive_letter}\\{site}_{timestamp}\\Tools"
         remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
 
         if "BMC1" in host_type or "BMC2" in host_type or "BMC3" in host_type or "BMC4" in host_type:
-            zip_src = "C:\\VSIL\\Zip\\BMC_Server.7z"
+            zip_src = f"C:\\{site}\\Zip\\BMC_Server.7z"
         elif "ICS1" in host_type or "ICS2" in host_type or "ICS3" in host_type or "ICS4" in host_type:
-            zip_src = "C:\\VSIL\\Zip\\ICS.7z"
+            zip_src = f"C:\\{site}\\Zip\\ICS.7z"
         elif "DB-BAT" in host_type or "DB-CBMC" in host_type:
-            zip_src = "C:\\VSIL\\Zip\\mDRS.7z"
+            zip_src = f"C:\\{site}\\Zip\\mDRS.7z"
         elif "TCS-Server" in host_type:
-            zip_src = "C:\\VSIL\\Zip\\TCS_Server.7z"
+            zip_src = f"C:\\{site}\\Zip\\TCS_Server.7z"
         elif "TCS Client" in host_type:
-            zip_src = "C:\\VSIL\\Zip\\TCS_Client.7z"
+            zip_src = f"C:\\{site}\\Zip\\TCS_Client.7z"
         elif "AD-BAT" in host_type or "AD-CBMC" in host_type or "AV-BAT" in host_type or "AV-CBMC" in host_type:
-            zip_src = "C:\\VSIL\\Zip\\WD_Common.7z"
+            zip_src = f"C:\\{site}\\Zip\\WD_Common.7z"
         elif "CBMC Client" in host_type:
-            zip_src = "C:\\VSIL\\Zip\\CBMC_Client.7z"
+            zip_src = f"C:\\{site}\\Zip\\CBMC_Client.7z"
         else:
-            zip_src = "C:\\VSIL\\Zip\\CBMC_Server.7z"
+            zip_src = f"C:\\{site}\\Zip\\CBMC_Server.7z"
 
-        tools_src = "C:\\VSIL\\Tools"
+        tools_src = f"C:\\{site}\\Tools"
 
         # Step 1: Copy script file
         logs.append(f"Copying script file to {scripts_dest}...")
@@ -702,3 +717,62 @@ def generate_sql_script_training_launchers(octet_value):
     END
     """
     return sql_script
+
+
+def install_wireshark():
+    # Define paths
+    extract_path = r'C:\WiresharkPortable'
+    archive_path = r'.\Tools\Softwares\WiresharkPortable64.7z'
+    seven_zip_path = r'.\Tools\7z.exe'
+
+    # Check if the extraction path exists, if not, create it
+    if not os.path.exists(extract_path):
+        os.makedirs(extract_path)
+
+    # Command to extract the .7z file using 7z.exe
+    command = [seven_zip_path, 'x', archive_path, f'-o{extract_path}', '-y']
+
+    # Run the command
+    subprocess.run(command, check=True)
+
+    print("Extraction complete!")
+    messagebox.showinfo("", "Done!")
+
+
+def run_install_wireshark():
+    threading.Thread(target=install_wireshark).start()
+
+
+
+def install_npcap():
+    try:
+        npcap_exe_path = ".\\tools\\Softwares\\npcap-1.81.exe"
+
+        if not os.path.exists(npcap_exe_path):
+            raise FileNotFoundError("npcap not found.")
+
+        # Open in a new cmd window
+        subprocess.run(npcap_exe_path, shell=True, check=True)
+
+    except FileNotFoundError:
+        messagebox.showerror("Error", "npcap installation is not found.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to start npcap installation: {e}")
+
+def run_npcap_install():
+    threading.Thread(target=install_npcap).start()
+
+
+def open_wireshark():
+    try:
+        if not os.path.exists("C:\\WiresharkPortable\\WiresharkPortable64.exe"):
+            raise FileNotFoundError("ILSpy.exe not found.")
+
+        subprocess.run("C:\\WiresharkPortable\\WiresharkPortable64.exe", shell=True, check=True)
+    except FileNotFoundError:
+        messagebox.showerror("Error", "The file ILSpy.exe is not found.")
+    except subprocess.CalledProcessError as e:
+        messagebox.showerror("Error", f"Failed to start ILSpy.exe: {e}")
+
+def run_open_wireshark():
+    threading.Thread(target=open_wireshark).start()

@@ -1,0 +1,47 @@
+{
+    "Ben-PC-Home": {
+        "ip": "10.11.18.80",
+        "services": [
+            {
+                "name": "Spooler",
+                "user": "LocalSystem",
+                "recovery": "Restart"
+            }
+        ]
+    },
+    "BMC1": {
+        "ip": "10.11.18.1",
+        "services": [
+            {
+                "name": "Spooler",
+                "user": "LocalSystem",
+                "recovery": "Restart"
+            }
+        ]
+    },
+    "Host 2 services": {
+        "ip": "10.11.18.80",
+        "services": [
+            {
+                "name": "Spooler",
+                "user": "LocalSystem",
+                "recovery": "Restart"
+            },
+			{
+                "name": "TermService",
+                "user": "NT Authority\\NetworkService",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	    "Ben-LP": {
+        "ip": "192.168.3.154",
+        "services": [
+            {
+                "name": "Spooler",
+                "user": "LocalSystem",
+                "recovery": "Restart"
+            }
+        ]
+    }
+}

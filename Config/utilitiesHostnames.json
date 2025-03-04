@@ -1,6 +1,6 @@
 {
-    "Ben-lp": {
-        "ip": "10.11.18.80",
+    "Ben-PC": {
+        "ip": "192.168.3.141",
         "services": [
             {
                 "name": "Spooler",
@@ -9,8 +9,8 @@
             }
         ]
     },
-    "BMC1": {
-        "ip": "10.11.18.1",
+	    "Ben-LP": {
+        "ip": "192.168.3.154",
         "services": [
             {
                 "name": "Spooler",
@@ -19,17 +19,12 @@
             }
         ]
     },
-    "Host 2 services": {
+		    "ping": {
         "ip": "10.11.18.80",
         "services": [
             {
                 "name": "Spooler",
                 "user": "LocalSystem",
-                "recovery": "Restart"
-            },
-			{
-                "name": "TermService",
-                "user": "NT Authority\\NetworkService",
                 "recovery": "Restart"
             }
         ]
