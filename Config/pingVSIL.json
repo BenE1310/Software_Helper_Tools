@@ -8,12 +8,12 @@
     "ip": "10.11.28.1"
   },
   {
-    "hostname": "BMC1",
-    "ip": "10.11.18.1"
+    "hostname": "BMC3",
+    "ip": "10.11.38.1"
   },
   {
-    "hostname": "BMC2",
-    "ip": "10.11.18.2"
+    "hostname": "BMC4",
+    "ip": "10.11.48.2"
   },
   {
     "hostname": "ICS1",
@@ -21,66 +21,74 @@
   },
   {
     "hostname": "ICS2",
-    "ip": "10.12.18.14"
+    "ip": "10.12.28.13"
   },
   {
-    "hostname": "DB1",
+    "hostname": "ICS3",
+    "ip": "10.12.38.13"
+  },
+  {
+    "hostname": "ICS4",
+    "ip": "10.12.48.13"
+  },
+  {
+    "hostname": "DB-BAT",
     "ip": "10.11.18.3"
   },
   {
-    "hostname": "DB2",
-    "ip": "10.11.18.4"
+    "hostname": "CBMC",
+    "ip": "10.11.218.1"
   },
   {
-    "hostname": "Client1",
-    "ip": "10.11.18.6"
+    "hostname": "DB-CBMC",
+    "ip": "10.11.218.3"
   },
   {
-    "hostname": "Client2",
-    "ip": "10.11.18.7"
+    "hostname": "TCS Server",
+    "ip": "10.11.218.2"
   },
   {
-    "hostname": "Client3",
-    "ip": "10.11.18.8"
+    "hostname": "TCS Client",
+    "ip": "10.11.218.11"
   },
   {
-    "hostname": "Client4",
-    "ip": "10.11.18.9"
+    "hostname": "CBMC-Client",
+    "ip": "10.11.218.50"
   },
   {
-    "hostname": "Client5",
-    "ip": "10.11.18.10"
+    "hostname": "AD-BAT",
+    "ip": "10.11.13.20"
   },
   {
-    "hostname": "SW-BMC1",
-    "ip": "10.11.18.251"
+    "hostname": "AD-CBMC",
+    "ip": "10.11.213.20"
   },
   {
-    "hostname": "SW-BMC2",
-    "ip": "10.11.18.252"
+    "hostname": "AV-BAT",
+    "ip": "10.11.13.22"
   },
   {
-    "hostname": "SW-ICS1",
-    "ip": "10.12.18.251"
+    "hostname": "AV-CBMC",
+    "ip": "10.11.213.22"
   },
   {
-    "hostname": "SW-ICS2",
-    "ip": "10.12.18.252"
+    "hostname": "SW-BMC",
+    "ip": "10.11.18.254"
   },
   {
-    "hostname": "FW-BMC",
-    "ip": "10.11.18.199"
+    "hostname": "SW-ICS",
+    "ip": "10.12.18.254"
   },
   {
-    "hostname": "FW-ICS",
-    "ip": "10.12.18.199"
+    "hostname": "SW-CBMC",
+    "ip": "10.11.218.254"
   },
   {
-    "hostname": "RTR-BMC",
-    "ip": "10.10.10.2"
+    "hostname": "SW-Sec",
+    "ip": "10.11.13.254"
   },
   {
-    "hostname": "RTR-ICS",
-    "ip": "10.12.11.2"
+    "hostname": "FW",
+    "ip": "10.11.18.254"
   }
 ]
