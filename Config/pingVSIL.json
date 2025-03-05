@@ -1,11 +1,11 @@
 [
   {
-    "hostname": "Ben-LP",
-    "ip": "192.168.3.154"
+    "hostname": "BMC1",
+    "ip": "10.11.18.1"
   },
   {
-    "hostname": "Ben-PC",
-    "ip": "192.168.3.141"
+    "hostname": "BMC2",
+    "ip": "10.11.28.1"
   },
   {
     "hostname": "BMC1",
@@ -30,18 +30,6 @@
   {
     "hostname": "DB2",
     "ip": "10.11.18.4"
-  },
-  {
-    "hostname": "AD1",
-    "ip": "10.11.13.20"
-  },
-  {
-    "hostname": "AD2",
-    "ip": "10.11.13.21"
-  },
-  {
-    "hostname": "AV",
-    "ip": "10.11.13.20"
   },
   {
     "hostname": "Client1",

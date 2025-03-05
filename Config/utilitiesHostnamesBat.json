@@ -58,14 +58,14 @@
         "ip": "10.11.18.4",
         "services": [
             {
-                "name": "ServiceD",
-                "user": "admin",
+                "name": "mDRS Agent Service",
+                "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "ServiceE",
-                "user": "user2",
-                "recovery": "RunProgram"
+                "name": "mDRS Server Service",
+                "user": "LocalSystem",
+                "recovery": "Restart"
             }
         ]
     },

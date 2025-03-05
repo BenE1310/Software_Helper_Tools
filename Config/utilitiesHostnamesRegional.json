@@ -1,46 +1,26 @@
 {
-    "BMC1": {
-        "ip": "10.11.18.1",
+    "CBMC1": {
+        "ip": "10.11.218.1",
         "services": [
             {
-                "name": "FBE Watchdog",
+                "name": "FBE Watchdog REGIONAL",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
         ]
     },
-    "BMC2": {
-        "ip": "10.11.18.2",
+    "CBMC2": {
+        "ip": "10.11.218.2",
         "services": [
             {
-                "name": "FBE Watchdog",
+                "name": "FBE Watchdog REGIONAL",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
         ]
     },
-    "ICS1": {
-        "ip": "10.12.18.13",
-        "services": [
-            {
-                "name": "FBE Watchdog",
-                "user": "LocalSystem",
-                "recovery": "Restart"
-            }
-        ]
-    },
-	"ICS2": {
-        "ip": "10.12.18.14",
-        "services": [
-            {
-                "name": "FBE Watchdog",
-                "user": "LocalSystem",
-                "recovery": "Restart"
-            }
-        ]
-    },
-	"DB01": {
-        "ip": "10.11.18.3",
+	"CBMC-DB1": {
+        "ip": "10.11.218.3",
         "services": [
             {
                 "name": "mDRS Agent Service",
@@ -54,70 +34,99 @@
             }
         ]
     },
-	"DB02": {
-        "ip": "10.11.18.4",
+	"CBMC-DB2": {
+        "ip": "10.11.218.4",
         "services": [
             {
-                "name": "ServiceD",
-                "user": "admin",
+                "name": "mDRS Agent Service",
+                "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "ServiceE",
-                "user": "user2",
-                "recovery": "RunProgram"
+                "name": "mDRS Server Service",
+                "user": "LocalSystem",
+                "recovery": "Restart"
             }
         ]
     },
 	"Client1": {
-        "ip": "10.11.18.6",
+        "ip": "10.11.218.50",
         "services": [
             {
-                "name": "FBE Watchdog",
+                "name": "FBE Watchdog REGIONAL",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
         ]
     },
 	"Client2": {
-        "ip": "10.11.18.7",
+        "ip": "10.11.218.51",
         "services": [
             {
-                "name": "FBE Watchdog",
+                "name": "FBE Watchdog REGIONAL",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
         ]
     },
 	"Client3": {
-        "ip": "10.11.18.8",
+        "ip": "10.11.218.52",
         "services": [
             {
-                "name": "FBE Watchdog",
+                "name": "FBE Watchdog REGIONAL",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
         ]
     },
 	"Client4": {
-        "ip": "10.11.18.9",
+        "ip": "10.11.218.53",
         "services": [
             {
-                "name": "FBE Watchdog",
+                "name": "FBE Watchdog REGIONAL",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
         ]
     },
 	"Client5": {
-        "ip": "10.11.18.10",
+        "ip": "10.11.218.54",
         "services": [
             {
-                "name": "FBE Watchdog",
+                "name": "FBE Watchdog REGIONAL",
+                "user": "LocalSystem",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"Client6": {
+        "ip": "10.11.218.55",
+        "services": [
+            {
+                "name": "FBE Watchdog REGIONAL",
+                "user": "LocalSystem",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"Client7": {
+        "ip": "10.11.218.56",
+        "services": [
+            {
+                "name": "FBE Watchdog REGIONAL",
+                "user": "LocalSystem",
+                "recovery": "Restart"
+            }
+        ]
+    },
+	"Client8": {
+        "ip": "10.11.218.56",
+        "services": [
+            {
+                "name": "FBE Watchdog REGIONAL",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
         ]
     }
-	
 }

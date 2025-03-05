@@ -1,0 +1,78 @@
+[
+  {
+    "hostname": "CBMC1",
+    "ip": "10.11.218.1"
+  },
+  {
+    "hostname": "CBMC2",
+    "ip": "10.11.218.2"
+  },
+  {
+    "hostname": "CBMC-DB1",
+    "ip": "10.11.218.3"
+  },
+  {
+    "hostname": "CBMC-DB2",
+    "ip": "10.11.218.4"
+  },
+  {
+    "hostname": "AD1",
+    "ip": "10.11.213.20"
+  },
+  {
+    "hostname": "AD2",
+    "ip": "10.11.213.21"
+  },
+  {
+    "hostname": "AV1",
+    "ip": "10.11.213.22"
+  },
+  {
+    "hostname": "Client1",
+    "ip": "10.11.218.50"
+  },
+  {
+    "hostname": "Client2",
+    "ip": "10.11.218.51"
+  },
+  {
+    "hostname": "Client3",
+    "ip": "10.11.218.52"
+  },
+  {
+    "hostname": "Client4",
+    "ip": "10.11.218.53"
+  },
+  {
+    "hostname": "Client5",
+    "ip": "10.11.218.54"
+  },
+  {
+    "hostname": "Client6",
+    "ip": "10.11.218.55"
+  },
+  {
+    "hostname": "Client7",
+    "ip": "10.11.218.56"
+  },
+  {
+    "hostname": "Client8",
+    "ip": "10.11.218.57"
+  },
+  {
+    "hostname": "SW-CBMC1",
+    "ip": "10.11.218.251"
+  },
+  {
+    "hostname": "SW-CBMC2",
+    "ip": "10.11.218.252"
+  },
+  {
+    "hostname": "FW-CBMC",
+    "ip": "10.11.218.199"
+  },
+  {
+    "hostname": "RTR-BMC",
+    "ip": "21.21.21.2"
+  }
+]

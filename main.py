@@ -326,7 +326,7 @@ def open_ping_monitor():
     for host_item in hosts:
         hostname = host_item["hostname"]
         lbl = tk.Label(scrollable_frame, text=hostname, font=("Arial", 12, "bold"))
-        lbl.pack(pady=5, padx=10, anchor="w")
+        lbl.pack(pady=3, padx=10, anchor="w")
         labels.append(lbl)
         default_bg.append(lbl.cget("bg"))
 
@@ -601,7 +601,6 @@ def open_utilities_window():
     },
 
 }
-
 
     def load_json(filename):
         try:
