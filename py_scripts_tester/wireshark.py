@@ -3,8 +3,8 @@ import subprocess
 
 # Define paths
 extract_path = r'C:\WiresharkPortable'
-archive_path = r'.\Tools\Softwares\WiresharkPortable64.7z'
-seven_zip_path = r'.\Tools\7z.exe'
+archive_path = r'../tools/Softwares/WiresharkPortable64.7z'
+seven_zip_path = r'../tools/7z.exe'
 
 # Check if the extraction path exists, if not, create it
 if not os.path.exists(extract_path):

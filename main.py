@@ -2000,11 +2000,12 @@ def open_vsil_database_window():
     if server_choice == 1:
         BN = 1
         hostname = "DB-BAT"
+
     else:
         BN = 21
         hostname = "DB-CBMC"
-    print(server_choice)
-    print(BN)
+
+
 
     # Title Label
     title_label = tk.Label(
@@ -2021,18 +2022,14 @@ def open_vsil_database_window():
         bg="#872657", fg="white", selectcolor="#872657", font=("Arial", 12)
     ).place(x=20, y=50)
 
-    tk.Checkbutton(
-        database_window_vsil, text="Training", variable=training_var,
-        bg="#872657", fg="white", selectcolor="#872657", font=("Arial", 12)
-    ).place(x=20, y=90)
 
     def on_close():
         database_window_vsil.destroy()  # Close the window
 
     def yes_no_keep_delete():
-        response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?", parent=None)
+        response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?", parent=database_window_vsil)
         if response:
-            handle_delete_tables()
+            delete_databases()
         else:
             return
 
@@ -2049,7 +2046,7 @@ def open_vsil_database_window():
     # Wrap the existing functions with progress updates
     def run_with_progress(target_function):
         if not (operational_var.get() or training_var.get()):
-            messagebox.showwarning("No Selection", "Please select at least one mode.", parent=None)
+            messagebox.showwarning("No Selection", "Please select at least one mode.", parent=database_window_vsil)
             return
         def wrapper():
             start_progress()
@@ -2067,10 +2064,8 @@ def open_vsil_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
-        if operational_var.get():
-            bat_file_name = "CreateEmptyTablesOperational.bat"
-        elif training_var.get():
-            bat_file_name = "CreateEmptyTablesTraining.bat"
+        if operational_var.get() and hostname == "DB-BAT":
+            bat_file_name = "CreateEmptyTablesDbBatVSIL.bat"
         else:
             print("No mode selected.")
             return
@@ -2079,7 +2074,7 @@ def open_vsil_database_window():
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=None)
+        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
 
     def create_empty_databases():
         run_with_progress(handle_create_empty_tables)
@@ -2095,9 +2090,7 @@ def open_vsil_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "DeleteDatabasesOperational.bat"
-        elif training_var.get():
-            bat_file_name = "DeleteDatabasesTraining.bat"
+            bat_file_name = "DeleteDatabasesOperationalVSIL.bat"
         else:
             print("No mode selected.")
             return
@@ -2106,7 +2099,7 @@ def open_vsil_database_window():
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=None)
+        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
 
     def delete_databases():
         run_with_progress(handle_delete_tables)
@@ -2121,9 +2114,7 @@ def open_vsil_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "CreateTablesOperationalFBE.bat"
-        elif training_var.get():
-            bat_file_name = "CreateTablesTrainingFBE.bat"
+            bat_file_name = "CreateTablesOperationalVSIL.bat"
         else:
             print("No mode selected.")
             return
@@ -2133,7 +2124,7 @@ def open_vsil_database_window():
 
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN,current_bat_file=bat_file_name, results_text=results_text, parent_window=None)
+        handle_tables_battery(BN, PN,current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
 
 
     def import_tables():
@@ -2159,6 +2150,12 @@ def open_vsil_database_window():
         database_window_vsil, text="Import Tables", font=("Arial", 12), bg="#C71585", fg="white",
         activebackground="#DC143C", command=import_tables
     ).place(x=button_x, y=y_start + 2 * y_gap, width=button_width, height=button_height)
+
+    if hostname == "DB-BAT":
+        tk.Button(
+            database_window_vsil, text="Adding Launchers", font=("Arial", 12), bg="#C71585", fg="white",
+            activebackground="#DC143C", command=None
+        ).place(x=button_x, y=y_start + 3 * y_gap, width=button_width, height=button_height)
 
     tk.Button(
         database_window_vsil, text="Close", font=("Arial", 12), bg="#673147", fg="white",
@@ -2252,7 +2249,7 @@ def open_regional_database_window():
     def yes_no_keep_delete():
         response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?", parent=database_window_regional)
         if response:
-            handle_delete_tables()
+            delete_databases()
         else:
             return
 
@@ -2473,7 +2470,7 @@ def open_battery_database_window():
     def yes_no_keep_delete():
         response = messagebox.askyesno("Delete tables", "Are you sure you want to delete DB tables?", parent=database_window_battery)
         if response:
-            handle_delete_tables()
+            delete_databases()
         else:
             return
 
@@ -4732,6 +4729,27 @@ def open_battery_window():
     #     messagebox.showinfo("Don't forget", "The new version of the application should be on the local disk: C:\\FBE")
     #     installation_app_remote_message.append("onetime")
 
+
+def dependences_screen():
+    # Clear existing buttons
+    on_button_click()
+
+    # Add Label
+    dependences_label = tk.Label(root, text='Dependences', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    dependences_label.place(x=210, y=10)
+    buttons.append(dependences_label)
+
+    # Create Buttons with Hover Effects
+    create_button(root, 'Add Sysinternal to path', run_install_wireshark, 178, 420)
+    create_button(root, 'Install "msodbcsql"', run_npcap_install, 178, 490)
+    create_button(root, 'Install "MsSqlCmdLnUtils"', run_open_wireshark, 178, 560)
+
+
+
+    create_button(root, 'Back', tools_screen, 14, 690, button_style_small)
+    create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
+
+
 def wireshark_screen():
     # Clear existing buttons
     on_button_click()
@@ -4751,13 +4769,14 @@ def wireshark_screen():
     create_button(root, 'Back', tools_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
+
 def tools_screen():
     # Clear existing buttons
     on_button_click()
 
     # Add Label
     tools_label = tk.Label(root, text='Tools', fg='white', bg='#000000', font=('Arial', 20, 'bold'), anchor="center")
-    tools_label.place(x=250, y=10)
+    tools_label.place(x=260, y=10)
     buttons.append(tools_label)
 
     # Create Buttons with Hover Effects
@@ -4766,7 +4785,7 @@ def tools_screen():
     create_button(root, 'Wireshark' , wireshark_screen, 156, 490, button_style_medium)
     create_button(root, 'ILSpy', run_ilspy, 320, 490, button_style_medium)
     create_button(root, 'Ping Monitor', open_ping_monitor, 156, 560, button_style_medium)
-    create_button(root, 'Dep.', None, 320, 560, button_style_medium)
+    create_button(root, 'Dependences', dependences_screen, 320, 560, button_style_medium)
 
 
     create_button(root, 'Back', main_screen, 14, 690, button_style_small)
@@ -4792,8 +4811,14 @@ def rai_screen():
         disable_button(battery_install_window)
         disable_button(regional_install_window)
         disable_button(simulator_install_window)
+    elif BN == 21:
+        disable_button(battery_install_window)
+        disable_button(vsil_install_window)
+        disable_button(simulator_install_window)
     else:
         disable_button(vsil_install_window)
+        disable_button(regional_install_window)
+
 
 
     create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
@@ -4817,12 +4842,17 @@ def db_screen():
     if BN == "VSIL/CIWS":
         disable_button(battery_install_window)
         disable_button(regional_install_window)
+    elif BN == 21:
+        disable_button(battery_install_window)
+        disable_button(vsil_install_window)
     else:
         disable_button(vsil_install_window)
+        disable_button(regional_install_window)
 
 
     create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
+
 
 def phases_app_installation_screen():
     # Check if BN is chosen
@@ -4842,6 +4872,7 @@ def phases_app_installation_screen():
 
     create_button(root, 'Back', main_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
+
 
 def main_screen():
     on_button_click()
