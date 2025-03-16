@@ -1,6 +1,7 @@
 @echo off
 setlocal enabledelayedexpansion
 set /a BN=0
+set /a PN=0
 
 echo Deleting Databases for Battery number %BN% Training Mode
 set CDBase="C:\Windows\Temp\DeleteDatabases.sql"

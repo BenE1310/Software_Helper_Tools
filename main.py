@@ -2285,9 +2285,9 @@ def open_regional_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "CreateEmptyTablesOperational.bat"
+            bat_file_name = "FBE\\Regional\\CreateEmptyTablesOperationalRegional.bat"
         elif training_var.get():
-            bat_file_name = "CreateEmptyTablesTraining.bat"
+            bat_file_name = "FBE\\Regional\\CreateEmptyTablesTrainingRegional.bat"
         else:
             print("No mode selected.")
             return
@@ -2312,9 +2312,9 @@ def open_regional_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "DeleteDatabasesOperational.bat"
+            bat_file_name = "FBE\\Regional\\DeleteDatabasesOperationalRegional.bat"
         elif training_var.get():
-            bat_file_name = "DeleteDatabasesTraining.bat"
+            bat_file_name = "FBE\\Regional\\DeleteDatabasesTrainingRegional.bat"
         else:
             print("No mode selected.")
             return
@@ -2338,9 +2338,9 @@ def open_regional_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "CreateTablesOperationalFBE.bat"
+            bat_file_name = "FBE\\Regional\\CreateTablesOperationalRegional.bat"
         elif training_var.get():
-            bat_file_name = "CreateTablesTrainingFBE.bat"
+            bat_file_name = "FBE\\Regional\\CreateTablesTrainingRegional.bat"
         else:
             print("No mode selected.")
             return
@@ -2506,9 +2506,9 @@ def open_battery_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "CreateEmptyTablesOperational.bat"
+            bat_file_name = "FBE\\Battery\\CreateEmptyTablesOperational.bat"
         elif training_var.get():
-            bat_file_name = "CreateEmptyTablesTraining.bat"
+            bat_file_name = "FBE\\Battery\\CreateEmptyTablesTraining.bat"
         else:
             print("No mode selected.")
             return
@@ -2533,9 +2533,9 @@ def open_battery_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "DeleteDatabasesOperational.bat"
+            bat_file_name = "FBE\\Battery\\DeleteDatabasesOperational.bat"
         elif training_var.get():
-            bat_file_name = "DeleteDatabasesTraining.bat"
+            bat_file_name = "FBE\\Battery\\DeleteDatabasesTraining.bat"
         else:
             print("No mode selected.")
             return
@@ -2559,9 +2559,9 @@ def open_battery_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "CreateTablesOperationalFBE.bat"
+            bat_file_name = "FBE\\Battery\\CreateTablesOperationalFBE.bat"
         elif training_var.get():
-            bat_file_name = "CreateTablesTrainingFBE.bat"
+            bat_file_name = "FBE\\Battery\\CreateTablesTrainingFBE.bat"
         else:
             print("No mode selected.")
             return
