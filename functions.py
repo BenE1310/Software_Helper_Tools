@@ -495,7 +495,6 @@ def cleanup_temp_files():
             os.remove(os.path.join(temp_dir, file))
     print("Temporary files cleaned up.")
 
-# TODO: Add more argument to the function call 'folder' = FBE, VSIL or CIWS
 def handle_adding_launchers_battery(bat_num, pos_num, parent_window, current_bat_file, current_sql_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
@@ -685,6 +684,83 @@ def write_bat_file_db_phase(BN, PN, BAT_FILE_NAME, logs=None, results_text=None)
             file.writelines(new_lines)
 
         print(f"New batch file created with values starting at line 3: {BAT_FILE_PATH}")
+
+
+def handle_adding_launchers_vsil(pos_num, parent_window, current_bat_file, current_sql_file, logs=None, results_text=None):
+    """
+    Prepare the installation process for a host.
+    """
+    logs = logs or []
+    drive_letter = "P:"  # Use any available drive letter
+    db_ip = f"10.11.18.{pos_num}"
+    unc_path = f"\\\\{db_ip}\\c$"
+    scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
+    sql_script_src = f".\\Scripts\\SQL\\{current_sql_file}"
+
+    # Determine the destination folder based on host type
+    try:
+        # Step 1: Map the drive
+        log_message = f"Mapping {unc_path} to {drive_letter}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+
+        mapping_result = subprocess.run(f'net use {drive_letter} {unc_path}', shell=True, capture_output=True, text=True)
+        if mapping_result.stderr:
+            print("Copy Error Output:")
+            for line in mapping_result.stderr.splitlines():
+                print(line)  # Print each line separately
+
+        if "System error 64" in mapping_result.stderr or "System error 67" in mapping_result.stderr:
+            messagebox.showerror("Error", "Network issue detected! Ensure the drive is not already mapped.", parent=parent_window)
+            update_results_text(results_text, "Error: Network issue detected! Ensure the drive is not already mapped.")
+            raise Exception(f"Mapping failed: {mapping_result.stderr.strip()}")  # Stops function execution
+
+
+        # Step 2: Copy the script
+        scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
+        sql_dest = f"{drive_letter}\\DB\\sql\\"
+        remote_bat_path = f"{scripts_dest}{current_bat_file}"
+
+        log_message = f"Copying script file to {scripts_dest}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        subprocess.run(f"echo D | xcopy \"{scripts_src}\" \"{scripts_dest}\" /E /Y /I", shell=True, capture_output=True, text=True)
+
+        log_message_sql = f"Copying sql script file to {sql_dest}..."
+        logs.append(log_message_sql)
+        update_results_text(results_text, log_message_sql)
+        subprocess.run(f"echo D | xcopy \"{sql_script_src}\" \"{sql_dest}\" /E /Y /I", shell=True, capture_output=True, text=True)
+
+
+        # Step 3: Execute the batch file
+        log_message = f"Executing batch file {remote_bat_path}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        run_remote_script = subprocess.run(["cmd", "/c", remote_bat_path], shell=True, capture_output=True, text=True)
+
+        if run_remote_script.stderr:
+            print("Copy Error Output:")
+            for line in run_remote_script.stderr.splitlines():
+                print(line)  # Print each line separately
+
+        if "'sqlcmd' is not recognized as an internal or external command" in run_remote_script.stderr:
+            messagebox.showerror("Error", "Check whether you have 'sqlcmd' installed in the component you are trying to install from.", parent=parent_window)
+            update_results_text(results_text, "Error: 'sqlcmd' is not recognized as an internal or external command")
+            raise Exception(f"Mapping failed: {run_remote_script.stderr.strip()}")  # Stops function execution
+
+    except Exception as e:
+        log_message = f"Error during execution: {e}"
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        messagebox.showerror("Error", "The process failed. Ensure all dependencies are installed and communication stability to the DB server and try again.", parent=parent_window)
+        return
+
+    finally:
+        # Step 4: Unmap the drive
+        log_message = f"Unmapping {drive_letter}..."
+        logs.append(log_message)
+        update_results_text(results_text, log_message)
+        os.system(f"net use {drive_letter} /delete")
 
 def update_results_text(results_text, message):
     """

@@ -10,7 +10,8 @@ import wmi
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
     prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery, handle_adding_launchers_battery, \
-    generate_sql_script_training_launchers, run_npcap_install, run_install_wireshark, run_open_wireshark
+    generate_sql_script_training_launchers, run_npcap_install, run_install_wireshark, run_open_wireshark, \
+    handle_adding_launchers_vsil
 import tkinter.ttk as ttk
 import threading
 import pythoncom  # Import pythoncom for WMI operations
@@ -2065,7 +2066,9 @@ def open_vsil_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get() and hostname == "DB-BAT":
-            bat_file_name = "CreateEmptyTablesDbBatVSIL.bat"
+            bat_file_name = "VSIL\\Battery\\CreateEmptyTablesDbBatVSIL.bat"
+        elif operational_var.get() and hostname == "DB-CBMC":
+            bat_file_name = "VSIL\\Regional\\CreateEmptyTablesDbVSILRegional.bat"
         else:
             print("No mode selected.")
             return
@@ -2089,8 +2092,11 @@ def open_vsil_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
-        if operational_var.get():
-            bat_file_name = "DeleteDatabasesOperationalVSIL.bat"
+        if operational_var.get() and hostname == "DB-BAT":
+            bat_file_name = "VSIL\\Battery\\DeleteDatabasesOperationalBatVSIL.bat"
+        elif operational_var.get() and hostname == "DB-CBMC":
+            bat_file_name = "VSIL\\Regional\\DeleteDatabasesOperationalVSILRegional.bat"
+
         else:
             print("No mode selected.")
             return
@@ -2113,8 +2119,11 @@ def open_vsil_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
-        if operational_var.get():
-            bat_file_name = "CreateTablesOperationalVSIL.bat"
+        if operational_var.get() and hostname == "DB-BAT":
+            bat_file_name = "VSIL\\Battery\\ImportTablesOperationalBatVSIL.bat"
+        elif operational_var.get() and hostname == "DB-CBMC":
+            bat_file_name = "VSIL\\Regional\\ImportTablesOperationalBatVSIL.bat"
+
         else:
             print("No mode selected.")
             return
@@ -2129,6 +2138,50 @@ def open_vsil_database_window():
 
     def import_tables():
         run_with_progress(handle_import_tables)
+
+    def handle_adding_launchers():
+        global BN, bat_file_name
+
+        """
+        Handles the "Adding launchers" button click.
+        - Checks if either checkbox is selected.
+        - Writes the BAT file.
+        - Calls function to transfer & execute remotely.
+        """
+        if operational_var.get() and hostname == "DB-BAT":
+            bat_file_name = "VSIL\\Battery\\AddingLaunchersTrainingVSILBat.bat"
+            sql_file_name = "adding_launcher_training_mode.sql"
+
+            for BN in range(1, 5):  # This loop runs with BN = 1, 2, 3, 4
+
+                sql_code = generate_sql_script_training_launchers(BN)
+
+                # Write it to a file
+                with open(f"Scripts/SQL/adding_launcher_training_mode.sql", "w") as file:
+                    file.write(sql_code)
+
+                # Step 1: Write BAT File
+                write_bat_file_db_phase(
+                    BN=BN,
+                    PN=PN,
+                    BAT_FILE_NAME=bat_file_name,
+                    results_text=results_text
+                )
+                # Step 2: Transfer & Execute Remotely
+                handle_adding_launchers_vsil(
+                    pos_num=PN,
+                    current_sql_file=sql_file_name,
+                    current_bat_file=bat_file_name,
+                    results_text=results_text,
+                    parent_window=database_window_vsil
+                )
+        else:
+            print("No mode selected.")
+            return
+
+
+    def adding_launchers():
+        run_with_progress(handle_adding_launchers)
 
     # Buttons on the right
     button_x = 210
@@ -2154,7 +2207,7 @@ def open_vsil_database_window():
     if hostname == "DB-BAT":
         tk.Button(
             database_window_vsil, text="Adding Launchers", font=("Arial", 12), bg="#C71585", fg="white",
-            activebackground="#DC143C", command=None
+            activebackground="#DC143C", command=adding_launchers
         ).place(x=button_x, y=y_start + 3 * y_gap, width=button_width, height=button_height)
 
     tk.Button(
@@ -2338,9 +2391,9 @@ def open_regional_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "FBE\\Regional\\CreateTablesOperationalRegional.bat"
+            bat_file_name = "FBE\\Regional\\ImportTablesOperationalRegional.bat"
         elif training_var.get():
-            bat_file_name = "FBE\\Regional\\CreateTablesTrainingRegional.bat"
+            bat_file_name = "FBE\\Regional\\ImportTablesTrainingRegional.bat"
         else:
             print("No mode selected.")
             return
@@ -2559,9 +2612,9 @@ def open_battery_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get():
-            bat_file_name = "FBE\\Battery\\CreateTablesOperationalFBE.bat"
+            bat_file_name = "FBE\\Battery\\ImportTablesOperationalFBE.bat"
         elif training_var.get():
-            bat_file_name = "FBE\\Battery\\CreateTablesTrainingFBE.bat"
+            bat_file_name = "FBE\\Battery\\ImportTablesTrainingFBE.bat"
         else:
             print("No mode selected.")
             return
@@ -4730,19 +4783,19 @@ def open_battery_window():
     #     installation_app_remote_message.append("onetime")
 
 
-def dependences_screen():
+def dependencies_screen():
     # Clear existing buttons
     on_button_click()
 
     # Add Label
-    dependences_label = tk.Label(root, text='Dependences', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
+    dependences_label = tk.Label(root, text='Dependencies', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
     dependences_label.place(x=210, y=10)
     buttons.append(dependences_label)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Add Sysinternal to path', run_install_wireshark, 178, 420)
-    create_button(root, 'Install "msodbcsql"', run_npcap_install, 178, 490)
-    create_button(root, 'Install "MsSqlCmdLnUtils"', run_open_wireshark, 178, 560)
+    create_button(root, 'Add Sysinternal to path', None, 178, 420) ### TODO - Run the script "add_sysinternals_to_path.bat"
+    create_button(root, 'Install "msodbcsql"', None, 178, 490) ### TODO - Run the msi file - msodbcsql"
+    create_button(root, 'Install "MsSqlCmdLnUtils"', None, 178, 560) ### TODO - Run the msi file MsSqlCmdLnUtils"
 
 
 
@@ -4785,7 +4838,7 @@ def tools_screen():
     create_button(root, 'Wireshark' , wireshark_screen, 156, 490, button_style_medium)
     create_button(root, 'ILSpy', run_ilspy, 320, 490, button_style_medium)
     create_button(root, 'Ping Monitor', open_ping_monitor, 156, 560, button_style_medium)
-    create_button(root, 'Dependences', dependences_screen, 320, 560, button_style_medium)
+    create_button(root, 'Dependencies', dependencies_screen, 320, 560, button_style_medium)
 
 
     create_button(root, 'Back', main_screen, 14, 690, button_style_small)
