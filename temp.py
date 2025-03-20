@@ -13,6 +13,11 @@ def open_ping_monitor():
     shows user alerts if the file is missing or invalid, and falls back to defaults
     if necessary.
     """
+    global BN
+
+    if BN == 0:
+        messagebox.showerror("Battery number", "Please choose a battery number to continue.")
+        return
 
     # 1) Create the Toplevel first, so message dialogs can use it as a parent
     ping_window = tk.Toplevel()
@@ -22,12 +27,291 @@ def open_ping_monitor():
     ping_window.geometry("300x900")
 
     # 2) Define default data
-    default_hosts = [
-        {
-            "hostname": "Default Host",
-            "ip": "192.168.0.1"
-        }
+    default_hosts_battery = [
+      {
+        "hostname": "BMC1",
+        "ip": f"10.11.{BN}8.1"
+      },
+      {
+        "hostname": "BMC2",
+        "ip": f"10.11.{BN}8.2"
+      },
+      {
+        "hostname": "ICS1",
+        "ip": f"10.12.{BN}8.13"
+      },
+      {
+        "hostname": "ICS2",
+        "ip": f"10.12.{BN}8.14"
+      },
+      {
+        "hostname": "DB1",
+        "ip": f"10.11.{BN}8.3"
+      },
+      {
+        "hostname": "DB2",
+        "ip": f"10.11.{BN}8.4"
+      },
+      {
+        "hostname": "AD1",
+        "ip": f"10.11.{BN}3.20"
+      },
+      {
+        "hostname": "AD2",
+        "ip": f"10.11.{BN}3.21"
+      },
+      {
+        "hostname": "AV",
+        "ip": f"10.11.{BN}3.22"
+      },
+      {
+        "hostname": "Client1",
+        "ip": f"10.11.{BN}8.6"
+      },
+      {
+        "hostname": "Client2",
+        "ip": f"10.11.{BN}8.7"
+      },
+      {
+        "hostname": "Client3",
+        "ip": f"10.11.{BN}8.8"
+      },
+      {
+        "hostname": "Client4",
+        "ip": f"10.11.{BN}8.9"
+      },
+      {
+        "hostname": "Client5",
+        "ip": f"10.11.{BN}8.10"
+      },
+      {
+        "hostname": "SW-BMC1",
+        "ip": f"10.11.{BN}8.251"
+      },
+      {
+        "hostname": "SW-BMC2",
+        "ip": f"10.11.{BN}8.252"
+      },
+      {
+        "hostname": "SW-ICS1",
+        "ip": f"10.12.{BN}8.251"
+      },
+      {
+        "hostname": "SW-ICS2",
+        "ip": f"10.12.{BN}8.252"
+      },
+      {
+        "hostname": "FW-BMC",
+        "ip": f"10.11.{BN}8.199"
+      },
+      {
+        "hostname": "FW-ICS",
+        "ip": f"10.12.{BN}8.199"
+      },
+      {
+        "hostname": "RTR-BMC",
+        "ip": f"{BN}0.{BN}0.{BN}0.2"
+      },
+      {
+        "hostname": "RTR-ICS",
+        "ip": f"{BN}0.12.{BN}0.2"
+      },
+      {
+        "hostname": "Rubidium",
+        "ip": f"10.12.{BN}8.5"
+      },
+      {
+        "hostname": "Uplink",
+        "ip": f"10.12.{BN}8.12"
+      },
     ]
+
+    default_hosts_regional = [
+      {
+        "hostname": "CBMC1",
+        "ip": "10.11.218.1"
+      },
+      {
+        "hostname": "CBMC2",
+        "ip": "10.11.218.2"
+      },
+      {
+        "hostname": "CBMC-DB1",
+        "ip": "10.11.218.3"
+      },
+      {
+        "hostname": "CBMC-DB2",
+        "ip": "10.11.218.4"
+      },
+      {
+        "hostname": "AD1",
+        "ip": "10.11.213.20"
+      },
+      {
+        "hostname": "AD2",
+        "ip": "10.11.213.21"
+      },
+      {
+        "hostname": "AV1",
+        "ip": "10.11.213.22"
+      },
+      {
+        "hostname": "Client1",
+        "ip": "10.11.218.50"
+      },
+      {
+        "hostname": "Client2",
+        "ip": "10.11.218.51"
+      },
+      {
+        "hostname": "Client3",
+        "ip": "10.11.218.52"
+      },
+      {
+        "hostname": "Client4",
+        "ip": "10.11.218.53"
+      },
+      {
+        "hostname": "Client5",
+        "ip": "10.11.218.54"
+      },
+      {
+        "hostname": "Client6",
+        "ip": "10.11.218.55"
+      },
+      {
+        "hostname": "Client7",
+        "ip": "10.11.218.56"
+      },
+      {
+        "hostname": "Client8",
+        "ip": "10.11.218.57"
+      },
+      {
+        "hostname": "SW-CBMC1",
+        "ip": "10.11.218.251"
+      },
+      {
+        "hostname": "SW-CBMC2",
+        "ip": "10.11.218.252"
+      },
+      {
+        "hostname": "FW-CBMC",
+        "ip": "10.11.218.199"
+      },
+      {
+        "hostname": "RTR-BMC",
+        "ip": "21.21.21.2"
+      }
+    ]
+
+    default_hosts_vsil = [
+      {
+        "hostname": "BMC1",
+        "ip": "10.11.18.1"
+      },
+      {
+        "hostname": "BMC2",
+        "ip": "10.11.28.1"
+      },
+      {
+        "hostname": "BMC3",
+        "ip": "10.11.38.1"
+      },
+      {
+        "hostname": "BMC4",
+        "ip": "10.11.48.2"
+      },
+      {
+        "hostname": "ICS1",
+        "ip": "10.12.18.13"
+      },
+      {
+        "hostname": "ICS2",
+        "ip": "10.12.28.13"
+      },
+      {
+        "hostname": "ICS3",
+        "ip": "10.12.38.13"
+      },
+      {
+        "hostname": "ICS4",
+        "ip": "10.12.48.13"
+      },
+      {
+        "hostname": "DB-BAT",
+        "ip": "10.11.18.3"
+      },
+      {
+        "hostname": "CBMC",
+        "ip": "10.11.218.1"
+      },
+      {
+        "hostname": "DB-CBMC",
+        "ip": "10.11.218.3"
+      },
+      {
+        "hostname": "TCS Server",
+        "ip": "10.11.218.2"
+      },
+      {
+        "hostname": "TCS Client",
+        "ip": "10.11.218.11"
+      },
+      {
+        "hostname": "CBMC-Client",
+        "ip": "10.11.218.50"
+      },
+      {
+        "hostname": "AD-BAT",
+        "ip": "10.11.13.20"
+      },
+      {
+        "hostname": "AD-CBMC",
+        "ip": "10.11.213.20"
+      },
+      {
+        "hostname": "AV-BAT",
+        "ip": "10.11.13.22"
+      },
+      {
+        "hostname": "AV-CBMC",
+        "ip": "10.11.213.22"
+      },
+      {
+        "hostname": "SW-BMC",
+        "ip": "10.11.18.254"
+      },
+      {
+        "hostname": "SW-ICS",
+        "ip": "10.12.18.254"
+      },
+      {
+        "hostname": "SW-CBMC",
+        "ip": "10.11.218.254"
+      },
+      {
+        "hostname": "SW-Sec",
+        "ip": "10.11.13.254"
+      },
+      {
+        "hostname": "FW",
+        "ip": "10.11.18.254"
+      },
+    ]
+
+    if BN == "VSIL/CIWS":
+        default_hosts = default_hosts_vsil
+        env = "VSIL"
+    elif BN == 21:
+        default_hosts = default_hosts_regional
+        env = "Regional"
+    else:
+        default_hosts = default_hosts_battery
+        env = f"Battery {BN}"
+    print(BN)
+
+
 
     # 3) Attempt to load JSON
     def load_json(filename, parent_window):
@@ -37,7 +321,7 @@ def open_ping_monitor():
         Otherwise return the parsed JSON.
         """
         if not os.path.exists(filename):
-            messagebox.showerror(
+            messagebox.showwarning(
                 "File Not Found",
                 f"The file '{filename}' doesn't exist.",
                 parent=parent_window
@@ -67,7 +351,7 @@ def open_ping_monitor():
             return None
 
     # 4) Load or fallback
-    filename = 'Config\\pingBat.json'
+    filename = 'Config\\ping.json'
     hosts_data = load_json(filename, ping_window)
     if hosts_data is None:
         hosts = default_hosts
@@ -143,6 +427,9 @@ def open_ping_monitor():
     top_label = tk.Label(ping_window, text="Ping Monitor", font=("Arial", 16, "bold"))
     top_label.pack(side="top", pady=10)
 
+    top_label = tk.Label(ping_window, text=env, font=("Arial", 8, "bold"))
+    top_label.place(x=238,y=5)
+
     # Scrollable container
     container = tk.Frame(ping_window)
     container.pack(fill="both", expand=True, padx=10, pady=(0, 5))
@@ -166,7 +453,7 @@ def open_ping_monitor():
     for host_item in hosts:
         hostname = host_item["hostname"]
         lbl = tk.Label(scrollable_frame, text=hostname, font=("Arial", 12, "bold"))
-        lbl.pack(pady=5, padx=10, anchor="w")
+        lbl.pack(pady=3, padx=10, anchor="w")
         labels.append(lbl)
         default_bg.append(lbl.cget("bg"))
 

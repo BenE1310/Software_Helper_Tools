@@ -2,8 +2,10 @@ import json
 import os
 import subprocess
 import platform
+import sys
 import threading
 import time
+import winreg
 from datetime import datetime
 from tkinter import messagebox
 
@@ -570,7 +572,6 @@ def handle_adding_launchers_battery(bat_num, pos_num, parent_window, current_bat
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
 
-# TODO: Add more argument to the function call 'folder' = FBE, VSIL or CIWS
 def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
@@ -586,8 +587,11 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
         log_message = f"Mapping {unc_path} to {drive_letter}..."
         logs.append(log_message)
         update_results_text(results_text, log_message)
+        logs.append(f'net use {drive_letter} {unc_path}')
 
+        print(f'net use {drive_letter} {unc_path}')
         mapping_result = subprocess.run(f'net use {drive_letter} {unc_path}', shell=True, capture_output=True, text=True)
+
         if mapping_result.stderr:
             print("Copy Error Output:")
             for line in mapping_result.stderr.splitlines():
@@ -850,3 +854,97 @@ def open_wireshark():
 
 def run_open_wireshark():
     threading.Thread(target=open_wireshark).start()
+
+
+def install_msodbcsql():
+    try:
+        msodbcsql_msi_path = ".\\tools\\Softwares\\msodbcsql.msi"
+
+        if not os.path.exists(msodbcsql_msi_path):
+            raise FileNotFoundError("msodbcsql.msi not found.")
+
+        # Open in a new cmd window
+        subprocess.run(msodbcsql_msi_path, shell=True, check=True)
+
+    except FileNotFoundError:
+        messagebox.showerror("Error", "msodbcsql.msi installation is not found.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to start msodbcsql.msi installation: {e}")
+
+def run_msodbcsql_install():
+    threading.Thread(target=install_msodbcsql).start()
+
+def install_MsSqlCmdLnUtils():
+    try:
+        MsSqlCmdLnUtils_msi_path = ".\\tools\\Softwares\\MsSqlCmdLnUtils.msi"
+
+        if not os.path.exists(MsSqlCmdLnUtils_msi_path):
+            raise FileNotFoundError("MsSqlCmdLnUtils.msi not found.")
+
+        # Open in a new cmd window
+        subprocess.run(MsSqlCmdLnUtils_msi_path, shell=True, check=True)
+
+    except FileNotFoundError:
+        messagebox.showerror("Error", "MsSqlCmdLnUtils.msi installation is not found.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to start MsSqlCmdLnUtils.msi installation: {e}")
+
+def run_MsSqlCmdLnUtils_install():
+    threading.Thread(target=install_MsSqlCmdLnUtils).start()
+
+
+def add_sysinternals_to_path():
+    # Determine base path depending on execution environment
+    if getattr(sys, 'frozen', False):
+        # Running as compiled executable
+        script_dir = os.path.dirname(sys.executable)
+    else:
+        # Running as Python script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    current_dir = os.path.normpath(os.path.join(script_dir, 'Tools'))
+
+    # Check if there are executable files (.exe) in the Tools directory
+    if not os.path.exists(current_dir):
+        print(f"Tools directory not found: {current_dir}")
+        input("Press Enter to exit...")
+        exit()
+
+    exe_files = [f for f in os.listdir(current_dir) if f.lower().endswith('.exe')]
+
+    if not exe_files:
+        print("No executable files found in the Tools directory.")
+        input("Press Enter to exit...")
+        exit()
+
+    # Add the Tools folder to the system PATH permanently
+    def add_to_system_path(path_to_add):
+        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE,
+                             r'SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment',
+                             0, winreg.KEY_READ | winreg.KEY_WRITE)
+        try:
+            existing_path, regtype = winreg.QueryValueEx(key, 'Path')
+            paths = existing_path.split(';')
+            if path_to_add not in paths:
+                paths.insert(0, path_to_add)
+                new_path = ';'.join(paths)
+                winreg.SetValueEx(key, 'Path', 0, winreg.REG_EXPAND_SZ, new_path)
+                print(f"Successfully added to PATH: {path_to_add}")
+            else:
+                print(f"Path already exists: {path_to_add}")
+        except Exception as e:
+            print(f"Failed to update PATH: {e}")
+        finally:
+            winreg.CloseKey(key)
+
+    # Requires admin privileges
+    add_to_system_path(current_dir)
+
+    print("\nNow you can use the following Sysinternals tools from any command prompt:")
+    for exe in exe_files:
+        print(f"- {os.path.splitext(exe)[0]}")
+
+    print("\nRestart your command prompt or system for changes to take effect.")
+    messagebox.showinfo("Done!", "Now you can use the following Sysinternals tools" )
+
+

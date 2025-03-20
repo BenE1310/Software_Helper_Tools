@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
     ffi=FixedFileInfo(
-        filevers=(1, 0, 0, 1),
-        prodvers=(1, 0, 0, 1),
+        filevers=(1, 0, 3, 0),
+        prodvers=(1, 0, 3, 0),
         mask=0x3f,
         flags=0x0,
         OS=0x40004,
@@ -18,12 +18,12 @@ VSVersionInfo(
                     [
                         StringStruct('CompanyName', 'mPrest'),
                         StringStruct('FileDescription', 'Software Helper Tool'),
-                        StringStruct('FileVersion', '1.0.0.1'),
+                        StringStruct('FileVersion', '1.0.3'),
                         StringStruct('InternalName', 'SoftwareHelperTool'),
                         StringStruct('LegalCopyright', 'Copyright © mPrest System 2013-2025'),
                         StringStruct('OriginalFilename', 'SoftwareHelperTool.exe'),
                         StringStruct('ProductName', 'By Ben Eytan'),
-                        StringStruct('ProductVersion', '1.0.0.1')
+                        StringStruct('ProductVersion', '1.0.3')
                     ]
                 )
             ]

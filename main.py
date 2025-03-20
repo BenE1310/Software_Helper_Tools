@@ -11,7 +11,7 @@ from functions import check_communication, check_permissions, get_drive_space, g
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
     prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery, handle_adding_launchers_battery, \
     generate_sql_script_training_launchers, run_npcap_install, run_install_wireshark, run_open_wireshark, \
-    handle_adding_launchers_vsil
+    handle_adding_launchers_vsil, run_msodbcsql_install, run_MsSqlCmdLnUtils_install, add_sysinternals_to_path
 import tkinter.ttk as ttk
 import threading
 import pythoncom  # Import pythoncom for WMI operations
@@ -101,15 +101,19 @@ root.resizable(False, False)
 root.iconbitmap(temp_icon_path)
 
 # Protect application
-# try:
-#     key = askstring('Lock', "Enter Master Key", show='*')
-#     while key != "1234":
-#         showinfo('Error', 'You type error master key!')
-#         key = askstring('Enter Master Key', "The master key is invalid Please try again:", show='*')
-# except:
-#     pass
-# else:
-#     showinfo("Master key successful", "Welcome to \"FBE Software Helper Tool\"")
+try:
+    key = askstring('Lock', "Enter Master Key", show='*')
+    if key is None:
+        sys.exit()  # User pressed Cancel, close the app
+    while key != "Q1w2e3r4":
+        showinfo('Error', 'You typed an incorrect master key!')
+        key = askstring('Enter Master Key', "The master key is invalid. Please try again:", show='*')
+        if key is None:
+            sys.exit()  # User pressed Cancel, close the app
+except Exception as e:
+    print(f"An error occurred: {e}")
+else:
+    showinfo("Master key successful", "Welcome to \"FBE Software Helper Tool\"")
 
 # Set Background Image
 
@@ -225,7 +229,7 @@ def open_ping_monitor():
       },
       {
         "hostname": "AV",
-        "ip": f"10.11.{BN}3.20"
+        "ip": f"10.11.{BN}3.22"
       },
       {
         "hostname": "Client1",
@@ -273,11 +277,19 @@ def open_ping_monitor():
       },
       {
         "hostname": "RTR-BMC",
-        "ip": f"10.10.10.2"
+        "ip": f"{BN}0.{BN}0.{BN}0.2"
       },
       {
         "hostname": "RTR-ICS",
-        "ip": f"10.12.11.2"
+        "ip": f"{BN}0.12.{BN}0.2"
+      },
+      {
+        "hostname": "Rubidium",
+        "ip": f"10.12.{BN}8.5"
+      },
+      {
+        "hostname": "Uplink",
+        "ip": f"10.12.{BN}8.12"
       },
     ]
 
@@ -520,11 +532,31 @@ def open_ping_monitor():
     def ping_host(ip):
         current_os = platform.system().lower()
         if 'windows' in current_os:
-            cmd = f'ping -n 1 {ip} > NUL 2>&1'
+            cmd = ['ping', '-n', '1', '-w', '1000', ip]  # '-w 1000' sets a timeout of 1 second
         else:
-            cmd = f'ping -c 1 {ip} > /dev/null 2>&1'
-        response = os.system(cmd)
-        return (response == 0)
+            cmd = ['ping', '-c', '1', '-W', '1', ip]  # '-W 1' sets a timeout of 1 second on Unix-based OS
+
+        try:
+            result = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                encoding='utf-8'
+            )
+            output = result.stdout.lower()
+
+            if 'ttl=' in output:
+                return True
+            else:
+                return False
+
+        except subprocess.SubprocessError as e:
+            print(f"Subprocess error: {e}")
+            return False
+
+    labels = []
+    default_bg = []
 
     labels = []
     default_bg = []
@@ -1259,6 +1291,7 @@ def open_utilities_window():
     else:
         # If the file doesn't exist, use the default settings
         hostnames = default_hostnames_utilities
+        messagebox.showinfo("Loading hosts", "Loading default file.", parent=utilities_window)
 
     # Title label
     tk.Label(
@@ -1899,6 +1932,24 @@ def open_utilities_window():
 
 
 # Tools phase
+def open_sysinternals_script():
+    try:
+        script_path = ".\\Scripts\\Accessories\\add_sysinternals_to_path.bat"
+
+        if not os.path.exists(script_path):
+            raise FileNotFoundError("add_sysinternals_to_path script not found.")
+
+        # Open in a new cmd window
+        subprocess.Popen(f'start cmd /k "{script_path}"', shell=True)
+
+    except FileNotFoundError:
+        messagebox.showerror("Error", "add_sysinternals_to_path is not found.")
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to start add_sysinternals_to_path: {e}")
+
+def run_sysinternals():
+    threading.Thread(target=open_sysinternals_script).start()
+
 def open_finishscript():
     try:
         script_path = ".\\tools\\FinishScripts\\RunME.bat"
@@ -4793,9 +4844,9 @@ def dependencies_screen():
     buttons.append(dependences_label)
 
     # Create Buttons with Hover Effects
-    create_button(root, 'Add Sysinternal to path', None, 178, 420) ### TODO - Run the script "add_sysinternals_to_path.bat"
-    create_button(root, 'Install "msodbcsql"', None, 178, 490) ### TODO - Run the msi file - msodbcsql"
-    create_button(root, 'Install "MsSqlCmdLnUtils"', None, 178, 560) ### TODO - Run the msi file MsSqlCmdLnUtils"
+    create_button(root, 'Add Sysinternal to path', add_sysinternals_to_path, 178, 420)
+    create_button(root, 'Install "msodbcsql"', run_msodbcsql_install, 178, 490)
+    create_button(root, 'Install "MsSqlCmdLnUtils"', run_MsSqlCmdLnUtils_install, 178, 560)
 
 
 
