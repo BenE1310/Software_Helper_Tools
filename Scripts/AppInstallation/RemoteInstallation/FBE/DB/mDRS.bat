@@ -69,7 +69,7 @@ echo ----------------------------------------------------------
 psservice \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
 psservice \\10.11.%BN%8.%PN% stop "mDRS Server Service"
 
-timeout /t 10
+timeout /t 15
 
 :: Check and Rename Folder mDRS
 if exist "T:\%TargetFolder%" (

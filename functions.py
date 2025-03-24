@@ -8,7 +8,7 @@ import time
 import winreg
 from datetime import datetime
 from tkinter import messagebox
-
+import re
 import pefile
 import win32file
 import wmi
@@ -102,14 +102,24 @@ def get_drive_space(remote_host):
 
 
 def get_remote_file_version(remote_server, file_path):
+    """
+    Safely reads PE version info from a remote file or a mapped drive path.
+    If the file doesn't contain version info, or is missing pieces,
+    we handle it gracefully.
+    """
     try:
-        # Construct the UNC path for the remote file
-        unc_path = fr"\\{remote_server}\{file_path}"
-        print(unc_path)
+        # If file_path starts with a drive letter (like "V:"), treat it as is.
+        # Otherwise, build a UNC path.
+        if os.path.splitdrive(file_path)[0]:  # means file_path has a drive letter
+            final_path = file_path
+        else:
+            final_path = fr"\\{remote_server}\{file_path}"
 
-        # Open the remote file
+        print("Opening file:", final_path)
+
+        # Open the remote (or local) file handle
         handle = win32file.CreateFile(
-            unc_path,
+            final_path,
             win32file.GENERIC_READ,
             win32file.FILE_SHARE_READ,
             None,
@@ -118,17 +128,38 @@ def get_remote_file_version(remote_server, file_path):
             None
         )
 
-        # Read the file's content
-        file_data = win32file.ReadFile(handle, os.path.getsize(unc_path))[1]
+        # Read the file content
+        size_on_disk = os.path.getsize(final_path)
+        file_data = win32file.ReadFile(handle, size_on_disk)[1]
         handle.Close()
 
-        # Use pefile to extract version information
+        # Parse the PE data
         pe = pefile.PE(data=file_data)
-        version_info = pe.FileInfo[0][0].StringTable[0].entries
 
-        # Extract and decode version details
-        product_version = version_info.get(b"ProductVersion", b"Unknown").decode()
-        file_version = version_info.get(b"FileVersion", b"Unknown").decode()
+        product_version = None
+        file_version = None
+
+        # Safely extract version info
+        if hasattr(pe, 'FileInfo') and pe.FileInfo:
+            for fileinfo in pe.FileInfo:
+                for entry in fileinfo:
+                    # Check if this entry has a StringTable
+                    if hasattr(entry, 'StringTable'):
+                        for st in entry.StringTable:
+                            if b"ProductVersion" in st.entries:
+                                product_version = st.entries[b"ProductVersion"].decode(errors='replace')
+                            if b"FileVersion" in st.entries:
+                                file_version = st.entries[b"FileVersion"].decode(errors='replace')
+                    # Some PE files store version info in a "Var" structure
+                    # but typically "StringTable" is what we want.
+
+        if not product_version and not file_version:
+            # No version info found
+            return {"error": "Version resource not found in PE"}
+
+        # Default to "Unknown" if one of them is missing
+        product_version = product_version if product_version else "Unknown"
+        file_version = file_version if file_version else "Unknown"
 
         return {
             "Product Version": product_version,
@@ -137,7 +168,6 @@ def get_remote_file_version(remote_server, file_path):
 
     except Exception as e:
         return {"error": str(e)}
-
 
 def change_bat_pos_function(bat_file_path, BN, PN, output_path, logs):
     """
@@ -582,6 +612,10 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
     unc_path = f"\\\\{db_ip}\\c$"
     scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
 
+    scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
+    remote_bat_path = f"{scripts_dest}{current_bat_file}"
+    print(remote_bat_path)
+
     try:
         # Step 1: Map the drive
         log_message = f"Mapping {unc_path} to {drive_letter}..."
@@ -603,8 +637,7 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
             raise Exception(f"Mapping failed: {mapping_result.stderr.strip()}")  # Stops function execution
 
         # Step 2: Copy the script
-        scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
-        remote_bat_path = f"{scripts_dest}{current_bat_file}"
+
 
         log_message = f"Copying script file to {scripts_dest}..."
         logs.append(log_message)

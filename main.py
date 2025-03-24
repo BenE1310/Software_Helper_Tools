@@ -841,12 +841,12 @@ def open_utilities_window():
         "ip": f"10.11.{BN}8.3",
         "services": [
             {
-                "name": "mDRS Agent Service",
+                "name": "mDRSAgent",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "mDRS Server Service",
+                "name": "mDRSServer",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
@@ -856,14 +856,14 @@ def open_utilities_window():
         "ip": f"10.11.{BN}8.4",
         "services": [
             {
-                "name": "ServiceD",
-                "user": "admin",
+                "name": "mDRSAgent",
+                "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "ServiceE",
-                "user": "user2",
-                "recovery": "RunProgram"
+                "name": "mDRSServer",
+                "user": "LocalSystem",
+                "recovery": "Restart"
             }
         ]
     },
@@ -944,12 +944,12 @@ def open_utilities_window():
         "ip": "10.11.218.3",
         "services": [
             {
-                "name": "mDRS Agent Service",
+                "name": "mDRSAgent",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "mDRS Server Service",
+                "name": "mDRSServer",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
@@ -959,12 +959,12 @@ def open_utilities_window():
         "ip": "10.11.218.4",
         "services": [
             {
-                "name": "mDRS Agent Service",
+                "name": "mDRSAgent",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "mDRS Server Service",
+                "name": "mDRSServer",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
@@ -1137,12 +1137,12 @@ def open_utilities_window():
         "ip": "10.11.18.3",
         "services": [
             {
-                "name": "mDRS Agent Service",
+                "name": "mDRSAgent",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "mDRS Server Service",
+                "name": "mDRSServer",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
@@ -1167,12 +1167,12 @@ def open_utilities_window():
         "ip": "10.11.218.3",
         "services": [
             {
-                "name": "mDRS Agent Service",
+                "name": "mDRSAgent",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "mDRS Server Service",
+                "name": "mDRSServer",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
@@ -4581,31 +4581,63 @@ def open_battery_window():
                 if var.get():
                     ip = hostnames[host]
 
-                    # Determine the file path based on the host type
-                    if host.startswith("DB"):
-                        file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
-                        print("select - DB")
-                    else:
-                        file_path = r"c$\Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
-                        print("select - not DB")
+                    # 1. Map network drive V: to \\{ip}\c$
+                    drive_letter = "V:"
+                    unc_path = f"\\\\{ip}\\c$"
 
-                    # Call the version checker
-                    version_info = get_remote_file_version(ip, file_path)
+                    # If it's a DB host
+                    if host.startswith("DB"):
+                        sub_path = r"mDRS\Server\mPrest.mDRS.dll"
+                    else:
+                        sub_path = r"Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
+
+                    # We'll reference the file from the mapped drive
+                    mapped_file = f"{drive_letter}\\{sub_path}"
+
+                    # Step 1: Map the drive
+                    logs.append(f"Mapping {unc_path} to {drive_letter}...")
+                    mapping_cmd = f'net use {drive_letter} {unc_path}'
+                    mapping_result = subprocess.run(mapping_cmd, shell=True, capture_output=True, text=True)
+
+                    if mapping_result.returncode != 0:
+                        logs.append(f"Mapping error for {host}: {mapping_result.stderr.strip()}")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
+                        continue  # Skip to next host
+
+                    # 2. Check if V: actually exists
+                    if not os.path.exists(drive_letter):
+                        logs.append(f"Drive {drive_letter} not accessible for {host}")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
+                        # Attempt to unmap in case partial map was done
+                        subprocess.run(f'net use {drive_letter} /delete', shell=True)
+                        continue
+
+                    # 3. Get file version from mapped drive
+                    version_info = get_remote_file_version(ip, mapped_file)
+                    # ↑ We pass ip too, but the updated function sees a drive letter in mapped_file
+                    #   and won't re-build the UNC path.
 
                     if "error" in version_info:
-                        labels[host].config(fg="red")
-                        labels[host].config(text=f"{host} (IP: {ip}) V")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
                         logs.append(f"{host} (IP: {ip}): Version check failed - {version_info['error']}")
                     else:
                         product_version = version_info.get("Product Version", "Unknown")
-                        labels[host].config(fg="green")
+                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) App version: {product_version}")
                         logs.append(f"{host} (IP: {ip}): Version: {product_version}")
 
-            # Stop the progress bar and display results
+                    # 4. Unmap
+                    unmapping_cmd = f'net use {drive_letter} /delete'
+                    unmap_result = subprocess.run(unmapping_cmd, shell=True, capture_output=True, text=True)
+                    if unmap_result.returncode != 0:
+                        logs.append(f"Error unmapping drive {drive_letter}: {unmap_result.stderr.strip()}")
+                    else:
+                        logs.append(f"Unmapped drive {drive_letter} successfully.")
+
+            # Stop progress bar, show results
             battery_window.after(0, lambda: progress_bar_version.stop())
             battery_window.after(0, lambda: display_results(logs))
 
-        # Run the test in a separate thread
+        # Run in separate thread
         threading.Thread(target=run_test).start()
 
     def perform_communication_test():
