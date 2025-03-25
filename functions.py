@@ -527,7 +527,7 @@ def cleanup_temp_files():
             os.remove(os.path.join(temp_dir, file))
     print("Temporary files cleaned up.")
 
-def handle_adding_launchers_battery(bat_num, pos_num, parent_window, current_bat_file, current_sql_file, logs=None, results_text=None):
+def handle_adding_launchers_battery(bat_num, pos_num, parent_window, full_path_bat_file,  current_bat_file, current_sql_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
@@ -535,7 +535,7 @@ def handle_adding_launchers_battery(bat_num, pos_num, parent_window, current_bat
     drive_letter = "P:"  # Use any available drive letter
     db_ip = f"10.11.{bat_num}8.{pos_num}"
     unc_path = f"\\\\{db_ip}\\c$"
-    scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
+    scripts_src = f".\\Scripts\\SQL\\{full_path_bat_file}"
     sql_script_src = f".\\Scripts\\SQL\\{current_sql_file}"
 
     # Determine the destination folder based on host type
@@ -612,9 +612,6 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
     unc_path = f"\\\\{db_ip}\\c$"
     scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
 
-    scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
-    remote_bat_path = f"{scripts_dest}{current_bat_file}"
-    print(remote_bat_path)
 
     try:
         # Step 1: Map the drive
@@ -637,7 +634,8 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
             raise Exception(f"Mapping failed: {mapping_result.stderr.strip()}")  # Stops function execution
 
         # Step 2: Copy the script
-
+        scripts_dest = f"{drive_letter}\\DB\\Scripts\\"
+        remote_bat_path = f"{scripts_dest}{current_bat_file}"
 
         log_message = f"Copying script file to {scripts_dest}..."
         logs.append(log_message)
@@ -723,7 +721,7 @@ def write_bat_file_db_phase(BN, PN, BAT_FILE_NAME, logs=None, results_text=None)
         print(f"New batch file created with values starting at line 3: {BAT_FILE_PATH}")
 
 
-def handle_adding_launchers_vsil(pos_num, parent_window, current_bat_file, current_sql_file, logs=None, results_text=None):
+def handle_adding_launchers_vsil(pos_num, parent_window, current_bat_file,full_path_bat_dile , current_sql_file, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
@@ -731,7 +729,7 @@ def handle_adding_launchers_vsil(pos_num, parent_window, current_bat_file, curre
     drive_letter = "P:"  # Use any available drive letter
     db_ip = f"10.11.18.{pos_num}"
     unc_path = f"\\\\{db_ip}\\c$"
-    scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
+    scripts_src = f".\\Scripts\\SQL\\{full_path_bat_dile}"
     sql_script_src = f".\\Scripts\\SQL\\{current_sql_file}"
 
     # Determine the destination folder based on host type

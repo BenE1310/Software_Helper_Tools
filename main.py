@@ -2117,15 +2117,19 @@ def open_vsil_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get() and hostname == "DB-BAT":
-            bat_file_name = "VSIL\\Battery\\CreateEmptyTablesDbBatVSIL.bat"
+            bat_file_name = "CreateEmptyTablesDbBatVSIL.bat"
+            path_file = "VSIL\\Battery\\"
         elif operational_var.get() and hostname == "DB-CBMC":
-            bat_file_name = "VSIL\\Regional\\CreateEmptyTablesDbVSILRegional.bat"
+            bat_file_name = "CreateEmptyTablesDbVSILRegional.bat"
+            path_file = "VSIL\\Regional\\"
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
         handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
@@ -2144,16 +2148,21 @@ def open_vsil_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get() and hostname == "DB-BAT":
-            bat_file_name = "VSIL\\Battery\\DeleteDatabasesOperationalBatVSIL.bat"
+            bat_file_name = "DeleteDatabasesOperationalBatVSIL.bat"
+            path_file = "VSIL\\Battery\\"
         elif operational_var.get() and hostname == "DB-CBMC":
-            bat_file_name = "VSIL\\Regional\\DeleteDatabasesOperationalVSILRegional.bat"
+            bat_file_name = "DeleteDatabasesOperationalVSILRegional.bat"
+            path_file = "VSIL\\Regional\\"
+
 
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
         handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
@@ -2170,17 +2179,22 @@ def open_vsil_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
+
         if operational_var.get() and hostname == "DB-BAT":
-            bat_file_name = "VSIL\\Battery\\ImportTablesOperationalBatVSIL.bat"
+            bat_file_name = "ImportTablesOperationalBatVSIL.bat"
+            path_file = "VSIL\\Battery\\"
         elif operational_var.get() and hostname == "DB-CBMC":
-            bat_file_name = "VSIL\\Regional\\ImportTablesOperationalBatVSIL.bat"
+            bat_file_name = "ImportTablesOperationalBatVSIL.bat"
+            path_file = "VSIL\\Regional\\"
 
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
 
         # Step 2: Transfer & Execute Remotely
@@ -2200,8 +2214,12 @@ def open_vsil_database_window():
         - Calls function to transfer & execute remotely.
         """
         if operational_var.get() and hostname == "DB-BAT":
-            bat_file_name = "VSIL\\Battery\\AddingLaunchersTrainingVSILBat.bat"
+
+            path_file = "VSIL\\Battery\\"
+            bat_file_name = "AddingLaunchersTrainingVSILBat.bat"
             sql_file_name = "adding_launcher_training_mode.sql"
+
+            full_path = path_file + bat_file_name
 
             for BN in range(1, 5):  # This loop runs with BN = 1, 2, 3, 4
 
@@ -2223,6 +2241,7 @@ def open_vsil_database_window():
                     pos_num=PN,
                     current_sql_file=sql_file_name,
                     current_bat_file=bat_file_name,
+                    full_path_bat_dile=full_path,
                     results_text=results_text,
                     parent_window=database_window_vsil
                 )
@@ -2388,16 +2407,21 @@ def open_regional_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
+
+        path_file = "FBE\\Regional\\"
+
         if operational_var.get():
-            bat_file_name = "FBE\\Regional\\CreateEmptyTablesOperationalRegional.bat"
+            bat_file_name = "CreateEmptyTablesOperationalRegional.bat"
         elif training_var.get():
-            bat_file_name = "FBE\\Regional\\CreateEmptyTablesTrainingRegional.bat"
+            bat_file_name = "CreateEmptyTablesTrainingRegional.bat"
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
         handle_tables_battery(21, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
@@ -2415,16 +2439,20 @@ def open_regional_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
+        path_file = "FBE\\Regional\\"
+
         if operational_var.get():
-            bat_file_name = "FBE\\Regional\\DeleteDatabasesOperationalRegional.bat"
+            bat_file_name = "DeleteDatabasesOperationalRegional.bat"
         elif training_var.get():
-            bat_file_name = "FBE\\Regional\\DeleteDatabasesTrainingRegional.bat"
+            bat_file_name = "DeleteDatabasesTrainingRegional.bat"
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
         handle_tables_battery(21, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
@@ -2441,16 +2469,19 @@ def open_regional_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
+        path_file = "FBE\\Regional\\"
         if operational_var.get():
-            bat_file_name = "FBE\\Regional\\ImportTablesOperationalRegional.bat"
+            bat_file_name = "ImportTablesOperationalRegional.bat"
         elif training_var.get():
-            bat_file_name = "FBE\\Regional\\ImportTablesTrainingRegional.bat"
+            bat_file_name = "ImportTablesTrainingRegional.bat"
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
 
         # Step 2: Transfer & Execute Remotely
@@ -2609,16 +2640,20 @@ def open_battery_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
+        path_file = "FBE\\Battery\\"
+
         if operational_var.get():
-            bat_file_name = "FBE\\Battery\\CreateEmptyTablesOperational.bat"
+            bat_file_name = "CreateEmptyTablesOperational.bat"
         elif training_var.get():
-            bat_file_name = "FBE\\Battery\\CreateEmptyTablesTraining.bat"
+            bat_file_name = "CreateEmptyTablesTraining.bat"
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
         handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
@@ -2636,16 +2671,20 @@ def open_battery_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
+        path_file = "FBE\\Battery\\"
+
         if operational_var.get():
-            bat_file_name = "FBE\\Battery\\DeleteDatabasesOperational.bat"
+            bat_file_name = "DeleteDatabasesOperational.bat"
         elif training_var.get():
-            bat_file_name = "FBE\\Battery\\DeleteDatabasesTraining.bat"
+            bat_file_name = "DeleteDatabasesTraining.bat"
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
         handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
@@ -2662,16 +2701,20 @@ def open_battery_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
+
+        path_file = "FBE\\Battery\\"
         if operational_var.get():
-            bat_file_name = "FBE\\Battery\\ImportTablesOperationalFBE.bat"
+            bat_file_name = "ImportTablesOperationalFBE.bat"
         elif training_var.get():
-            bat_file_name = "FBE\\Battery\\ImportTablesTrainingFBE.bat"
+            bat_file_name = "FBEImportTablesTrainingFBE.bat"
         else:
             print("No mode selected.")
             return
 
+        full_path = path_file + bat_file_name
+
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name, results_text=results_text)
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
 
         # Step 2: Transfer & Execute Remotely
@@ -2690,6 +2733,9 @@ def open_battery_database_window():
         - Writes the BAT file.
         - Calls function to transfer & execute remotely.
         """
+
+        path_file = "FBE\\Battery\\"
+
         if operational_var.get():
             bat_file_name = "AddingLaunchersOperationalFBE.bat"
             sql_file_name = "adding_launcher_operational_mode.sql"
@@ -2698,6 +2744,8 @@ def open_battery_database_window():
             sql_file_name = "adding_launcher_training_mode.sql"
             sql_code = generate_sql_script_training_launchers(BN)
 
+
+
             # Write it to a file
             with open(f"Scripts/SQL/adding_launcher_training_mode.sql", "w") as file:
                 file.write(sql_code)
@@ -2705,12 +2753,14 @@ def open_battery_database_window():
             print("No mode selected.")
             return
 
+        full_path_bat = path_file + bat_file_name
+
         # Step 1: Write BAT File
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name,
                                 results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_adding_launchers_battery(bat_num=BN,pos_num=PN, current_sql_file=sql_file_name, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
+        handle_adding_launchers_battery(bat_num=BN,pos_num=PN,full_path_bat_file=full_path_bat ,current_sql_file=sql_file_name, current_bat_file=full_path_bat, results_text=results_text, parent_window=database_window_battery)
 
     def adding_launchers():
         run_with_progress(handle_adding_launchers)

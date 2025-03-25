@@ -1,7 +1,7 @@
 @cd /d "%~dp0"
 @echo off
-set /a BN=6
-set /a PN=4
+set /a BN=1
+set /a PN=3
 
 sqlcmd -S 10.11.%BN%8.%PN% -d FireBolt_BMCConfigDB_Operational_%BN% -i P:\DB\Sql\CreateBatteryConfig.sql
 
