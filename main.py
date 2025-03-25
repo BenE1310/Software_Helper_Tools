@@ -3148,28 +3148,63 @@ def open_vsil_window():
                 if var.get():
                     ip = hostnames[host]
 
-                    # Determine the file path based on the host type
-                    if host.startswith("DB"):
-                        file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
-                    else:
-                        file_path = r"c$\VSIL\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
+                    # 1. Map network drive V: to \\{ip}\c$
+                    drive_letter = "V:"
+                    unc_path = f"\\\\{ip}\\c$"
 
-                    # Call the version checker
-                    version_info = get_remote_file_version(ip, file_path)
+                    # If it's a DB host
+                    if host.startswith("DB"):
+                        sub_path = r"mDRS\Server\mPrest.mDRS.dll"
+                    else:
+                        sub_path = r"c$\VSIL\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
+
+                    # We'll reference the file from the mapped drive
+                    mapped_file = f"{drive_letter}\\{sub_path}"
+
+                    # Step 1: Map the drive
+                    logs.append(f"Mapping {unc_path} to {drive_letter}...")
+                    mapping_cmd = f'net use {drive_letter} {unc_path}'
+                    mapping_result = subprocess.run(mapping_cmd, shell=True, capture_output=True, text=True)
+
+                    if mapping_result.returncode != 0:
+                        logs.append(f"Mapping error for {host}: {mapping_result.stderr.strip()}")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
+                        continue  # Skip to next host
+
+                    # 2. Check if V: actually exists
+                    if not os.path.exists(drive_letter):
+                        logs.append(f"Drive {drive_letter} not accessible for {host}")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
+                        # Attempt to unmap in case partial map was done
+                        subprocess.run(f'net use {drive_letter} /delete', shell=True)
+                        continue
+
+                    # 3. Get file version from mapped drive
+                    version_info = get_remote_file_version(ip, mapped_file)
+                    # ↑ We pass ip too, but the updated function sees a drive letter in mapped_file
+                    #   and won't re-build the UNC path.
 
                     if "error" in version_info:
-                        labels[host].config(fg="red")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
                         logs.append(f"{host} (IP: {ip}): Version check failed - {version_info['error']}")
                     else:
                         product_version = version_info.get("Product Version", "Unknown")
-                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) - Version: {product_version}")
+                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) App version: {product_version}")
                         logs.append(f"{host} (IP: {ip}): Version: {product_version}")
 
-            # Stop the progress bar and display results
+                    # 4. Unmap
+                    unmapping_cmd = f'net use {drive_letter} /delete'
+                    unmap_result = subprocess.run(unmapping_cmd, shell=True, capture_output=True, text=True)
+                    if unmap_result.returncode != 0:
+                        logs.append(f"Error unmapping drive {drive_letter}: {unmap_result.stderr.strip()}")
+                    else:
+                        logs.append(f"Unmapped drive {drive_letter} successfully.")
+
+            # Stop progress bar, show results
             vsil_window.after(0, lambda: progress_bar_version.stop())
             vsil_window.after(0, lambda: display_results(logs))
 
-        # Run the test in a separate thread
+        # Run in separate thread
         threading.Thread(target=run_test).start()
 
     def perform_communication_test():
@@ -3633,29 +3668,63 @@ def open_simulator_window():
                 if var.get():
                     ip = hostnames[host]
 
-                    # Determine the file path based on the host type
-                    ### need to change ###
-                    if host.startswith("DB"):
-                        file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
-                    else:
-                        file_path = r"c$\Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
+                    # 1. Map network drive V: to \\{ip}\c$
+                    drive_letter = "V:"
+                    unc_path = f"\\\\{ip}\\c$"
 
-                    # Call the version checker
-                    version_info = get_remote_file_version(ip, file_path)
+                    # If it's a DB host
+                    if host.startswith("Sim"):
+                        sub_path = r"Firebolt\Simulator\Server\server_dll.dll"
+                    else:
+                        sub_path = r"Firebolt\Simulator\client\client_dll.dll"
+
+                    # We'll reference the file from the mapped drive
+                    mapped_file = f"{drive_letter}\\{sub_path}"
+
+                    # Step 1: Map the drive
+                    logs.append(f"Mapping {unc_path} to {drive_letter}...")
+                    mapping_cmd = f'net use {drive_letter} {unc_path}'
+                    mapping_result = subprocess.run(mapping_cmd, shell=True, capture_output=True, text=True)
+
+                    if mapping_result.returncode != 0:
+                        logs.append(f"Mapping error for {host}: {mapping_result.stderr.strip()}")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
+                        continue  # Skip to next host
+
+                    # 2. Check if V: actually exists
+                    if not os.path.exists(drive_letter):
+                        logs.append(f"Drive {drive_letter} not accessible for {host}")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
+                        # Attempt to unmap in case partial map was done
+                        subprocess.run(f'net use {drive_letter} /delete', shell=True)
+                        continue
+
+                    # 3. Get file version from mapped drive
+                    version_info = get_remote_file_version(ip, mapped_file)
+                    # ↑ We pass ip too, but the updated function sees a drive letter in mapped_file
+                    #   and won't re-build the UNC path.
 
                     if "error" in version_info:
-                        labels[host].config(fg="red")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
                         logs.append(f"{host} (IP: {ip}): Version check failed - {version_info['error']}")
                     else:
                         product_version = version_info.get("Product Version", "Unknown")
-                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) - Version: {product_version}")
+                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) App version: {product_version}")
                         logs.append(f"{host} (IP: {ip}): Version: {product_version}")
 
-            # Stop the progress bar and display results
+                    # 4. Unmap
+                    unmapping_cmd = f'net use {drive_letter} /delete'
+                    unmap_result = subprocess.run(unmapping_cmd, shell=True, capture_output=True, text=True)
+                    if unmap_result.returncode != 0:
+                        logs.append(f"Error unmapping drive {drive_letter}: {unmap_result.stderr.strip()}")
+                    else:
+                        logs.append(f"Unmapped drive {drive_letter} successfully.")
+
+            # Stop progress bar, show results
             simulator_window.after(0, lambda: progress_bar_version.stop())
             simulator_window.after(0, lambda: display_results(logs))
 
-        # Run the test in a separate thread
+        # Run in separate thread
         threading.Thread(target=run_test).start()
 
     def perform_communication_test():
@@ -4131,28 +4200,63 @@ def open_regional_window():
                 if var.get():
                     ip = hostnames[host]
 
-                    # Determine the file path based on the host type
-                    if host.startswith("DB"):
-                        file_path = r"c$\mDRS\Server\mPrest.mDRS.dll"
-                    else:
-                        file_path = r"c$\Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
+                    # 1. Map network drive V: to \\{ip}\c$
+                    drive_letter = "V:"
+                    unc_path = f"\\\\{ip}\\c$"
 
-                    # Call the version checker
-                    version_info = get_remote_file_version(ip, file_path)
+                    # If it's a DB host
+                    if host.startswith("DB"):
+                        sub_path = r"mDRS\Server\mPrest.mDRS.dll"
+                    else:
+                        sub_path = r"Firebolt\Watchdog\WDService\mPrest.IronDome.Watchdog.Service.dll"
+
+                    # We'll reference the file from the mapped drive
+                    mapped_file = f"{drive_letter}\\{sub_path}"
+
+                    # Step 1: Map the drive
+                    logs.append(f"Mapping {unc_path} to {drive_letter}...")
+                    mapping_cmd = f'net use {drive_letter} {unc_path}'
+                    mapping_result = subprocess.run(mapping_cmd, shell=True, capture_output=True, text=True)
+
+                    if mapping_result.returncode != 0:
+                        logs.append(f"Mapping error for {host}: {mapping_result.stderr.strip()}")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
+                        continue  # Skip to next host
+
+                    # 2. Check if V: actually exists
+                    if not os.path.exists(drive_letter):
+                        logs.append(f"Drive {drive_letter} not accessible for {host}")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
+                        # Attempt to unmap in case partial map was done
+                        subprocess.run(f'net use {drive_letter} /delete', shell=True)
+                        continue
+
+                    # 3. Get file version from mapped drive
+                    version_info = get_remote_file_version(ip, mapped_file)
+                    # ↑ We pass ip too, but the updated function sees a drive letter in mapped_file
+                    #   and won't re-build the UNC path.
 
                     if "error" in version_info:
-                        labels[host].config(fg="red")
+                        labels[host].config(fg="red", text=f"{host} (IP: {ip}) V")
                         logs.append(f"{host} (IP: {ip}): Version check failed - {version_info['error']}")
                     else:
                         product_version = version_info.get("Product Version", "Unknown")
-                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) - Version: {product_version}")
+                        labels[host].config(fg="green", text=f"{host} (IP: {ip}) App version: {product_version}")
                         logs.append(f"{host} (IP: {ip}): Version: {product_version}")
 
-            # Stop the progress bar and display results
+                    # 4. Unmap
+                    unmapping_cmd = f'net use {drive_letter} /delete'
+                    unmap_result = subprocess.run(unmapping_cmd, shell=True, capture_output=True, text=True)
+                    if unmap_result.returncode != 0:
+                        logs.append(f"Error unmapping drive {drive_letter}: {unmap_result.stderr.strip()}")
+                    else:
+                        logs.append(f"Unmapped drive {drive_letter} successfully.")
+
+            # Stop progress bar, show results
             regional_window.after(0, lambda: progress_bar_version.stop())
             regional_window.after(0, lambda: display_results(logs))
 
-        # Run the test in a separate thread
+        # Run in separate thread
         threading.Thread(target=run_test).start()
 
     def perform_communication_test():
@@ -4990,8 +5094,9 @@ def rai_screen():
     # Create Buttons with Hover Effects
     battery_install_window = create_button(root, 'Battery', open_battery_window, 178, 420)
     regional_install_window = create_button(root, 'Regional', open_regional_window, 178, 490)
-    simulator_install_window = create_button(root, 'Simulator', open_simulator_window, 178, 560)
-    vsil_install_window = create_button(root, 'VSIL/CIWS', open_vsil_window, 178, 630)
+    vsil_install_window = create_button(root, 'VSIL/CIWS', open_vsil_window, 178, 560)
+    simulator_install_window = create_button(root, 'Simulator', open_simulator_window, 178, 630)
+
 
     if BN == "VSIL/CIWS":
         disable_button(battery_install_window)
