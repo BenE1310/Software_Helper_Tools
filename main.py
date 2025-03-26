@@ -2132,7 +2132,7 @@ def open_vsil_database_window():
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
 
     def create_empty_databases():
         run_with_progress(handle_create_empty_tables)
@@ -2165,7 +2165,7 @@ def open_vsil_database_window():
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
 
     def delete_databases():
         run_with_progress(handle_delete_tables)
@@ -2198,7 +2198,7 @@ def open_vsil_database_window():
 
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN,current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_vsil)
 
 
     def import_tables():
@@ -2424,7 +2424,7 @@ def open_regional_database_window():
         write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(21, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
 
     def create_empty_databases():
         run_with_progress(handle_create_empty_tables)
@@ -2455,7 +2455,7 @@ def open_regional_database_window():
         write_bat_file_db_phase(BN=21, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(21, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
 
     def delete_databases():
         run_with_progress(handle_delete_tables)
@@ -2485,7 +2485,7 @@ def open_regional_database_window():
 
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(21, PN,current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_regional)
 
 
     def import_tables():
@@ -2656,7 +2656,7 @@ def open_battery_database_window():
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
 
     def create_empty_databases():
         run_with_progress(handle_create_empty_tables)
@@ -2687,7 +2687,7 @@ def open_battery_database_window():
         write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path, results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
 
     def delete_databases():
         run_with_progress(handle_delete_tables)
@@ -2706,7 +2706,7 @@ def open_battery_database_window():
         if operational_var.get():
             bat_file_name = "ImportTablesOperationalFBE.bat"
         elif training_var.get():
-            bat_file_name = "FBEImportTablesTrainingFBE.bat"
+            bat_file_name = "ImportTablesTrainingFBE.bat"
         else:
             print("No mode selected.")
             return
@@ -2718,7 +2718,7 @@ def open_battery_database_window():
 
 
         # Step 2: Transfer & Execute Remotely
-        handle_tables_battery(BN, PN,current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
+        handle_tables_battery(BN, PN, full_path_bat_file=full_path, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
 
 
     def import_tables():
@@ -2756,11 +2756,11 @@ def open_battery_database_window():
         full_path_bat = path_file + bat_file_name
 
         # Step 1: Write BAT File
-        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=bat_file_name,
+        write_bat_file_db_phase(BN=BN, PN=PN, BAT_FILE_NAME=full_path_bat,
                                 results_text=results_text)
 
         # Step 2: Transfer & Execute Remotely
-        handle_adding_launchers_battery(bat_num=BN,pos_num=PN,full_path_bat_file=full_path_bat ,current_sql_file=sql_file_name, current_bat_file=full_path_bat, results_text=results_text, parent_window=database_window_battery)
+        handle_adding_launchers_battery(bat_num=BN,pos_num=PN,full_path_bat_file=full_path_bat ,current_sql_file=sql_file_name, current_bat_file=bat_file_name, results_text=results_text, parent_window=database_window_battery)
 
     def adding_launchers():
         run_with_progress(handle_adding_launchers)
@@ -3674,9 +3674,9 @@ def open_simulator_window():
 
                     # If it's a DB host
                     if host.startswith("Sim"):
-                        sub_path = r"Firebolt\Simulator\Server\server_dll.dll"
+                        sub_path = r"Firebolt\Simulator\simServer\FBEIronDomeSimServer.exe"
                     else:
-                        sub_path = r"Firebolt\Simulator\client\client_dll.dll"
+                        sub_path = r"Firebolt\Simulator\simclient\FBEIronDomeSimClient.exe"
 
                     # We'll reference the file from the mapped drive
                     mapped_file = f"{drive_letter}\\{sub_path}"

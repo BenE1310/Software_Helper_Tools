@@ -588,6 +588,8 @@ def handle_adding_launchers_battery(bat_num, pos_num, parent_window, full_path_b
             update_results_text(results_text, "Error: 'sqlcmd' is not recognized as an internal or external command")
             raise Exception(f"Mapping failed: {run_remote_script.stderr.strip()}")  # Stops function execution
 
+        messagebox.showinfo("", "Done!", parent=parent_window)
+
     except Exception as e:
         log_message = f"Error during execution: {e}"
         logs.append(log_message)
@@ -602,7 +604,7 @@ def handle_adding_launchers_battery(bat_num, pos_num, parent_window, full_path_b
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
 
-def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, logs=None, results_text=None):
+def handle_tables_battery(bat_num, bat_pos, current_bat_file, full_path_bat_file, parent_window, logs=None, results_text=None):
     """
     Prepare the installation process for a host.
     """
@@ -610,7 +612,7 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
     drive_letter = "P:"  # Use any available drive letter
     db_ip = f"10.11.{bat_num}8.{bat_pos}"
     unc_path = f"\\\\{db_ip}\\c$"
-    scripts_src = f".\\Scripts\\SQL\\{current_bat_file}"
+    scripts_src = f".\\Scripts\\SQL\\{full_path_bat_file}"
 
 
     try:
@@ -638,6 +640,7 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
         remote_bat_path = f"{scripts_dest}{current_bat_file}"
 
         log_message = f"Copying script file to {scripts_dest}..."
+        print(f"Copying script file to {scripts_dest}...")
         logs.append(log_message)
         update_results_text(results_text, log_message)
         subprocess.run(f'echo D | xcopy "{scripts_src}" "{scripts_dest}" /E /Y /I', shell=True, capture_output=True, text=True)
@@ -660,6 +663,8 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
             update_results_text(results_text, "Error: 'sqlcmd' is not recognized as an internal or external command")
             raise Exception(f"Mapping failed: {run_remote_script.stderr.strip()}")  # Stops function execution
 
+        messagebox.showinfo("", "Done!", parent=parent_window)
+
 
     except Exception as e:
         log_message = f"Error during execution: {e}"
@@ -676,7 +681,7 @@ def handle_tables_battery(bat_num, bat_pos, current_bat_file, parent_window, log
         update_results_text(results_text, log_message)
         os.system(f"net use {drive_letter} /delete")
 
-# TODO: Add more argument to the function call 'folder' = FBE, VSIL or CIWS
+
 def write_bat_file_db_phase(BN, PN, BAT_FILE_NAME, logs=None, results_text=None):
     """
     Writes BN, SQL_USER, and SQL_PASS values to lines 3, 4, and 5 in the BAT file.
@@ -690,6 +695,8 @@ def write_bat_file_db_phase(BN, PN, BAT_FILE_NAME, logs=None, results_text=None)
     ]
 
     BAT_FILE_PATH = f".\\Scripts\\SQL\\{BAT_FILE_NAME}"
+    log_message_path = f"Update the file {BAT_FILE_NAME}"
+    logs.append(log_message_path)
 
     if os.path.exists(BAT_FILE_PATH):
         with open(BAT_FILE_PATH, "r") as file:
@@ -782,6 +789,9 @@ def handle_adding_launchers_vsil(pos_num, parent_window, current_bat_file,full_p
             messagebox.showerror("Error", "Check whether you have 'sqlcmd' installed in the component you are trying to install from.", parent=parent_window)
             update_results_text(results_text, "Error: 'sqlcmd' is not recognized as an internal or external command")
             raise Exception(f"Mapping failed: {run_remote_script.stderr.strip()}")  # Stops function execution
+
+
+        messagebox.showinfo("", "Done!", parent=parent_window)
 
     except Exception as e:
         log_message = f"Error during execution: {e}"

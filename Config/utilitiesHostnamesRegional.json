@@ -23,12 +23,12 @@
         "ip": "10.11.218.3",
         "services": [
             {
-                "name": "mDRS Agent Service",
+                "name": "mDRSAgent",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "mDRS Server Service",
+                "name": "mDRSService",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
@@ -38,12 +38,12 @@
         "ip": "10.11.218.4",
         "services": [
             {
-                "name": "mDRS Agent Service",
+                "name": "mDRSAgent",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             },
             {
-                "name": "mDRS Server Service",
+                "name": "mDRSService",
                 "user": "LocalSystem",
                 "recovery": "Restart"
             }
