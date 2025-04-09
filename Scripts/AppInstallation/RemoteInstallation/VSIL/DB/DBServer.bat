@@ -71,8 +71,8 @@ echo Installation Path: %DestPath_mDRS%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-psservice \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
-psservice \\10.11.%BN%8.%PN% stop "mDRS Server Service"
+pskill \\10.11.%BN%8.%PN% stop "mDRSAgent.exe"
+pskill \\10.11.%BN%8.%PN% stop "mDRSServer.exe"
 psservice \\10.11.%BN%8.%PN% stop "VSIL Watchdog"
 
 timeout /t 10

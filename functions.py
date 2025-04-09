@@ -17,35 +17,37 @@ import tkinter as tk
 import pythoncom  # Import pythoncom for WMI operations
 
 
-
 def check_communication(ip):
     """
-    Ping a server to test communication.
-
-    Parameters:
-        ip (str): The IP address to test.
-
-    Returns:
-        bool: True if communication is successful, False otherwise.
+    Ping a server to test communication, with a short timeout
+    and by checking for 'ttl=' in the response, similar to PING OK.
     """
-    # Determine the ping command based on the operating system
-    if platform.system().lower() == "windows":
-        ping_command = ["ping", "-n", "1"]
+
+    current_os = platform.system().lower()
+    # Set up the command with a 1-second timeout
+    if 'windows' in current_os:
+        cmd = ['ping', '-n', '1', '-w', '1000', ip]  # '-w 1000' => 1s
     else:
-        ping_command = ["ping", "-c", "1"]
+        cmd = ['ping', '-c', '1', '-W', '1', ip]  # '-W 1'   => 1s
 
     try:
-        # Run the ping command and capture the output
         result = subprocess.run(
-            ping_command + [ip],
+            cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            text=True
+            text=True,
+            encoding='utf-8'
         )
-        # Successful communication if return code is 0
-        return result.returncode == 0
-    except Exception as e:
-        print(f"Error during communication check with {ip}: {e}")
+        output = result.stdout.lower()
+
+        # Return True if 'ttl=' is found in the output
+        if 'ttl=' in output:
+            return True
+        else:
+            return False
+
+    except subprocess.SubprocessError as e:
+        print(f"Subprocess error: {e}")
         return False
 
 
@@ -327,14 +329,10 @@ def prepare_installation_simulator(ip_base, host_type, current_bat_file, scripts
         tools_dest = f"{drive_letter}\\FBE_{timestamp}\\Tools"
         remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
 
-        if "BMC" in host_type:
-            zip_src = "C:\\FBE\\Zip\\BatteryServer.7z"
-        elif "DB" in host_type:
-            zip_src = "C:\\FBE\\Zip\\mDRS.7z"
-        elif "ICS" in host_type:
-            zip_src = "C:\\FBE\\Zip\\ICS.7z"
+        if "Sim" in host_type:
+            zip_src = "C:\\FBE\\Zip\\SimulatorServer.7z"
         else:
-            zip_src = "C:\\FBE\\Zip\\BatteryClient.7z"
+            zip_src = "C:\\FBE\\Zip\\SimulatorClient.7z"
 
         tools_src = "C:\\FBE\\Tools"
 
@@ -399,13 +397,11 @@ def prepare_installation_regional(ip_base, host_type, current_bat_file, scripts_
         remote_bat_path = f"{scripts_dest}\\{current_bat_file}"
 
         if "BMC" in host_type:
-            zip_src = "C:\\FBE\\Zip\\BatteryServer.7z"
+            zip_src = "C:\\FBE\\Zip\\RegionalServer.7z"
         elif "DB" in host_type:
             zip_src = "C:\\FBE\\Zip\\mDRS.7z"
-        elif "ICS" in host_type:
-            zip_src = "C:\\FBE\\Zip\\ICS.7z"
         else:
-            zip_src = "C:\\FBE\\Zip\\BatteryClient.7z"
+            zip_src = "C:\\FBE\\Zip\\RegionalClient.7z"
 
         tools_src = "C:\\FBE\\Tools"
 

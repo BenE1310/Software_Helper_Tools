@@ -2,11 +2,8 @@ import json
 import platform
 import shutil
 import subprocess
-import tkinter as tk
 import time
 from tkinter import PhotoImage, ttk, messagebox
-import pythoncom
-import wmi
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
     prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery, handle_adding_launchers_battery, \
@@ -554,9 +551,6 @@ def open_ping_monitor():
         except subprocess.SubprocessError as e:
             print(f"Subprocess error: {e}")
             return False
-
-    labels = []
-    default_bg = []
 
     labels = []
     default_bg = []
@@ -2001,6 +1995,10 @@ def disable_button(window):
 def enable_button(window):
     window.config(state='normal')  # Enable the grayed-out button
 
+###############################################################################
+#                               Database Windows                              #
+###############################################################################
+
 # Database VSIL windows and functions
 
 def set_server_vsil(choice):
@@ -2803,6 +2801,10 @@ def open_battery_database_window():
     results_text = tk.Text(database_window_battery, height=5, width=50, bg="#003333", fg="white", font=("Arial", 10))
     results_text.place(x=20, y=330, width=360, height=120)
 
+###############################################################################
+#                              App Installation                               #
+###############################################################################
+
 # Function to open a new window for the App Installation
 def open_vsil_window():
     vsil_window = tk.Toplevel(root)
@@ -2830,7 +2832,7 @@ def open_vsil_window():
 
     # Hostnames and IPs
     default_hostnames_VSIL = {
-        "BMC1": "192.168.1.1",
+        "BMC1": "10.11.18.1",
         "BMC2": "10.11.28.1",
         "BMC3": "10.11.38.1",
         "BMC4": "10.11.48.1",
@@ -3051,7 +3053,7 @@ def open_vsil_window():
             cleanup_temp_files()
             logs.append("All installations completed.")
 
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.", parent=vsil_window)
+            messagebox.showinfo("Installation Complete", "Installation completed successfully for all checked components.", parent=vsil_window)
 
             display_results(logs)
 
@@ -3429,11 +3431,11 @@ def open_simulator_window():
     # Hostnames and IPs
     default_hostnames_simulator = {
         "Sim Server": f"10.11.{BN}8.2",
-        "Client1": f"192.168.{BN}8.6",
-        "Client2": f"192.168.{BN}8.7",
-        "Client3": f"192.168.{BN}8.8",
-        "Client4": f"192.168.{BN}8.9",
-        "Client5": f"192.168.{BN}8.10",
+        "Client1": f"10.11.{BN}8.6",
+        "Client2": f"10.11.{BN}8.7",
+        "Client3": f"10.11..{BN}8.8",
+        "Client4": f"10.11.{BN}8.9",
+        "Client5": f"10.11.{BN}8.10",
     }
 
     hostnames_file_path = ".\\Config\\hostnameSimulator.json."
@@ -3527,18 +3529,12 @@ def open_simulator_window():
 
                     # Create a unique temporary .bat file for the host
 
-                    if "BMC" in host:
-                        temp_bat_path = f".\\temp\\BatteryServer_{PN}.bat"
-                        name_bat_file = f"BatteryServer_{PN}.bat"
-                    elif "ICS" in host:
-                        temp_bat_path = f".\\temp\\ICS_{PN}.bat"
-                        name_bat_file = f"ICS_{PN}.bat"
-                    elif "DB" in host:
-                        temp_bat_path = f".\\temp\\mDRS_{PN}.bat"
-                        name_bat_file = f"mDRS_{PN}.bat"
+                    if "Sim" in host:
+                        temp_bat_path = f".\\temp\\SimulatorServer_{PN}.bat"
+                        name_bat_file = f"SimulatorServer_{PN}.bat"
                     else:
-                        temp_bat_path = f".\\temp\\BatteryClient_{PN}.bat"
-                        name_bat_file = f"BatteryClient_{PN}.bat"
+                        temp_bat_path = f".\\temp\\SimulatorClient_{PN}.bat"
+                        name_bat_file = f"SimulatorClient_{PN}.bat"
 
                     # Step 1: Customize the .bat file
                     logs.append(f"Customizing batch file for {host} ({ip})...")
@@ -3575,7 +3571,7 @@ def open_simulator_window():
             cleanup_temp_files()
             logs.append("All installations completed.")
 
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.", parent=simulator_window)
+            messagebox.showinfo("Installation Complete", "Installation completed successfully for all checked components.", parent=simulator_window)
 
             display_results(logs)
 
@@ -3751,10 +3747,11 @@ def open_simulator_window():
                     ip = hostnames[host]
                     success = check_communication(ip)
                     if success:
-                        labels[host].config(fg="#013220")
+                        labels[host].config(fg="green")
                         logs.append(f"{host} (IP: {ip}): Communication successful.")
+                        labels[host].config(text=f"{host} (IP: {ip})")
                     else:
-                        labels[host].config(fg="#800020")
+                        labels[host].config(fg="red")
                         labels[host].config(text=f"{host} (IP: {ip}) C")
                         logs.append(f"{host} (IP: {ip}): Communication failed.")
 
@@ -3788,16 +3785,42 @@ def open_simulator_window():
                 if var.get():
                     ip = hostnames[host]
                     network_path = rf"\\{ip}\c$\temp"  # Adjust the network path format
+
+                    # Check if the folder exists
+                    if not os.path.exists(network_path):
+                        try:
+                            os.makedirs(network_path)  # Create the folder
+                            folder_created = True
+                        except Exception as e:
+                            logs.append(f"{host} (IP: {ip}): Failed to create folder - {e}")
+                            labels[host].config(fg="red")
+                            labels[host].config(text=f"{host} (IP: {ip}) P")
+                            continue  # Skip further execution for this host
+                    else:
+                        folder_created = False  # The folder already existed
+
                     permissions = check_permissions(network_path)  # Call the helper function
 
                     # Update GUI based on results
                     if permissions["readable"] and permissions["writable"]:
-                        labels[host].config(fg="#013220")
+                        labels[host].config(fg="green")
+                        labels[host].config(text=f"{host} (IP: {ip})")
                         logs.append(f"{host} (IP: {ip}): Permissions OK (Read/Write).")
                     else:
-                        labels[host].config(fg="#800020")
+                        labels[host].config(fg="red")
                         labels[host].config(text=f"{host} (IP: {ip}) P")
                         logs.append(f"{host} (IP: {ip}): Permissions FAILED.")
+
+                    # If we created the folder, delete it after the test
+                    if folder_created:
+                        try:
+                            for file in os.listdir(network_path):  # Remove all files first
+                                file_path = os.path.join(network_path, file)
+                                if os.path.isfile(file_path) or os.path.islink(file_path):
+                                    os.remove(file_path)
+                            os.rmdir(network_path)  # Now remove the empty directory
+                        except Exception as e:
+                            logs.append(f"{host} (IP: {ip}): Failed to delete folder - {e}")
 
             # Stop the progress bar and display results
             simulator_window.after(0, lambda: progress_bar_permissions.stop())
@@ -3831,22 +3854,24 @@ def open_simulator_window():
                     if var.get():
                         ip = hostnames[host]
                         free_space, total_space, percentage_free = get_drive_space(ip)
-                        logs.append(f"free space:{free_space}, total space:{total_space}, percentage_free:{percentage_free}")
 
                         if free_space is None or total_space is None:
-                            labels[host].config(fg="#013220")
+                            labels[host].config(fg="red")
                             logs.append(f"{host} (IP: {ip}): Failed to retrieve disk space information.")
-                        elif percentage_free < 25:
-                            labels[host].config(fg="#800020")
+                        elif free_space < 10:
+                            labels[host].config(fg="red")
                             labels[host].config(text=f"{host} (IP: {ip}) D")
                             logs.append(
-                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Cannot install, please empty the disk."
+                                f"{host} (IP: {ip}): C Drive Disk space is {free_space:.2f}GB. Cannot install, please empty the disk."
                             )
                         else:
                             labels[host].config(fg="green")
+                            labels[host].config(text=f"{host} (IP: {ip})")
                             logs.append(
-                                f"{host} (IP: {ip}): Disk volume is {percentage_free:.2f}%. Disk space is sufficient."
+                                f"{host} (IP: {ip}): Free space in C Drive is {free_space:.2f}GB. Disk space is sufficient."
                             )
+                            logs.append(
+                                f"Free space: {free_space:.2f}GB, Total space: {total_space:.2f}GB, Percentage free: {percentage_free:.2f}%.")
             finally:
                 pythoncom.CoUninitialize()  # Uninitialize COM library
 
@@ -3947,18 +3972,18 @@ def open_regional_window():
 ### We can save the hostnames in JSON file
     # Hostnames and IPs
     default_hostnames_regional = {
-        "CBMC1": "192.168.218.1",
-        "CBMC2": "192.168.218.2",
-        "DB1": "192.168.218.3",
-        "DB2": "192.168.218.4",
-        "Client1": "192.168.218.50",
-        "Client2": "192.168.218.51",
-        "Client3": "192.168.218.52",
-        "Client4": "192.168.218.53",
-        "Client5": "192.168.218.54",
-        "Client6": "192.168.218.55",
-        "Client7": "192.168.218.56",
-        "Client8": "192.168.3.141",
+        "CBMC1": "10.11.218.1",
+        "CBMC2": "10.11.218.2",
+        "DB1": "10.11.218.3",
+        "DB2": "10.11.218.4",
+        "Client1": "10.11.218.50",
+        "Client2": "10.11.218.51",
+        "Client3": "10.11.218.52",
+        "Client4": "10.11.218.53",
+        "Client5": "10.11.218.54",
+        "Client6": "10.11.218.55",
+        "Client7": "10.11.218.56",
+        "Client8": "10.11.218.57",
     }
 
     hostnames_file_path_regional = ".\\Config\\hostnameRegional.json"
@@ -4089,7 +4114,7 @@ def open_regional_window():
             cleanup_temp_files()
             logs.append("All installations completed.")
 
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.", parent=regional_window)
+            messagebox.showinfo("Installation Complete", "Installation completed successfully for all checked components.", parent=regional_window)
 
             display_results(logs)
 
@@ -4642,7 +4667,7 @@ def open_battery_window():
             cleanup_temp_files()
             logs.append("All installations completed.")
 
-            messagebox.showinfo("Installation Complete", "File transfer process finished for all selected hosts.", parent=battery_window)
+            messagebox.showinfo("Installation Complete", "Installation completed successfully for all checked components.", parent=battery_window)
 
             display_results(logs)
 
@@ -5203,7 +5228,7 @@ def main_screen():
 
     # Create Buttons with Hover Effects
     create_button(root, 'App Installation', phases_app_installation_screen, 178, 420)
-    create_button(root, 'Checks Components', coming_soon, 178, 490)
+    create_button(root, 'Component Checker', coming_soon, 178, 490)
     create_button(root, 'Cyber Deployment', coming_soon, 178, 560)
     create_button(root, 'Tools', tools_screen, 360, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)

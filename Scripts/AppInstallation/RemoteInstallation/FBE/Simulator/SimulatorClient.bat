@@ -20,7 +20,6 @@ if %errorLevel% == 0 (
     exit
 )
 
-
 :logo
 cls
 title Firebolt Simulator Client Version Update 
@@ -56,24 +55,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-:: Check and Rename Folder
-if exist "T:\%TargetFolder%" (
-    echo Folder %TargetFolder% exists. Renaming to %NewFolderName%...
-    REN "T:\%TargetFolder%" "%NewFolderName%"
-    if errorlevel 1 (
-        echo Failed to rename the folder. Check permissions and path.
-        NET USE T: /DELETE >nul 2>&1
-        pause
-        exit /b 1
-    )
-    echo Folder renamed successfully to %NewFolderName%.
-) else (
-    echo Folder %TargetFolder% does not exist. Continuing...
-)
-
-:: Disconnect Mapped Drive
-NET USE T: /DELETE >nul 2>&1
-
 :: Continue with SimulatorClient Logic
 echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
@@ -82,19 +63,13 @@ echo ----------------------------------------------------------
 @echo Kill Processes...
 pskill \\10.11.%BN%8.%PN% FBEIronDomeSimClient.exe
 
-for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
-goto Simulator_Client
+:: Disconnect Mapped Drive
+NET USE T: /DELETE >nul 2>&1
 
 :Simulator_Client
 echo Installing Simulator Client, Please Wait...
 ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\SimulatorClient.7z" -o"%DestPath%" -y) 
 IF exist %DestPath% ( echo Firebolt Source Folder Found ) ELSE (goto NoSource)
-
-goto Maps
-
-:Maps
-IF not exist C:\Maps ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\Maps.7z" -o"C:\" -y) 
-goto EOF
 
 :EOF
 exit

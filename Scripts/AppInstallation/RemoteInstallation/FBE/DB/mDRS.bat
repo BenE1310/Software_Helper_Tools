@@ -1,11 +1,10 @@
 @echo off
-rem Version 1.0.1.0 By Ben Eytan 11022025
+rem Version 1.0.2.0 By Ben Eytan 09042025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
 set /a BN=0
 set /a PN=0
-
 
 :Check_Permissions
 echo Administrative permissions required. Detecting permissions...
@@ -66,10 +65,12 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-psservice \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
-psservice \\10.11.%BN%8.%PN% stop "mDRS Server Service"
+:: psservice \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
+:: psservice \\10.11.%BN%8.%PN% stop "mDRS Server Service"
+pskill \\10.11.%BN%8.%PN% stop "mDRSAgent.exe"
+pskill \\10.11.%BN%8.%PN% stop "mDRSServer.exe"
 
-timeout /t 15
+timeout /t 5
 
 :: Check and Rename Folder mDRS
 if exist "T:\%TargetFolder%" (
