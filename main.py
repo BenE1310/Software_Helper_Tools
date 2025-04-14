@@ -3,7 +3,7 @@ import platform
 import shutil
 import subprocess
 import time
-from tkinter import PhotoImage, ttk, messagebox
+from tkinter import PhotoImage, messagebox
 from functions import check_communication, check_permissions, get_drive_space, get_remote_file_version, \
     change_bat_pos_function, cleanup_temp_files, prepare_installation_battery, prepare_installation_regional, \
     prepare_installation_simulator, write_bat_file_db_phase, handle_tables_battery, handle_adding_launchers_battery, \
@@ -89,10 +89,36 @@ def coming_soon():
     messagebox.showinfo("Coming Soon", "Coming soon!")
 
 
+def is_sqlcmd_installed():
+    try:
+        result = subprocess.run(["sqlcmd", "-?"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return result.returncode == 0 or b"usage" in result.stdout.lower()
+    except FileNotFoundError:
+        return False
+
+def is_c_sht_tools_in_path():
+    target = os.path.normcase(r"C:\SHT\Tools")
+    path_env = os.environ.get("PATH", "")
+    paths = [os.path.normcase(p.strip('"')) for p in path_env.split(os.pathsep)]
+    return target in paths
+
+
+
+
+
 # Main Application
+
+def CenterWindowToDisplay(Screen: tk.Tk, width: int, height: int):
+    """Centers the window to the main display/monitor"""
+    screen_width = Screen.winfo_screenwidth()
+    screen_height = Screen.winfo_screenheight()
+    x = int((screen_width/2) - (width/2))
+    y = int((screen_height/1.7) - (height/1.5))
+    return f"{width}x{height}+{x}+{y}"
+
 root = tk.Tk()
 root.title("Software Helper Tools")
-root.geometry("600x750")
+root.geometry(CenterWindowToDisplay(root, 600, 750))
 root.resizable(False, False)
 # root.eval('tk::PlaceWindow . center')
 root.iconbitmap(temp_icon_path)
@@ -156,6 +182,7 @@ button_style_medium = {
 
 BN = 0
 VSIL_BN = 0
+back_window = None
 
 buttons = []
 installation_app_remote_message = []
@@ -165,6 +192,8 @@ progress_bar_disk = None
 progress_bar_version = None
 selection_window_DB = None
 server_choice = None
+missing_dependency = False
+missing_sysinternal = False
 
 ###############################################################################
 #                               PING WINDOWS                                  #
@@ -2859,10 +2888,14 @@ def open_vsil_window():
         with open(hostnames_file_path_VSIL, 'r') as file:
             hostnames = json.load(file)
         print("Loaded hostnames from JSON file.")
+        messagebox.showinfo("Details", "Loaded hostnames from JSON file.", parent=vsil_window)
+
     else:
         # If the JSON file does not exist, use the default dictionary
         hostnames = default_hostnames_VSIL
         print("Loaded hostnames from default dictionary.")
+        messagebox.showinfo("Details", "Loaded hostnames from default dictionary.", parent=vsil_window)
+
 
 
     # Map host to corresponding bat file paths
@@ -3445,10 +3478,14 @@ def open_simulator_window():
         with open(hostnames_file_path, 'r') as file:
             hostnames = json.load(file)
         print("Loaded hostnames from JSON file.")
+        messagebox.showinfo("Details", "Loaded hostnames from JSON file.", parent=simulator_window)
+
     else:
         # If the JSON file does not exist, use the default dictionary
         hostnames = default_hostnames_simulator
         print("Loaded hostnames from default dictionary.")
+        messagebox.showinfo("Details", "Loaded hostnames from default dictionary.", parent=simulator_window)
+
 
 
 
@@ -4021,10 +4058,14 @@ def open_regional_window():
         with open(bat_file_mapping_file_path, 'r') as file:
             reg_file_mapping = json.load(file)
         print("Loaded Bat file mapping from JSON file.")
+        messagebox.showinfo("Details", "Loaded hostnames from JSON file.", parent=regional_window)
+
     else:
         # If the JSON file does not exist, use the default dictionary
         reg_file_mapping = default_reg_file_mapping
         print("Loaded Bat file mapping from default dictionary.")
+        messagebox.showinfo("Details", "Loaded hostnames from default dictionary.", parent=regional_window)
+
 
     def on_install():
 
@@ -4527,10 +4568,12 @@ def open_battery_window():
         with open(hostnames_file_path, 'r') as file:
             hostnames = json.load(file)
         print("Loaded hostnames from JSON file.")
+        messagebox.showinfo("Details", "Loaded hostnames from JSON file.", parent=battery_window)
     else:
         # If the JSON file does not exist, use the default dictionary
         hostnames = default_hostnames_battery
         print("Loaded hostnames from default dictionary.")
+        messagebox.showinfo("Details", "Loaded hostnames from default dictionary.", parent=battery_window)
 
     # Map host to corresponding bat file paths
     default_bat_file_mapping = {
@@ -5046,6 +5089,7 @@ def open_battery_window():
 
 
 def dependencies_screen():
+    global back_window
     # Clear existing buttons
     on_button_click()
 
@@ -5061,8 +5105,10 @@ def dependencies_screen():
 
 
 
-    create_button(root, 'Back', tools_screen, 14, 690, button_style_small)
+    create_button(root, 'Back', back_window, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
+
+    back_window = tools_screen
 
 
 def wireshark_screen():
@@ -5109,6 +5155,7 @@ def tools_screen():
 
 def rai_screen():
     # Clear existing buttons
+    global missing_sysinternal, back_window
     on_button_click()
 
     # Add Label
@@ -5140,10 +5187,23 @@ def rai_screen():
     create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
 
+    if not missing_sysinternal:
+        if is_c_sht_tools_in_path():
+            print(r'"C:\SHT\Tools" is in the PATH.')
+        else:
+            print(r'"C:\SHT\Tools" is NOT in the PATH.')
+            messagebox.showwarning("Missing sysinternal", "From a component review, it appears that you are missing 'Sysinternal' to continue. Please install 'Sysinternal' under 'Dependencies'.")
+            messagebox.showinfo("Dependencies window", "Moved to the 'Dependencies' window")
+            missing_sysinternal = True
+            back_window = rai_screen
+            dependencies_screen()
+
 
 def db_screen():
     # Clear existing buttons
+    global missing_dependency, back_window
     on_button_click()
+
 
     # Add Label
     rai_label = tk.Label(root, text='Database Phase', fg='white', bg='#000000', font=('Arial', 20, 'bold'))
@@ -5168,6 +5228,22 @@ def db_screen():
 
     create_button(root, 'Back', phases_app_installation_screen, 14, 690, button_style_small)
     create_button(root, 'Exit', root.destroy, 480, 690, button_style_small)
+
+    if not missing_dependency:
+        if is_sqlcmd_installed():
+            print("sqlcmd is installed.")
+        else:
+            print("sqlcmd is NOT installed.")
+            messagebox.showwarning("Missing dependency",
+                                   "From a component review, it appears that you are missing 'sqlcmd' to continue. Please install 'msodbcsql' and 'MsSqlCmdLnUtis' under 'Dependencies'.")
+            messagebox.showinfo("Dependencies window", "Moved to the 'Dependencies' window")
+            missing_dependency = True
+            back_window = db_screen
+            dependencies_screen()
+
+
+
+
 
 
 def phases_app_installation_screen():
