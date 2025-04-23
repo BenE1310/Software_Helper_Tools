@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.1.0 By Ben Eytan 11022025
+rem Version 1.0.3.0 By Ben Eytan 23042025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -62,16 +62,18 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-psservice \\10.11.%BN%8.%PN% stop "FBE Watchdog"
-pskill \\10.11.%BN%8.%PN% IronDomeMdrsAgent.exe
-pskill \\10.11.%BN%8.%PN% LoginApp.exe
-pskill \\10.11.%BN%8.%PN% FBETrainerClient.exe
-pskill \\10.11.%BN%8.%PN% FBEMaintenance.exe
-pskill \\10.11.%BN%8.%PN% FBEIronDomeBmcOperationalClient.exe
-pskill \\10.11.%BN%8.%PN% FBEIronDomeTrainingClient.exe
-pskill \\10.11.%BN%8.%PN% FBEPlaybackClient.exe
+:: psservice \\10.11.%BN%8.%PN% stop "FBE Watchdog"
+pskill \\FB-%BN%8-0%PN% IronDomeMdrsAgent.exe
+pskill \\FB-%BN%8-0%PN% LoginApp.exe
+pskill \\FB-%BN%8-0%PN% FBETrainerClient.exe
+pskill \\FB-%BN%8-0%PN% FBEMaintenance.exe
+pskill \\FB-%BN%8-0%PN% FBEIronDomeBmcOperationalClient.exe
+pskill \\FB-%BN%8-0%PN% FBEIronDomeTrainingClient.exe
+pskill \\FB-%BN%8-0%PN% FBEPlaybackClient.exe
+pskill \\FB-%BN%8-0%PN% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
 
-timeout /t 10
+
+timeout /t 3
 
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
@@ -119,7 +121,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-psservice \\10.11.%BN%8.%PN% start "FBE Watchdog"
+psservice \\FB-%BN%8-0%PN% start "FBE Watchdog"
 goto EOF
 
 :EOF

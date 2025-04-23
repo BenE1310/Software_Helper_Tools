@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.2.0 By Ben Eytan 09042025
+rem Version 1.0.3.0 By Ben Eytan 23042025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -59,7 +59,6 @@ if errorlevel 1 (
     exit /b 1
 )
 
-
 echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
@@ -67,10 +66,14 @@ echo ----------------------------------------------------------
 @echo Kill Processes...
 :: psservice \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
 :: psservice \\10.11.%BN%8.%PN% stop "mDRS Server Service"
-pskill \\10.11.%BN%8.%PN% stop "mDRSAgent.exe"
-pskill \\10.11.%BN%8.%PN% stop "mDRSServer.exe"
+pskill \\FB-%BN%8-0%PN% "mDRSAgent.exe"
+pskill \\FB-%BN%8-0%PN% "mDRSServer.exe"
+pskill \\FB-%BN%8-0%PN% "mDRSExplorer.exe"
+pskill \\FB-%BN%8-0%PN% notepad++
+pskill \\FB-%BN%8-0%PN% "notepad"
 
-timeout /t 5
+
+timeout /t 3
 
 :: Check and Rename Folder mDRS
 if exist "T:\%TargetFolder%" (
@@ -115,7 +118,9 @@ goto DB
 echo Creating FBE DB folder, Please Wait...
 ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\DB.7z" -o"%DestPath_DB%" -y)
 IF exist %DestPath_DB% ( echo DB Source Folder Found ) ELSE (goto NoSource_DB)
-goto EOF
 
+
+:: psexec \\FB-%BN%8-0%PN% explorer.exe
+goto EOF
 :EOF
 exit

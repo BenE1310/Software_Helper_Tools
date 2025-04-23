@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.1.0 By Ben Eytan 11022025
+rem Version 1.0.1.0 By Ben Eytan 23042025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -62,11 +62,13 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-psservice \\10.12.%BN%8.%PN% stop "FBE Watchdog"
-pskill \\10.12.%BN%8.%PN% IcsMainAppWithSafeties.exe
-pskill \\10.12.%BN%8.%PN% IcsMainAppWithoutSafeties.exe
+:: psservice \\10.12.%BN%8.%PN% stop "FBE Watchdog"
+pskill \\FB-%BN%8-%PN% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
+pskill \\FB-%BN%8-%PN% IcsMainAppWithSafeties.exe
+pskill \\FB-%BN%8-%PN% IcsMainAppWithoutSafeties.exe
 
-timeout /t 10
+
+timeout /t 3
 
 for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
@@ -113,7 +115,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-psservice \\10.12.%BN%8.%PN% start "FBE Watchdog"
+psservice \\FB-%BN%8-%PN% start "FBE Watchdog"
 goto EOF
 
 :EOF

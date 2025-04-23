@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.1.0 By Ben Eytan 11022025
+rem Version 1.0.1.0 By Ben Eytan 23042025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -61,14 +61,15 @@ echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-psservice \\10.11.%BN%8.%PN% stop "FBE Watchdog"
+::psservice \\10.11.%BN%8.%PN% stop "FBE Watchdog"
+pskill \\10.11.%BN%8.%PN% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
 pskill \\10.11.%BN%8.%PN% FBEIronDomeBmcOperationalServer.exe
 pskill \\10.11.%BN%8.%PN% FBEPlaybackServer.exe
 pskill \\10.11.%BN%8.%PN% FBEBmcTrainingServer.exe
 pskill \\10.11.%BN%8.%PN% SafetiesService.exe
 pskill \\10.11.%BN%8.%PN% FBETrainerServer.exe
 
-timeout /t 10
+timeout /t 3
 
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (

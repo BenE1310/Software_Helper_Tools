@@ -5243,9 +5243,6 @@ def db_screen():
 
 
 
-
-
-
 def phases_app_installation_screen():
     # Check if BN is chosen
     if BN == 0:

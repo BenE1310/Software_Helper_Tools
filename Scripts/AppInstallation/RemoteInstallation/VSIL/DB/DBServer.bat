@@ -64,18 +64,20 @@ if errorlevel 1 (
 )
 
 
-
 echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo Installation Path: %DestPath_mDRS%
 echo ----------------------------------------------------------
 
 @echo Kill Processes...
-pskill \\10.11.%BN%8.%PN% stop "mDRSAgent.exe"
-pskill \\10.11.%BN%8.%PN% stop "mDRSServer.exe"
+pskill \\FB-%BN%8-0%PN% "mDRSAgent.exe"
+pskill \\FB-%BN%8-0%PN% "mDRSServer.exe"
+pskill \\FB-%BN%8-0%PN% "mDRSExplorer.exe"
+pskill \\FB-%BN%8-0%PN% "notepad++"
+pskill \\FB-%BN%8-0%PN% "notepad"
 psservice \\10.11.%BN%8.%PN% stop "VSIL Watchdog"
 
-timeout /t 10
+timeout /t 3
 
 :: Check and Rename Folder VSIL
 if exist "T:\%TargetFolder%" (
