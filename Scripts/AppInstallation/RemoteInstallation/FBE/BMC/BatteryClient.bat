@@ -63,6 +63,8 @@ echo ----------------------------------------------------------
 
 @echo Kill Processes...
 :: psservice \\10.11.%BN%8.%PN% stop "FBE Watchdog"
+pskill \\FB-%BN%8-0%PN% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
+pskill \\FB-%BN%8-0%PN% mDRS.IronDome.Watchdog.LoginApp.FBE.Battery.Host.exe
 pskill \\FB-%BN%8-0%PN% IronDomeMdrsAgent.exe
 pskill \\FB-%BN%8-0%PN% LoginApp.exe
 pskill \\FB-%BN%8-0%PN% FBETrainerClient.exe
@@ -70,7 +72,8 @@ pskill \\FB-%BN%8-0%PN% FBEMaintenance.exe
 pskill \\FB-%BN%8-0%PN% FBEIronDomeBmcOperationalClient.exe
 pskill \\FB-%BN%8-0%PN% FBEIronDomeTrainingClient.exe
 pskill \\FB-%BN%8-0%PN% FBEPlaybackClient.exe
-pskill \\FB-%BN%8-0%PN% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
+
+
 
 
 timeout /t 3
