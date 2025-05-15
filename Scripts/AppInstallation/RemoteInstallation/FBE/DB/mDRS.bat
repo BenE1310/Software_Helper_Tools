@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.3.0 By Ben Eytan 23042025
+rem Version 1.0.4.0 By Ben Eytan 15052025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -63,14 +63,16 @@ echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
-@echo Kill Processes...
-:: psservice \\10.11.%BN%8.%PN% stop "mDRS Agent Service"
-:: psservice \\10.11.%BN%8.%PN% stop "mDRS Server Service"
+:: Force-release locked handles on C:\mDRS before proceeding
+for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools\handle.exe" -accepteula C:\mDRS') DO "%~dp0..\..\Tools\handle.exe" -c %%J -y -p %%I
+
+
+@echo echo Terminating process on remote...
 pskill \\FB-%BN%8-0%PN% "mDRSAgent.exe"
 pskill \\FB-%BN%8-0%PN% "mDRSServer.exe"
 pskill \\FB-%BN%8-0%PN% "mDRSExplorer.exe"
-pskill \\FB-%BN%8-0%PN% notepad++
-pskill \\FB-%BN%8-0%PN% "notepad"
+rem pskill \\FB-%BN%8-0%PN% notepad++
+rem pskill \\FB-%BN%8-0%PN% "notepad"
 
 
 timeout /t 3
@@ -120,7 +122,6 @@ echo Creating FBE DB folder, Please Wait...
 IF exist %DestPath_DB% ( echo DB Source Folder Found ) ELSE (goto NoSource_DB)
 
 
-:: psexec \\FB-%BN%8-0%PN% explorer.exe
 goto EOF
 :EOF
 exit

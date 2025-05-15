@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.3.0 By Ben Eytan 23042025
+rem Version 1.0.4.0 By Ben Eytan 15052025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -61,6 +61,9 @@ echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
+:: Force-release locked handles on C:\Firebolt before proceeding
+for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools\handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools\handle.exe" -c %%J -y -p %%I
+
 @echo Kill Processes...
 :: psservice \\10.12.%BN%8.%PN% stop "FBE Watchdog"
 pskill \\FB-%BN%8-%PN% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
@@ -70,7 +73,7 @@ pskill \\FB-%BN%8-%PN% IcsMainAppWithoutSafeties.exe
 
 timeout /t 3
 
-for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
+
 
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (

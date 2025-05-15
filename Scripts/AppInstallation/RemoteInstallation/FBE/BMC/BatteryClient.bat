@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.3.0 By Ben Eytan 23042025
+rem Version 1.0.4.0 By Ben Eytan 15052025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -40,6 +40,14 @@ set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%date
 
 :: Variables
 set RemoteComputer=\\10.11.%BN%8.%PN%
+
+REM Check if PN is less than 10 (one digit)
+if %PN% LSS 10 (
+    set RemoteComputerName="\\FB-%BN%8-0%PN%"
+) else (
+    set RemoteComputerName="\\FB-%BN%8-%PN%"
+)
+
 set RemoteShare=C$
 set TargetFolder=Firebolt
 set NewFolderName=Firebolt_%mydate%
@@ -61,20 +69,19 @@ echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
-@echo Kill Processes...
-:: psservice \\10.11.%BN%8.%PN% stop "FBE Watchdog"
-pskill \\FB-%BN%8-0%PN% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
-pskill \\FB-%BN%8-0%PN% mDRS.IronDome.Watchdog.LoginApp.FBE.Battery.Host.exe
-pskill \\FB-%BN%8-0%PN% IronDomeMdrsAgent.exe
-pskill \\FB-%BN%8-0%PN% LoginApp.exe
-pskill \\FB-%BN%8-0%PN% FBETrainerClient.exe
-pskill \\FB-%BN%8-0%PN% FBEMaintenance.exe
-pskill \\FB-%BN%8-0%PN% FBEIronDomeBmcOperationalClient.exe
-pskill \\FB-%BN%8-0%PN% FBEIronDomeTrainingClient.exe
-pskill \\FB-%BN%8-0%PN% FBEPlaybackClient.exe
+:: Force-release locked handles on C:\Firebolt before proceeding
+for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools\handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools\handle.exe" -c %%J -y -p %%I
 
-
-
+@echo Terminating process on remote...
+pskill %RemoteComputerName% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
+pskill %RemoteComputerName% mDRS.IronDome.Watchdog.LoginApp.FBE.Battery.Host.exe
+pskill %RemoteComputerName% IronDomeMdrsAgent.exe
+pskill %RemoteComputerName% LoginApp.exe
+pskill %RemoteComputerName% FBETrainerClient.exe
+pskill %RemoteComputerName% FBEMaintenance.exe
+pskill %RemoteComputerName% FBEIronDomeBmcOperationalClient.exe
+pskill %RemoteComputerName% FBEIronDomeTrainingClient.exe
+pskill %RemoteComputerName% FBEPlaybackClient.exe
 
 timeout /t 3
 
@@ -95,9 +102,6 @@ if exist "T:\%TargetFolder%" (
 
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
-
-
-for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
 :BMC_Client
 ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\BatteryClient.7z" -o"%DestPath%" -y) 
@@ -124,7 +128,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-psservice \\FB-%BN%8-0%PN% start "FBE Watchdog"
+psservice %RemoteComputerName% start "FBE Watchdog"
 goto EOF
 
 :EOF

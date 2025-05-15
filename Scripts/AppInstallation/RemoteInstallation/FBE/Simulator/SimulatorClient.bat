@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.1.0 By Ben Eytan 11022025
+rem Version 1.0.4.0 By Ben Eytan 15052025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -40,6 +40,14 @@ set mydate=%datetime:~0,4%-%datetime:~4,2%-%datetime:~6,2%_%datetime:~8,2%-%date
 
 :: Variables
 set RemoteComputer=\\10.11.%BN%8.%PN%
+
+REM Check if PN is less than 10 (one digit)
+if %PN% LSS 10 (
+    set RemoteComputerName="\\FB-%BN%8-0%PN%"
+) else (
+    set RemoteComputerName="\\FB-%BN%8-%PN%"
+)
+
 set RemoteShare=C$
 set TargetFolder=Firebolt
 set NewFolderName=Firebolt_%mydate%
@@ -60,8 +68,12 @@ echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
+:: Force-release locked handles on C:\Firebolt before proceeding
+for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools\handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools\handle.exe" -c %%J -y -p %%I
+
+
 @echo Kill Processes...
-pskill \\10.11.%BN%8.%PN% FBEIronDomeSimClient.exe
+pskill %RemoteComputerName% FBEIronDomeSimClient.exe
 
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1

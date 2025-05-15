@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.1.0 By Ben Eytan 11022025
+rem Version 1.0.4.0 By Ben Eytan 15052025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -60,8 +60,11 @@ echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
+:: Force-release locked handles on C:\Firebolt before proceeding
+for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools\handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools\handle.exe" -c %%J -y -p %%I
+
 @echo Kill Processes...
-pskill \\10.11.%BN%8.2 FBEIronDomeSimServer.exe
+pskill "\\FB-%BN%8-02" FBEIronDomeSimServer.exe
 
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1

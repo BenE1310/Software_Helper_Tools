@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.3.0 By Ben Eytan 23042025
+rem Version 1.0.4.0 By Ben Eytan 15052025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -60,8 +60,11 @@ echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
-@echo Kill Processes...
-::psservice \\10.11.%BN%8.%PN% stop "FBE Watchdog"
+
+:: Force-release locked handles on C:\Firebolt before proceeding
+for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools\handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools\handle.exe" -c %%J -y -p %%I
+
+@echo Terminating process on remote...
 pskill \\FB-%BN%8-0%PN% mPrest.IronDome.Watchdog.Service.Battery.Host.exe
 pskill \\FB-%BN%8-0%PN% FBEIronDomeBmcOperationalServer.exe
 pskill \\FB-%BN%8-0%PN% FBEPlaybackServer.exe
@@ -90,7 +93,6 @@ if exist "T:\%TargetFolder%" (
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
 
-for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
 
 :BMC_Server
 ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\BatteryServer.7z" -o"%DestPath%" -y)
@@ -98,13 +100,10 @@ IF exist %DestPath% ( echo Firebolt Source Folder Found ) ELSE (goto NoSource)
 
 echo Installing FBE Server, Please Wait...
 echo.
-echo Deleting ClientFiltersData.xml and PreDefinedZoomConf.xml ...
 echo.
-SET FilterData="C:\Users\%%G\AppData\Roaming\mPrest Systems\Iron Dome\Client\FiltersData.xml"
-SET PreDefinedZoomConf="C:\Users\%%G\AppData\Roaming\mPrest\Client\PreDefinedZoomConf.xml"
-for /F %%G in ('dir C:\Users\ /b /AD') DO IF EXIST %FilterData% (del /F /Q %FilterData%)
-for /F %%G in ('dir C:\Users\ /b /AD') DO IF EXIST %PreDefinedZoomConf% (del /F /Q %PreDefinedZoomConf%)
-echo.
+echo Copying Safeties Transport Catalog, Please Wait...
+robocopy /w:3 /r:3 /NJH /NP /NDL /NFL %NewFolderName%\Watchdog\Safeties\SafetiesService\ %DestPath%\Watchdog\Safeties\SafetiesService\ ServiceTransportCatalog.xml
+robocopy /w:3 /r:3 /NJH /NP /NDL /NFL %NewFolderName%\Watchdog\WDService\ %DestPath%\Watchdog\WDService\ ServiceTransportCatalog.xml
 
 echo Moving mDRSStorage to the new version, Please Wait...
 robocopy /e /move /w:3 /r:3 /NJH /ETA /NP /NDL /NFL %NewFolderName%\Watchdog\mDRSAgent\mDRSStorage %DestPath%\Watchdog\mDRSAgent\mDRSStorage
@@ -122,3 +121,4 @@ goto EOF
 
 :EOF
 exit
+

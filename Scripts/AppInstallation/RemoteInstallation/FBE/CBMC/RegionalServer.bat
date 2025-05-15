@@ -1,5 +1,5 @@
 @echo off
-rem Version 1.0.1.0 By Ben Eytan 11022025
+rem Version 1.0.4.0 By Ben Eytan 15052025
 @setlocal enableextensions
 @cd /d "%~dp0"
 
@@ -62,14 +62,17 @@ echo ----------------------------------------------------------
 echo Installation Path: %DestPath%
 echo ----------------------------------------------------------
 
-@echo Kill Processes...
-psservice \\10.11.218.%PN% stop "FBE Watchdog REGIONAL"
-pskill \\10.11.%BN%8.%PN% FBEIronDomeRegionalOperationalServer.exe
-pskill \\10.11.%BN%8.%PN% FBEPlaybackServer.exe
-pskill \\10.11.%BN%8.%PN% FBEIronDomeTrainerServer.exe
-pskill \\10.11.%BN%8.%PN% FBETrainerServer.exe
+:: Force-release locked handles on C:\Firebolt before proceeding
+for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools\handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools\handle.exe" -c %%J -y -p %%I
 
-timeout /t 10
+@echo echo Terminating process on remote...
+psservice \\FB-218-0%PN% stop "FBE Watchdog REGIONAL"
+pskill \\FB-218-0%PN% FBEIronDomeRegionalOperationalServer.exe
+pskill \\FB-218-0%PN% FBEPlaybackServer.exe
+pskill \\FB-218-0%PN% FBEIronDomeTrainerServer.exe
+pskill \\FB-218-0%PN% FBETrainerServer.exe
+
+timeout /t 3
 
 :: Check and Rename Folder
 if exist "T:\%TargetFolder%" (
@@ -89,8 +92,6 @@ if exist "T:\%TargetFolder%" (
 :: Disconnect Mapped Drive
 NET USE T: /DELETE >nul 2>&1
 
-for /F "tokens=3,6 delims=: " %%I IN ('"%~dp0..\..\Tools"\"handle.exe" -accepteula C:\Firebolt') DO "%~dp0..\..\Tools"\"handle.exe" -c %%J -y -p %%I
-
 
 :CBMC_Server
 ("%~dp0..\..\Tools\7z.exe" x "%~dp0..\..\Zip\RegionalServer.7z" -o"%DestPath%" -y) 
@@ -109,7 +110,7 @@ goto Run_WD
 
 :Run_WD
 echo Trying to start FBE Watchdog Service
-psservice \\10.11.218.%PN% start "FBE Watchdog REGIONAL"
+psservice \\FB-218-0%PN% start "FBE Watchdog REGIONAL"
 
 goto EOF
 
