@@ -1871,7 +1871,7 @@ def open_utilities_window():
     # Mark All
     tk.Button(
         utilities_window,
-        text="Mark All",
+        text="Select All",
         command=lambda: [v.set(True) for v in selections.values()],
         bg="green",
         **button_style
@@ -1880,7 +1880,7 @@ def open_utilities_window():
     # Unmark All
     tk.Button(
         utilities_window,
-        text="Unmark All",
+        text="unselect All",
         command=lambda: [v.set(False) for v in selections.values()],
         bg="red",
         **button_style
@@ -3652,7 +3652,7 @@ def open_simulator_window():
     button_width = 200
     tk.Button(
         simulator_window,
-        text="Check All",
+        text="Select All",
         command=check_all,
         font=("Arial", 14),
         bg="#32CD32",
@@ -3662,7 +3662,7 @@ def open_simulator_window():
 
     tk.Button(
         simulator_window,
-        text="Uncheck All",
+        text="Unselect All",
         command=uncheck_all,
         font=("Arial", 14),
         bg="#32CD32",
@@ -4209,7 +4209,7 @@ def open_regional_window():
     button_width = 200
     tk.Button(
         regional_window,
-        text="Check All",
+        text="Select All",
         command=check_all,
         font=("Arial", 14),
         bg="#5a2c8a",
@@ -4219,7 +4219,7 @@ def open_regional_window():
 
     tk.Button(
         regional_window,
-        text="Uncheck All",
+        text="Unselect All",
         command=uncheck_all,
         font=("Arial", 14),
         bg="#5a2c8a",
@@ -4754,7 +4754,7 @@ def open_battery_window():
     button_width = 200
     tk.Button(
         battery_window,
-        text="Check All",
+        text="Select All",
         command=check_all,
         font=("Arial", 14),
         bg="#006666",
@@ -4764,7 +4764,7 @@ def open_battery_window():
 
     tk.Button(
         battery_window,
-        text="Uncheck All",
+        text="Unselect All",
         command=uncheck_all,
         font=("Arial", 14),
         bg="#006666",
